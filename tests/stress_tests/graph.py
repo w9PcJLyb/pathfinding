@@ -5,6 +5,11 @@ from copy import copy
 from w9_pathfinding import Graph, DFS, BFS, Dijkstra, BiDijkstra
 
 
+NUM_GRAPHS = 100
+NUM_QUERIES_PER_GRAPH = 10
+NUM_VERTICES = 1000
+BRANCHING_FACTOR = 20
+
 # - unweighted - can find the shortest path in an unweighted graph
 # - weighted - can find the shortest path in a weighted graph
 ALGORITHMS = [
@@ -85,75 +90,73 @@ def compare_results(results):
     return True
 
 
-def run_random_graph(algrithms, num_vertices=1000, branching_factor=5, weighted=True, num_runs=1):
-    graph = create_random_graph(num_vertices, branching_factor, weighted)
+def run_graph(algrithms, graph, start, end):
+    results = []
     for a in algrithms:
-        a["finder"] = a["class"](graph)
+        path, time = find_path(a["finder"], start, end)
+        a["total_time"] += time
 
-    for _ in range(num_runs):
-        
-        start = random.randint(0, graph.num_vertices - 1)
-        end = random.randint(0, graph.num_vertices - 1)
-
-        results = []
-        for a in algrithms:
-            path, time = find_path(a["finder"], start, end)
-            a["time_time"] += time
-
-            path_cost = calculate_cost(graph, path, start, end)
-            if path_cost == -1:
-                print(f"Error algorithm {a['name']} return the wrong path {path}")
-                show_graph_info(graph, start, end)
-                return False
-
-            a["total_cost"] += path_cost
-
-            results.append(
-                {
-                    "algorithm": a["name"],
-                    "path": path,
-                    "cost": path_cost,
-                    "shortest_path": a["shortest_path"],
-                }
-            )
-
-        if not compare_results(results):
-            print(compare_results(results))
-            print("Error, different results: ")
-            for r in results:
-                print(f" - {r['algorithm']} : cost = {r['cost']}, path = {r['path']}")
+        path_cost = calculate_cost(graph, path, start, end)
+        if path_cost == -1:
+            print(f"Error algorithm {a['name']} return the wrong path {path}")
             show_graph_info(graph, start, end)
             return False
+
+        a["total_cost"] += path_cost
+
+        results.append(
+            {
+                "algorithm": a["name"],
+                "path": path,
+                "cost": path_cost,
+                "shortest_path": a["shortest_path"],
+            }
+        )
+
+    if not compare_results(results):
+        print(compare_results(results))
+        print("Error, different results: ")
+        for r in results:
+            print(f" - {r['algorithm']} : cost = {r['cost']}, path = {r['path']}")
+        show_graph_info(graph, start, end)
+        return False
         
     return True
 
 
 def stress_test(algrithms, weighted):
-    num_tests = 100
 
     for a in algrithms:
-        a["time_time"] = 0
+        a["total_time"] = 0
         a["total_cost"] = 0
 
-    for i in range(num_tests):
-        print(f"run {i + 1}/{num_tests}", end="\r")
-        r = run_random_graph(
-            algrithms,
-            num_vertices=1000,
-            branching_factor=30,
+    for i in range(NUM_GRAPHS):
+        print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
+
+        graph = create_random_graph(
+            num_vertices=NUM_VERTICES,
+            branching_factor=BRANCHING_FACTOR,
             weighted=weighted,
-            num_runs=10,
         )
-        if not r:
-            break
+
+        for a in algrithms:
+            a["finder"] = a["class"](graph)
+
+        for _ in range(NUM_QUERIES_PER_GRAPH):
+            start = random.randint(0, graph.num_vertices - 1)
+            end = random.randint(0, graph.num_vertices - 1)
+
+            r = run_graph(algrithms, graph, start, end)
+            if not r:
+                return
 
     print("\nOverall results:")
+    count = NUM_GRAPHS * NUM_QUERIES_PER_GRAPH
     for a in algrithms:
-        mean_time = a['time_time'] / num_tests
-        mean_cost = a['total_cost'] / num_tests
+        mean_time = a['total_time'] / count
+        mean_cost = a['total_cost'] / count
         print(f" - {a['name']}:")
-        print(f"     mean time = {mean_time:.7f}, mean cost = {mean_cost:.2f}")
-
+        print(f"     mean time = {1000 * mean_time:.3f}ms, mean cost = {mean_cost:.2f}")
 
 
 def test_unweighted_graph():
