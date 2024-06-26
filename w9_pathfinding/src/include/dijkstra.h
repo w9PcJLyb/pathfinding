@@ -10,7 +10,7 @@ class Dijkstra : public AbsPathFinder {
 
     struct Node {
         int parent;
-        int distance;  // from start to this node
+        double distance;  // from start to this node
 
         Node() : parent(-1), distance(-1) {};
 

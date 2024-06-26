@@ -10,7 +10,7 @@ class AStar : public AbsPathFinder {
 
     struct Node {
         int parent;
-        int distance;  // from start to this node
+        double distance;  // from start to this node
         double f;  // distance + heuristic
 
         Node() : parent(-1), distance(-1), f(0) {};

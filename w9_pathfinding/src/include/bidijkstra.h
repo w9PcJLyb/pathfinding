@@ -11,7 +11,7 @@ class BiDijkstra : public AbsPathFinder {
 
     struct Node {
         int parent;
-        int distance;  // from start to this node
+        double distance;  // from start to this node
 
         Node() : parent(-1), distance(-1) {};
 
@@ -32,6 +32,7 @@ class BiDijkstra : public AbsPathFinder {
         AbsGraph* reversed_graph_;
         vector<vector<Node>> nodes_;
         vector<int> workset_;
+        vector<bool> closedset_;
         vector<int> reconstruct_path(int start, int end); 
         void clear();
         void visit_node(int side, int node_id, vector<Queue> &openset, double cost, int parent);

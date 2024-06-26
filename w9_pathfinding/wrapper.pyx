@@ -56,12 +56,15 @@ cdef class Graph(_AbsGraph):
         for start, end, cost in edges:
             self.assert_in(start)
             self.assert_in(end)
-            if cost <= 0:
-                raise ValueError("Cost must be positive")
+            if cost < 0:
+                raise ValueError("Weight cannot be negative!")
             starts.append(start)
             ends.append(end)
             costs.append(cost)
         self._obj.add_edges(starts, ends, costs)
+
+    def get_neighbours(self, int node_id):
+        return self._obj.get_neighbours(node_id)
 
 
 cdef class Grid(_AbsGraph):

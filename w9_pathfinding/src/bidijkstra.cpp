@@ -4,6 +4,7 @@
 BiDijkstra::BiDijkstra(AbsGraph *graph) : graph(graph) {
     reversed_graph_ = graph->reverse();
     nodes_.resize(2, vector<Node>(graph->size()));
+    closedset_.resize(graph->size(), 0);
 }
 
 BiDijkstra::~BiDijkstra() {
@@ -14,6 +15,7 @@ void BiDijkstra::clear() {
     for (int i : workset_) {
         nodes_[0][i].clear();
         nodes_[1][i].clear();
+        closedset_[i] = 0;
     }
     workset_.clear();
 }
@@ -105,20 +107,20 @@ vector<int> BiDijkstra::find_path(int start, int end) {
         if (node_id == -1)
             break;
 
-        if (nodes_[1][node_id].parent >= 0) {
+        if (closedset_[node_id])
             return reconstruct_path(start, end);
-        }
 
+        closedset_[node_id] = 1;
         process_node(0, node_id, openset, graph);
 
         node_id = extract_min(1, openset);
         if (node_id == -1)
             break;
 
-        if (nodes_[0][node_id].parent >= 0) {
+        if (closedset_[node_id])
             return reconstruct_path(start, end);
-        }
 
+        closedset_[node_id] = 1;
         process_node(1, node_id, openset, reversed_graph_);
     }
 

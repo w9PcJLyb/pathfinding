@@ -63,7 +63,7 @@ vector<int> AStar::find_path(int start, int end) {
             continue;
         }
 
-        int distance = nodes_[x].distance;
+        double distance = nodes_[x].distance;
         for (auto& [n, cost] : grid->get_neighbours(x)) {
             Node &node = nodes_[n]; 
             if (node.distance < 0 || node.distance > distance + cost) {

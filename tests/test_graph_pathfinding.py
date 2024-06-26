@@ -50,6 +50,22 @@ class TestShortestPath(unittest.TestCase):
     """
 
     def test_case_1(self):
+        graph = Graph(3)
+        graph.add_edges(
+            [
+                (0, 1, 49.9),
+                (1, 2, 50),
+                (0, 2, 100),
+            ]
+        )
+        answer = [0, 1, 2]
+
+        for a in SHORTEST_PATH_ALGORITHMS:
+            with self.subTest(a.__name__):
+                path = a(graph).find_path(0, 2)
+                self.assertListEqual(path, answer, a.__name__)
+
+    def test_case_2(self):
         graph = Graph(6)
         graph.add_edges(
             [
@@ -65,7 +81,7 @@ class TestShortestPath(unittest.TestCase):
             ]
         )
         answer = [0, 1, 2, 5]
-    
+
         for a in SHORTEST_PATH_ALGORITHMS:
             with self.subTest(a.__name__):
                 path = a(graph).find_path(0, 5)

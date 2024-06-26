@@ -30,6 +30,7 @@ cdef extern from "src/include/graph.h":
         size_t size()
         size_t num_edges()
         vector[vector[double]] get_edges()
+        vector[pair[int, double]] get_neighbours(int)
 
 
 cdef extern from "src/grid.cpp":

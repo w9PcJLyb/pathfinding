@@ -33,7 +33,7 @@ vector<int> Dijkstra::find_path(int start, int end) {
         key top = openset.top();
         openset.pop();
 
-        int distance = nodes_[top.second].distance;
+        double distance = nodes_[top.second].distance;
         if (top.first > distance)
             continue;
 
