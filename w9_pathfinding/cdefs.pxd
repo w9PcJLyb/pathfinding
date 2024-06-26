@@ -43,6 +43,7 @@ cdef extern from "src/include/grid.h":
         bool passable_left_right_border, passable_up_down_border
 
         Grid(int, int) except +
+        Grid(int, int, vector[int]) except +
         unsigned int get_diagonal_movement()
         void set_diagonal_movement(int)
         bool has_obstacle(int)
@@ -84,6 +85,17 @@ cdef extern from "src/include/dijkstra.h":
 
     cdef cppclass Dijkstra(AbsPathFinder):
         Dijkstra(AbsGraph*) except +
+        vector[int] find_path(int, int)
+
+
+cdef extern from "src/bidijkstra.cpp":
+    pass
+
+
+cdef extern from "src/include/bidijkstra.h":
+
+    cdef cppclass BiDijkstra(AbsPathFinder):
+        BiDijkstra(AbsGraph*) except +
         vector[int] find_path(int, int)
 
 

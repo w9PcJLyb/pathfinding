@@ -21,7 +21,7 @@ class Graph : public AbsGraph {
         void add_edges(vector<int> starts, vector<int> ends, vector<double> costs);
         vector<pair<int, double>> get_neighbours(int node) const;
         vector<vector<double>> get_edges() const;
-        Graph reverse() const;
+        AbsGraph* reverse() const;
 
     private:
         int num_vertices_; 

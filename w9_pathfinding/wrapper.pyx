@@ -6,10 +6,11 @@ from w9_pathfinding.cdefs cimport (
     AbsPathFinder as CAbsPathFinder,
     Grid as CGrid,
     Graph as CGraph,
-    AStar as CAstar,
     DFS as CDFS,
     BFS as CBFS,
     Dijkstra as CDijkstra,
+    BiDijkstra as CBiDijkstra,
+    AStar as CAstar,
 )
 
 
@@ -95,12 +96,18 @@ cdef class Grid(_AbsGraph):
 
         self._obj = new CGrid(width, height)
         self._baseobj = self._obj
+
         if obstacle_map is not None:
             self.obstacle_map = obstacle_map
 
-        self.diagonal_movement = diagonal_movement
-        self.passable_left_right_border = passable_left_right_border
-        self.passable_up_down_border = passable_up_down_border
+        if diagonal_movement:
+            self.diagonal_movement = diagonal_movement
+
+        if passable_left_right_border:
+            self.passable_left_right_border = passable_left_right_border
+
+        if passable_up_down_border:
+            self.passable_up_down_border = passable_up_down_border
 
     def __dealloc__(self):
         del self._obj
@@ -282,6 +289,18 @@ cdef class Dijkstra(_AbsPathFinder):
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
         self._obj = new CDijkstra(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+
+cdef class BiDijkstra(_AbsPathFinder):
+    cdef CBiDijkstra* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        self.graph = graph
+        self._obj = new CBiDijkstra(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):

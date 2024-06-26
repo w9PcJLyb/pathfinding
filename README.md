@@ -7,6 +7,7 @@ Currently implemented:
 - DFS (Depth-first search)
 - BFS (Breadth-first search)
 - Dijkstra
+- BiDijkstra (Bidirectional Dijkstra)
 - AStar (A*)
 
 # Installation

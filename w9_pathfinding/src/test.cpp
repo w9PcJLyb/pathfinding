@@ -5,6 +5,7 @@
 #include "include/bfs.h"
 #include "include/a_star.h"
 #include "include/dijkstra.h"
+#include "include/bidijkstra.h"
 
 
 void print_path(vector<int> nodes) {
@@ -62,6 +63,11 @@ void test_graph() {
     path = dijkstra.find_path(start_node, end_node);
     cout << "Dijkstra: ";
     print_path(path);
+
+    BiDijkstra bidijkstra(&graph);
+    path = bidijkstra.find_path(start_node, end_node);
+    cout << "BiDijkstra: ";
+    print_path(path);
 }
 
 
@@ -112,6 +118,11 @@ void test_grid() {
     Dijkstra dijkstra(&grid);
     path = dijkstra.find_path(start_node, end_node);
     cout << "Dijkstra: ";
+    print_path(grid, path);
+
+    BiDijkstra bidijkstra(&grid);
+    path = bidijkstra.find_path(start_node, end_node);
+    cout << "BiDijkstra: ";
     print_path(grid, path);
 
     AStar astar(&grid);

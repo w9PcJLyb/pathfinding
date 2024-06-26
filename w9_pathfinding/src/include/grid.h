@@ -26,6 +26,7 @@ class Grid : public AbsGraph {
         };
 
         Grid(int width, int height);
+        Grid(int width, int height, vector<int> obstacle_map);
         const int width, height;
         bool passable_left_right_border, passable_up_down_border;
 
@@ -47,10 +48,16 @@ class Grid : public AbsGraph {
         double manhattan_distance(int node1, int node2) const;
         double chebyshev_distance(int node1, int node2) const;
         double euclidean_distance(int node1, int node2) const;
+        AbsGraph* reverse() const;
 
     private:
         int diagonal_movement_;
-        vector<Point> directions_;
+        vector<Point> directions_ = {
+            // top, bottom, left, right
+            {0, -1}, {0, 1}, {-1, 0}, {1, 0},
+            // diagonal movements
+            {-1, -1}, {1, -1}, {-1, 1}, {1, 1}
+        };
         vector<int> obstacle_map_;
 
         void warp_point(Point &p) const;

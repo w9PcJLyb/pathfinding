@@ -1,7 +1,7 @@
 import unittest
-from w9_pathfinding import Grid, DFS, BFS, Dijkstra, AStar, DiagonalMovement
+from w9_pathfinding import Grid, DFS, BFS, Dijkstra, BiDijkstra, AStar, DiagonalMovement
 
-SHORTEST_PATH_ALGORITHMS = [AStar, BFS, Dijkstra]
+SHORTEST_PATH_ALGORITHMS = [BFS, Dijkstra, BiDijkstra, AStar]
 ALL_ALGORITHMS = [DFS] + SHORTEST_PATH_ALGORITHMS
 
 

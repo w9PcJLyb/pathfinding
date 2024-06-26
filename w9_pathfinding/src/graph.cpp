@@ -45,11 +45,11 @@ vector<pair<int, double>> Graph::get_neighbours(int node) const {
     return nb;
 }
 
-Graph Graph::reverse() const {
-    Graph reversed_graph(num_vertices_);
+AbsGraph* Graph::reverse() const {
+    Graph* reversed_graph(new Graph(num_vertices_));
     for (int i = 0; i < num_vertices_; i++) {
         for (const Edge &e: edges_[i]) {
-            reversed_graph.add_edge(e.node_id, i, e.cost);
+            reversed_graph->add_edge(e.node_id, i, e.cost);
         }
     }
     return reversed_graph;

@@ -12,13 +12,13 @@ Grid::Grid(int width, int height) : width(width), height(height) {
     passable_up_down_border = false;
 
     obstacle_map_.resize(size(), 0);
+}
 
-    directions_ = {
-        // top, bottom, left, right
-        {0, -1}, {0, 1}, {-1, 0}, {1, 0}, 
-        // diagonal movements
-        {-1, -1}, {1, -1}, {-1, 1}, {1, 1}
-    };
+Grid::Grid(int width, int height, vector<int> obstacle_map) : width(width), height(height) {
+    diagonal_movement_ = 0;
+    passable_left_right_border = false;
+    passable_up_down_border = false;
+    set_obstacle_map(obstacle_map);
 }
 
 size_t Grid::size() const {
@@ -197,4 +197,12 @@ double Grid::chebyshev_distance(int node1, int node2) const {
 double Grid::euclidean_distance(int node1, int node2) const {
     Point p = abs_distances(node1, node2);
     return std::sqrt(p.x * p.x + p.y * p.y);
+}
+
+AbsGraph* Grid::reverse() const {
+    Grid* reversed_grid(new Grid(width, height, obstacle_map_));
+    reversed_grid->set_diagonal_movement(diagonal_movement_);
+    reversed_grid->passable_left_right_border = passable_left_right_border;
+    reversed_grid->passable_up_down_border = passable_up_down_border;
+    return reversed_grid;
 }
