@@ -78,9 +78,10 @@ cdef class Grid(_AbsGraph):
         *,
         width=None,
         height=None,
-        diagonal_movement=0,
-        passable_left_right_border=False,
-        passable_up_down_border=False,
+        int diagonal_movement=0,
+        bool passable_left_right_border=False,
+        bool passable_up_down_border=False,
+        double diaganal_movement_cost_multiplier=1,
     ):
 
         if obstacle_map is None:
@@ -113,6 +114,9 @@ cdef class Grid(_AbsGraph):
         if passable_up_down_border:
             self.passable_up_down_border = passable_up_down_border
 
+        if diaganal_movement_cost_multiplier != 1:
+            self.diaganal_movement_cost_multiplier = diaganal_movement_cost_multiplier
+
     def __dealloc__(self):
         del self._obj
 
@@ -143,6 +147,16 @@ cdef class Grid(_AbsGraph):
     def passable_up_down_border(self, bool _b):
         self._obj.passable_up_down_border = _b
 
+    @property
+    def diaganal_movement_cost_multiplier(self):
+        return self._obj.diaganal_movement_cost_multiplier
+
+    @diaganal_movement_cost_multiplier.setter
+    def diaganal_movement_cost_multiplier(self, double m):
+        if not 1 <= m <= 2:
+            raise ValueError("diaganal_movement_cost_multiplier must be in range [1, 2].")
+        self._obj.diaganal_movement_cost_multiplier = m
+
     def assert_in(self, int x, int y):
         if not 0 <= x < self.width or not 0 <= y < self.height:
             raise ValueError(f"Point({x}, {y}) is out of the {self}")
@@ -171,8 +185,10 @@ cdef class Grid(_AbsGraph):
 
     def get_neighbours(self, int x, int y):
         node_id = self.get_node_id(x, y)
-        nodes = self._obj.get_neighbours(node_id)
-        return [self.get_coordinates(x) for x, _ in nodes]
+        neighbours = []
+        for n, cost in self._obj.get_neighbours(node_id):
+            neighbours.append((self.get_coordinates(n), cost))
+        return neighbours
 
     @property
     def obstacle_map(self):
@@ -328,11 +344,7 @@ cdef class AStar(_AbsPathFinder):
 
     def __cinit__(self, Grid grid):
         self.graph = grid
-        if grid.diagonal_movement:
-            heuristic = 1  # chebyshev
-        else:
-            heuristic = 0  # manhattan
-        self._obj = new CAstar(grid._obj, heuristic)
+        self._obj = new CAstar(grid._obj)
         self._baseobj = self._obj
 
     def __dealloc__(self):

@@ -28,6 +28,7 @@ class Grid : public AbsGraph {
         Grid(int width, int height);
         Grid(int width, int height, vector<int> obstacle_map);
         const int width, height;
+        double diaganal_movement_cost_multiplier;
         bool passable_left_right_border, passable_up_down_border;
 
         size_t size() const;
@@ -45,9 +46,7 @@ class Grid : public AbsGraph {
         int get_node_id(const Point &p) const;
         Point get_coordinates(int node) const;
         vector<Point> get_coordinates(vector<int> &p) const;
-        double manhattan_distance(int node1, int node2) const;
-        double chebyshev_distance(int node1, int node2) const;
-        double euclidean_distance(int node1, int node2) const;
+        double estimate_distance(int v1, int v2) const;
         AbsGraph* reverse() const;
 
     private:
@@ -61,5 +60,4 @@ class Grid : public AbsGraph {
         vector<int> obstacle_map_;
 
         void warp_point(Point &p) const;
-        Point abs_distances(int node1, int node2) const;
 };

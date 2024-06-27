@@ -24,7 +24,7 @@ class AStar : public AbsPathFinder {
 
     public:
         Grid* grid;
-        AStar(Grid* grid, int heuristic = 1);
+        AStar(Grid* grid);
 
         vector<int> find_path(int start, int end);
 
@@ -32,7 +32,6 @@ class AStar : public AbsPathFinder {
         int heuristic_;
         vector<Node> nodes_;
         vector<Node*> workset_;
-        double potential(int node1, int node2) const;
         vector<int> reconstruct_path(int start, int end); 
         void clear();
 };

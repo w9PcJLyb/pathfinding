@@ -21,6 +21,7 @@ class Graph : public AbsGraph {
         void add_edges(vector<int> starts, vector<int> ends, vector<double> costs);
         vector<pair<int, double>> get_neighbours(int node) const;
         vector<vector<double>> get_edges() const;
+        double estimate_distance(int v1, int v2) const;
         AbsGraph* reverse() const;
 
     private:

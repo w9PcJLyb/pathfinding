@@ -45,6 +45,10 @@ vector<pair<int, double>> Graph::get_neighbours(int node) const {
     return nb;
 }
 
+double Graph::estimate_distance(int v1, int v2) const {
+    throw std::runtime_error("Unable to estimate distance for graph.");
+}
+
 AbsGraph* Graph::reverse() const {
     Graph* reversed_graph(new Graph(num_vertices_));
     for (int i = 0; i < num_vertices_; i++) {

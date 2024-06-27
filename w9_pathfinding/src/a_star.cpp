@@ -1,16 +1,7 @@
 #include "include/a_star.h"
 
 
-AStar::AStar(Grid *grid, int heuristic) : grid(grid) {
-    if (heuristic < 0 || heuristic > 2) {
-        std::invalid_argument("Unknown heuristic " + std::to_string(heuristic));
-    }
-
-    // 0 - manhattan
-    // 1 - chebyshev
-    // 2 - euclidean
-    heuristic_ = heuristic;
-
+AStar::AStar(Grid *grid) : grid(grid) {
     nodes_.resize(grid->size());
 }
 
@@ -18,15 +9,6 @@ void AStar::clear() {
     for (Node *node : workset_)
         node->clear();
     workset_.clear();
-}
-
-double AStar::potential(int node1, int node2) const {
-    if (heuristic_ == 0)
-        return grid->manhattan_distance(node1, node2);
-    else if (heuristic_ == 1)
-        return grid->chebyshev_distance(node1, node2);
-    else 
-        return grid->euclidean_distance(node1, node2);
 }
 
 vector<int> AStar::reconstruct_path(int start, int end) {
@@ -67,9 +49,9 @@ vector<int> AStar::find_path(int start, int end) {
         for (auto& [n, cost] : grid->get_neighbours(x)) {
             Node &node = nodes_[n]; 
             if (node.distance < 0 || node.distance > distance + cost) {
-                double f = distance + cost + potential(n, end);
+                double f = distance + cost + grid->estimate_distance(n, end);
                 node.f = f;
-                node.distance = distance + 1;
+                node.distance = distance + cost;
                 node.parent = x;
                 openset.push({f, n});
                 workset_.push_back(&node);

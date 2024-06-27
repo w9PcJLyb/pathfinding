@@ -10,6 +10,7 @@ Grid::Grid(int width, int height) : width(width), height(height) {
 
     passable_left_right_border = false;
     passable_up_down_border = false;
+    diaganal_movement_cost_multiplier = 1.0;
 
     obstacle_map_.resize(size(), 0);
 }
@@ -18,6 +19,7 @@ Grid::Grid(int width, int height, vector<int> obstacle_map) : width(width), heig
     diagonal_movement_ = 0;
     passable_left_right_border = false;
     passable_up_down_border = false;
+    diaganal_movement_cost_multiplier = 1.0;
     set_obstacle_map(obstacle_map);
 }
 
@@ -127,7 +129,7 @@ vector<pair<int, double>> Grid::get_neighbours(int node) const {
         if (has_obstacle(node_id))
             return -1;
 
-        nb.push_back({node_id, 1});
+        nb.push_back({node_id, (direction_id < 4) ? 1.0 : diaganal_movement_cost_multiplier});
         return node_id;
     };
 
@@ -167,9 +169,9 @@ vector<pair<int, double>> Grid::get_neighbours(int node) const {
     return nb;
 }
 
-Grid::Point Grid::abs_distances(int node1, int node2) const {
-    Point p1 = get_coordinates(node1);
-    Point p2 = get_coordinates(node2);
+double Grid::estimate_distance(int v1, int v2) const {
+    Point p1 = get_coordinates(v1);
+    Point p2 = get_coordinates(v2);
 
     int dx = abs(p1.x - p2.x);
     if (passable_left_right_border && dx > width / 2) {
@@ -181,22 +183,17 @@ Grid::Point Grid::abs_distances(int node1, int node2) const {
         dy = height - dy;
     }
 
-    return {dx, dy};
-}
+    if (!diagonal_movement_) {
+        return dx + dy;  // manhattan
+    }
 
-double Grid::manhattan_distance(int node1, int node2) const {
-    Point p = abs_distances(node1, node2);
-    return p.x + p.y;
-}
-
-double Grid::chebyshev_distance(int node1, int node2) const {
-    Point p = abs_distances(node1, node2);
-    return std::max(p.x, p.y);
-}
-
-double Grid::euclidean_distance(int node1, int node2) const {
-    Point p = abs_distances(node1, node2);
-    return std::sqrt(p.x * p.x + p.y * p.y);
+    // octile
+    if (dx > dy) {
+        return dx + dy * (diaganal_movement_cost_multiplier - 1);
+    }
+    else {
+        return dy + dx * (diaganal_movement_cost_multiplier - 1);
+    }
 }
 
 AbsGraph* Grid::reverse() const {
@@ -204,5 +201,6 @@ AbsGraph* Grid::reverse() const {
     reversed_grid->set_diagonal_movement(diagonal_movement_);
     reversed_grid->passable_left_right_border = passable_left_right_border;
     reversed_grid->passable_up_down_border = passable_up_down_border;
+    reversed_grid->diaganal_movement_cost_multiplier = diaganal_movement_cost_multiplier;
     return reversed_grid;
 }

@@ -42,6 +42,7 @@ cdef extern from "src/include/grid.h":
     cdef cppclass Grid(AbsGraph):
         int width, height
         bool passable_left_right_border, passable_up_down_border
+        double diaganal_movement_cost_multiplier
 
         Grid(int, int) except +
         Grid(int, int, vector[int]) except +
@@ -118,6 +119,6 @@ cdef extern from "src/a_star.cpp":
 cdef extern from "src/include/a_star.h":
 
     cdef cppclass AStar(AbsPathFinder):
-        AStar(Grid*, int) except +
+        AStar(Grid*) except +
         vector[int] find_path(int, int)
 
