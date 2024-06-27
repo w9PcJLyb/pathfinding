@@ -46,27 +46,6 @@ def find_path(finder, start, end):
     return path, time.time() - t
 
 
-def calculate_cost(graph, path, start, end):
-    if not path:
-        return 0
-    
-    if path[0] != start or path[-1] != end:
-        return -1
-
-    total_cost = 0
-    for i in range(len(path) - 1):
-        p = path[i]
-        next_p = path[i + 1]
-
-        costs = [c for x, c in graph.get_neighbours(p) if x == next_p]
-        if not costs:
-            return -1
-
-        total_cost += min(costs)
-
-    return total_cost
-
-
 def show_graph_info(graph, start, end):
     print("num_vertices =", graph.num_vertices)
     print("edges: [")
@@ -97,7 +76,7 @@ def run_graph(algrithms, graph, start, end):
         path, time = find_path(a["finder"], start, end)
         a["total_time"] += time
 
-        path_cost = calculate_cost(graph, path, start, end)
+        path_cost = graph.calculate_cost(path)
         if path_cost == -1:
             print(f"Error algorithm {a['name']} return the wrong path {path}")
             show_graph_info(graph, start, end)

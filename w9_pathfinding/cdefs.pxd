@@ -12,6 +12,7 @@ cdef extern from "src/include/core.h":
     cdef cppclass AbsGraph:
         AbsGraph() except +
         size_t size()
+        double calculate_cost(vector[int])
 
     cdef cppclass AbsPathFinder:
         AbsPathFinder() except +
@@ -27,7 +28,6 @@ cdef extern from "src/include/graph.h":
     cdef cppclass Graph(AbsGraph):
         Graph(int) except +
         void add_edges(vector[int], vector[int], vector[double])
-        size_t size()
         size_t num_edges()
         vector[vector[double]] get_edges()
         vector[pair[int, double]] get_neighbours(int)

@@ -1,6 +1,7 @@
 # distutils: language = c++
 
 from libcpp cimport bool
+from libcpp.vector cimport vector
 from w9_pathfinding.cdefs cimport (
     AbsGraph as CAbsGraph,
     AbsPathFinder as CAbsPathFinder,
@@ -20,6 +21,9 @@ cdef class _AbsGraph:
 
     def __cinit__(self):
         pass
+
+    def calculate_cost(self, vector[int] path):
+        return self._baseobj.calculate_cost(path)
 
 
 cdef class Graph(_AbsGraph):
@@ -214,6 +218,11 @@ cdef class Grid(_AbsGraph):
             raise ValueError(f"obstacle_map.shape must be {self.width}x{self.height}")
  
         self._obj.set_obstacle_map(obstacle_map)
+
+    def calculate_cost(self, path):
+        cdef vector[int] nodes
+        nodes = [self.get_node_id(*x) for x in path]
+        return self._obj.calculate_cost(nodes)
 
     def show_path(self, path):
         if path:
