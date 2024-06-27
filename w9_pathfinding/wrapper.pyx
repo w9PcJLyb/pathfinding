@@ -8,6 +8,7 @@ from w9_pathfinding.cdefs cimport (
     Graph as CGraph,
     DFS as CDFS,
     BFS as CBFS,
+    BiBFS as CBiBFS,
     Dijkstra as CDijkstra,
     BiDijkstra as CBiDijkstra,
     AStar as CAstar,
@@ -280,6 +281,18 @@ cdef class BFS(_AbsPathFinder):
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
         self._obj = new CBFS(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+
+cdef class BiBFS(_AbsPathFinder):
+    cdef CBiBFS* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        self.graph = graph
+        self._obj = new CBiBFS(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):

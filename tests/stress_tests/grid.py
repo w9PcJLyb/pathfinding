@@ -2,9 +2,9 @@ import time
 import random
 from collections import defaultdict
 
-from w9_pathfinding import Grid, BFS, Dijkstra, BiDijkstra, AStar
+from w9_pathfinding import Grid, BFS, BiBFS, Dijkstra, BiDijkstra, AStar
 
-SHORTEST_PATH_ALGORITHMS = [AStar, BFS, Dijkstra, BiDijkstra]
+SHORTEST_PATH_ALGORITHMS = [AStar, BFS, BiBFS, Dijkstra, BiDijkstra]
 
 
 def create_random_map(width, height, obstacle_percentage):

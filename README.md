@@ -6,6 +6,7 @@ Currently implemented:
 
 - DFS (Depth-first search)
 - BFS (Breadth-first search)
+- BiBFS (Bidirectional Breadth-first search)
 - Dijkstra
 - BiDijkstra (Bidirectional Dijkstra)
 - AStar (A*)
@@ -20,10 +21,10 @@ Currently implemented:
     pip install cython
     ```
 
-3. Install pathfinding:
+3. Clone this repository and install pathfinding from the local filesystem:
 
     ```bash
-    python setup.py develop
+    pip install pathfinding/
     ```
 
 # Examples

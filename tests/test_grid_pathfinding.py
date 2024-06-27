@@ -1,7 +1,7 @@
 import unittest
-from w9_pathfinding import Grid, DFS, BFS, Dijkstra, BiDijkstra, AStar, DiagonalMovement
+from w9_pathfinding import Grid, DFS, BFS, BiBFS, Dijkstra, BiDijkstra, AStar, DiagonalMovement
 
-SHORTEST_PATH_ALGORITHMS = [BFS, Dijkstra, BiDijkstra, AStar]
+SHORTEST_PATH_ALGORITHMS = [BFS, BiBFS, Dijkstra, BiDijkstra, AStar]
 ALL_ALGORITHMS = [DFS] + SHORTEST_PATH_ALGORITHMS
 
 
@@ -131,9 +131,8 @@ class TestSimpleGrid(unittest.TestCase):
             DiagonalMovement.always: 4,
         }
 
-        for diagonal_movement in DiagonalMovement:
+        for diagonal_movement, answer_len in path_len.items():
             grid = Grid(obstacle_matrix, diagonal_movement=diagonal_movement)
-            answer_len = path_len[diagonal_movement]
             for a in ALL_ALGORITHMS:
                 with self.subTest(f"{a.__name__}, diagonal_movement={diagonal_movement}"):
                     path = a(grid).find_path(start, end)
@@ -156,9 +155,8 @@ class TestSimpleGrid(unittest.TestCase):
             DiagonalMovement.always: 5,
         }
 
-        for diagonal_movement in DiagonalMovement:
+        for diagonal_movement, answer_len in path_len.items():
             grid = Grid(obstacle_matrix, diagonal_movement=diagonal_movement)
-            answer_len = path_len[diagonal_movement]
             for a in ALL_ALGORITHMS:
                 with self.subTest(f"{a.__name__}, diagonal_movement={diagonal_movement}"):
                     path = a(grid).find_path(start, end)
@@ -181,9 +179,8 @@ class TestSimpleGrid(unittest.TestCase):
             DiagonalMovement.always: 3,
         }
 
-        for diagonal_movement in DiagonalMovement:
+        for diagonal_movement, answer_len in path_len.items():
             grid = Grid(obstacle_matrix, diagonal_movement=diagonal_movement)
-            answer_len = path_len[diagonal_movement]
             for a in SHORTEST_PATH_ALGORITHMS:
                 with self.subTest(f"{a.__name__}, diagonal_movement={diagonal_movement}"):
                     path = a(grid).find_path(start, end)

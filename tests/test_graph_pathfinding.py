@@ -1,8 +1,8 @@
 import unittest
-from w9_pathfinding import Graph, DFS, BFS, Dijkstra, BiDijkstra
+from w9_pathfinding import Graph, DFS, BFS, BiBFS, Dijkstra, BiDijkstra
 
 SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra]
-ALL_ALGORITHMS = [DFS, BFS, Dijkstra, BiDijkstra]
+ALL_ALGORITHMS = [DFS, BFS, BiBFS, Dijkstra, BiDijkstra]
 
 
 class TestSimpleGraph(unittest.TestCase):

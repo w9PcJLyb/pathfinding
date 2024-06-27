@@ -3,6 +3,7 @@
 #include "include/grid.h"
 #include "include/dfs.h"
 #include "include/bfs.h"
+#include "include/bibfs.h"
 #include "include/a_star.h"
 #include "include/dijkstra.h"
 #include "include/bidijkstra.h"
@@ -59,6 +60,11 @@ void test_graph() {
     cout << "BFS: ";
     print_path(path);
 
+    BiBFS bibfs(&graph);
+    path = bibfs.find_path(start_node, end_node);
+    cout << "BiBFS: ";
+    print_path(path);
+
     Dijkstra dijkstra(&graph);
     path = dijkstra.find_path(start_node, end_node);
     cout << "Dijkstra: ";
@@ -113,6 +119,11 @@ void test_grid() {
     BFS bfs(&grid);
     path = bfs.find_path(start_node, end_node);
     cout << "BFS: ";
+    print_path(grid, path);
+
+    BiBFS bibfs(&grid);
+    path = bibfs.find_path(start_node, end_node);
+    cout << "BiBFS: ";
     print_path(grid, path);
 
     Dijkstra dijkstra(&grid);

@@ -2,19 +2,20 @@ import time
 import random
 from copy import copy
 
-from w9_pathfinding import Graph, DFS, BFS, Dijkstra, BiDijkstra
+from w9_pathfinding import Graph, DFS, BFS, BiBFS, Dijkstra, BiDijkstra
 
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
-NUM_VERTICES = 1000
-BRANCHING_FACTOR = 20
+NUM_VERTICES = 2000
+BRANCHING_FACTOR = 10
 
 # - unweighted - can find the shortest path in an unweighted graph
 # - weighted - can find the shortest path in a weighted graph
 ALGORITHMS = [
     {"name": "DFS", "class": DFS, "unweighted": False, "weighted": False},
     {"name": "BFS", "class": BFS, "unweighted": True, "weighted": False},
+    {"name": "BiBFS", "class": BiBFS, "unweighted": True, "weighted": False},
     {"name": "Dijkstra", "class": Dijkstra, "unweighted": True, "weighted": True},
     {"name": "BiDijkstra", "class": BiDijkstra, "unweighted": True, "weighted": True},
 ]

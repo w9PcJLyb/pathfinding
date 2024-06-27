@@ -78,6 +78,17 @@ cdef extern from "src/include/bfs.h":
         vector[int] find_path(int, int)
 
 
+cdef extern from "src/bibfs.cpp":
+    pass
+
+
+cdef extern from "src/include/bibfs.h":
+
+    cdef cppclass BiBFS(AbsPathFinder):
+        BiBFS(AbsGraph*) except +
+        vector[int] find_path(int, int)
+
+
 cdef extern from "src/dijkstra.cpp":
     pass
 

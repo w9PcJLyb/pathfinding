@@ -35,10 +35,10 @@ vector<int> BiDijkstra::reconstruct_path(int start, int end) {
     assert(middle_point >= 0);
 
     int p;
+    vector<int> path;
     
     // from start to middle 
     p = middle_point;
-    vector<int> path = {p};
     while (p != start) {
         p = nodes_[0][p].parent;
         path.push_back(p);
@@ -47,6 +47,7 @@ vector<int> BiDijkstra::reconstruct_path(int start, int end) {
 
     // from middle to end
     p = middle_point;
+    path.push_back(middle_point);
     while (p != end) {
         p = nodes_[1][p].parent;
         path.push_back(p);
