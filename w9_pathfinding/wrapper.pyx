@@ -13,6 +13,7 @@ from w9_pathfinding.cdefs cimport (
     Dijkstra as CDijkstra,
     BiDijkstra as CBiDijkstra,
     AStar as CAStar,
+    BiAStar as CBiAStar,
 )
 
 
@@ -365,6 +366,18 @@ cdef class AStar(_AbsPathFinder):
     def __cinit__(self, Grid grid):
         self.graph = grid
         self._obj = new CAStar(grid._obj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+
+cdef class BiAStar(_AbsPathFinder):
+    cdef CBiAStar* _obj
+
+    def __cinit__(self, Grid grid):
+        self.graph = grid
+        self._obj = new CBiAStar(grid._obj)
         self._baseobj = self._obj
 
     def __dealloc__(self):

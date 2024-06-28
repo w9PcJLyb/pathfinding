@@ -1,8 +1,9 @@
+import math
 import unittest
-from w9_pathfinding import Grid, DFS, BFS, BiBFS, Dijkstra, BiDijkstra, AStar, DiagonalMovement
+from w9_pathfinding import Grid, DFS, BFS, BiBFS, Dijkstra, BiDijkstra, AStar, BiAStar, DiagonalMovement
 
-SHORTEST_PATH_ALGORITHMS = [BFS, BiBFS, Dijkstra, BiDijkstra, AStar]
-ALL_ALGORITHMS = [DFS] + SHORTEST_PATH_ALGORITHMS
+SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar]
+ALL_ALGORITHMS = [DFS, BFS, BiBFS] + SHORTEST_PATH_ALGORITHMS
 
 
 class TestSimpleGrid(unittest.TestCase):
@@ -233,3 +234,28 @@ class TestShortestPath(unittest.TestCase):
             with self.subTest(a.__name__):
                 path = a(grid).find_path(start, end)
                 self.assertEqual(len(path), answer_len)
+
+    def test_case_3(self):
+        """
+            + - - - - - - +
+            | s x x x     |
+            |         x   |
+            |   # # # # x |
+            |   #       x |
+            |           x |
+            |           e |
+            + - - - - - - +
+        """
+        obstacle_matrix = [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]
+        start, end = (0, 0), (5, 5)
+        grid = Grid(
+            obstacle_matrix,
+            diagonal_movement=DiagonalMovement.always,
+            diaganal_movement_cost_multiplier=math.sqrt(2),
+        )
+        answer_cost = 6 + 2 * math.sqrt(2)
+
+        for a in SHORTEST_PATH_ALGORITHMS:
+            with self.subTest(a.__name__):
+                path = a(grid).find_path(start, end)
+                self.assertAlmostEqual(grid.calculate_cost(path), answer_cost, places=3)

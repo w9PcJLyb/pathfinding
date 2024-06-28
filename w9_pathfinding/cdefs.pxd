@@ -80,11 +80,11 @@ cdef extern from "src/include/bfs.h":
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/bibfs.cpp":
+cdef extern from "src/bi_bfs.cpp":
     pass
 
 
-cdef extern from "src/include/bibfs.h":
+cdef extern from "src/include/bi_bfs.h":
 
     cdef cppclass BiBFS(AbsPathFinder):
         BiBFS(AbsGraph*) except +
@@ -102,11 +102,11 @@ cdef extern from "src/include/dijkstra.h":
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/bidijkstra.cpp":
+cdef extern from "src/bi_dijkstra.cpp":
     pass
 
 
-cdef extern from "src/include/bidijkstra.h":
+cdef extern from "src/include/bi_dijkstra.h":
 
     cdef cppclass BiDijkstra(AbsPathFinder):
         BiDijkstra(AbsGraph*) except +
@@ -123,3 +123,13 @@ cdef extern from "src/include/a_star.h":
         AStar(Grid*) except +
         vector[int] find_path(int, int)
 
+
+cdef extern from "src/bi_a_star.cpp":
+    pass
+
+
+cdef extern from "src/include/bi_a_star.h":
+
+    cdef cppclass BiAStar(AbsPathFinder):
+        BiAStar(Grid*) except +
+        vector[int] find_path(int, int)

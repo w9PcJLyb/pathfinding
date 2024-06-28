@@ -1,18 +1,18 @@
-#include "include/bibfs.h" 
+#include "include/bi_a_star.h"
 
 
-BiBFS::BiBFS(AbsGraph *graph) : graph(graph) {
+BiAStar::BiAStar(AbsGraph *graph) : graph(graph) {
     reversed_graph_ = graph->reverse();
     forward_nodes_.resize(graph->size());
     backward_nodes_.resize(graph->size());
     closedset_.resize(graph->size(), 0);
 }
 
-BiBFS::~BiBFS() {
+BiAStar::~BiAStar() {
     delete reversed_graph_;
-} 
+}
 
-void BiBFS::clear() {
+void BiAStar::clear() {
     for (int i : workset_) {
         forward_nodes_[i].clear();
         backward_nodes_[i].clear();
@@ -21,7 +21,7 @@ void BiBFS::clear() {
     workset_.clear();
 }
 
-vector<int> BiBFS::reconstruct_path(int start, int end) {
+vector<int> BiAStar::reconstruct_path(int start, int end) {
     double min_distance = -1;
     int middle_point = -1;
     for (int i : workset_) {
@@ -38,8 +38,8 @@ vector<int> BiBFS::reconstruct_path(int start, int end) {
 
     int p;
     vector<int> path;
-    
-    // from start to middle 
+
+    // from start to middle
     p = middle_point;
     while (p != start) {
         p = forward_nodes_[p].parent;
@@ -58,25 +58,47 @@ vector<int> BiBFS::reconstruct_path(int start, int end) {
     return path;
 }
 
+double BiAStar::potential(int node_id, bool is_backward) {
+    double d1 = graph->estimate_distance(node_id, start_node);
+    double d2 = graph->estimate_distance(node_id, end_node);
+    if (is_backward)
+        return (d1 - d2) / 2;
+    else
+        return (d2 - d1) / 2;
+}
 
-bool BiBFS::step(std::queue<int> &queue, vector<Node> &nodes, AbsGraph* g) {
-    if (queue.empty())
+bool BiAStar::step(Queue &queue, vector<Node> &nodes, AbsGraph* g, bool is_backward) {
+    int node_id = -1;
+    key top;
+    while (!queue.empty()) {
+        top = queue.top();
+        queue.pop();
+
+        if (top.first > nodes[top.second].f) {
+            continue;
+        }
+
+        node_id = top.second;
+        break;
+    }
+
+    if (node_id == -1)
         return false;
 
-    int node_id = queue.front();
     if (closedset_[node_id])
         return false;
-    
-    closedset_[node_id] = 1;
-    queue.pop();
-    int d = nodes[node_id].distance + 1;
 
+    closedset_[node_id] = 1;
+
+    double distance = nodes[node_id].distance;
     for (auto& [n, cost] : g->get_neighbours(node_id)) {
         Node &nb = nodes[n];
-        if (nb.distance < 0) {
-            nb.distance = d;
+        if (nb.distance < 0 || nb.distance - distance - cost > epsilon) {
+            double f = distance + cost + potential(n, is_backward);
             nb.parent = node_id;
-            queue.push(n);
+            nb.distance = distance + cost;
+            nb.f = f;
+            queue.push({f, n});
             workset_.push_back(n);
         }
     }
@@ -84,27 +106,25 @@ bool BiBFS::step(std::queue<int> &queue, vector<Node> &nodes, AbsGraph* g) {
     return true;
 }
 
+vector<int> BiAStar::find_path(int start, int end) {
+    start_node = start;
+    end_node = end;
 
-vector<int> BiBFS::find_path(int start, int end) {
     clear();
 
-    std::queue<int> forward_queue;
-    std::queue<int> backward_queue;
+    Queue forward_queue, backward_queue;
+    forward_queue.push({0., start});
+    backward_queue.push({0., end});
 
-    forward_queue.push(start);
-    backward_queue.push(end);
-
-    forward_nodes_[start].parent = start;
-    forward_nodes_[start].distance = 0;
-    backward_nodes_[end].parent = end;
-    backward_nodes_[end].distance = 0;
+    forward_nodes_[start].distance = 0.;
+    backward_nodes_[end].distance = 0.;
 
     workset_.push_back(start);
     workset_.push_back(end);
 
     while (
-        step(forward_queue, forward_nodes_, graph) 
-        && step(backward_queue, backward_nodes_, reversed_graph_)
+        step(forward_queue, forward_nodes_, graph, false)
+        && step(backward_queue, backward_nodes_, reversed_graph_, true)
     ) {
     }
 

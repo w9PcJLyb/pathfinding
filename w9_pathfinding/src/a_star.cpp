@@ -1,8 +1,8 @@
 #include "include/a_star.h"
 
 
-AStar::AStar(Grid *grid) : grid(grid) {
-    nodes_.resize(grid->size());
+AStar::AStar(AbsGraph *graph) : graph(graph) {
+    nodes_.resize(graph->size());
 }
 
 void AStar::clear() {
@@ -46,10 +46,10 @@ vector<int> AStar::find_path(int start, int end) {
         }
 
         double distance = nodes_[x].distance;
-        for (auto& [n, cost] : grid->get_neighbours(x)) {
+        for (auto& [n, cost] : graph->get_neighbours(x)) {
             Node &node = nodes_[n]; 
             if (node.distance < 0 || node.distance > distance + cost) {
-                double f = distance + cost + grid->estimate_distance(n, end);
+                double f = distance + cost + graph->estimate_distance(n, end);
                 node.f = f;
                 node.distance = distance + cost;
                 node.parent = x;

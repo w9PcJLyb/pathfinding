@@ -29,15 +29,12 @@ class BiDijkstra : public AbsPathFinder {
         vector<int> find_path(int start, int end);
 
     private:
+        double epsilon = 0.000001;
         AbsGraph* reversed_graph_;
-        vector<vector<Node>> nodes_;
+        vector<Node> forward_nodes_, backward_nodes_;
         vector<int> workset_;
         vector<bool> closedset_;
         vector<int> reconstruct_path(int start, int end); 
         void clear();
-        void visit_node(int side, int node_id, vector<Queue> &openset, double cost, int parent);
-        int extract_min(int side, vector<Queue> &openset); 
-        void process_node(int side, int node_id, vector<Queue> &openset, AbsGraph *g);
+        bool step(Queue &queue, vector<Node> &nodes, AbsGraph* g);
 };
- 
- 

@@ -26,8 +26,7 @@ class BiBFS : public AbsPathFinder {
         vector<int> find_path(int start, int end);
 
     private:
-        vector<Node> forward_nodes_;
-        vector<Node> backward_nodes_;
+        vector<Node> forward_nodes_, backward_nodes_;
         vector<int> workset_;
         vector<bool> closedset_;
         AbsGraph* reversed_graph_;

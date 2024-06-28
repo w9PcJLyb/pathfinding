@@ -3,10 +3,11 @@
 #include "include/grid.h"
 #include "include/dfs.h"
 #include "include/bfs.h"
-#include "include/bibfs.h"
-#include "include/a_star.h"
+#include "include/bi_bfs.h"
 #include "include/dijkstra.h"
-#include "include/bidijkstra.h"
+#include "include/bi_dijkstra.h"
+#include "include/a_star.h"
+#include "include/bi_a_star.h"
 
 
 void print_path(vector<int> nodes) {
@@ -16,14 +17,12 @@ void print_path(vector<int> nodes) {
     cout << endl;
 }
 
-
 void print_path(Grid &grid, vector<int> nodes) {
     for (int node_id: nodes) {
        cout << grid.get_coordinates(node_id) << " ";
     }
     cout << endl;
 }
-
 
 void test_graph() {
     cout << "\nTest graph" << endl;
@@ -48,34 +47,26 @@ void test_graph() {
     vector<int> min_vertices_path = {0, 2, 5};
     vector<int> min_distance_path = {0, 1, 2, 5};
 
-    vector<int> path;
-
     DFS dfs(&graph);
-    path = dfs.find_path(start_node, end_node);
-    cout << "DFS: ";
-    print_path(path);
-
     BFS bfs(&graph);
-    path = bfs.find_path(start_node, end_node);
-    cout << "BFS: ";
-    print_path(path);
-
     BiBFS bibfs(&graph);
-    path = bibfs.find_path(start_node, end_node);
-    cout << "BiBFS: ";
-    print_path(path);
-
     Dijkstra dijkstra(&graph);
-    path = dijkstra.find_path(start_node, end_node);
-    cout << "Dijkstra: ";
-    print_path(path);
-
     BiDijkstra bidijkstra(&graph);
-    path = bidijkstra.find_path(start_node, end_node);
-    cout << "BiDijkstra: ";
-    print_path(path);
-}
 
+    vector<pair<std::string, AbsPathFinder*>> finders = {
+        {"DFS", &dfs},
+        {"BFS", &bfs},
+        {"Bidirectional BFS", &bibfs},
+        {"Dijkstra", &dijkstra},
+        {"Bidirectional Dijkstra", &bidijkstra}
+    };
+
+    for (auto &[name, finder] : finders) {
+        vector<int> path = finder->find_path(start_node, end_node);
+        cout << name << ": ";
+        print_path(path);
+    }
+}
 
 void test_grid() {
     cout << "\nTest grid" << endl;
@@ -109,37 +100,30 @@ void test_grid() {
     int end_node = grid.get_node_id(end);
     cout << "\nFinding path in the grid from " << start << " to " << end << endl;
 
-    vector<int> path;
-
     DFS dfs(&grid);
-    path = dfs.find_path(start_node, end_node);
-    cout << "DFS: ";
-    print_path(grid, path);
-
     BFS bfs(&grid);
-    path = bfs.find_path(start_node, end_node);
-    cout << "BFS: ";
-    print_path(grid, path);
-
     BiBFS bibfs(&grid);
-    path = bibfs.find_path(start_node, end_node);
-    cout << "BiBFS: ";
-    print_path(grid, path);
-
     Dijkstra dijkstra(&grid);
-    path = dijkstra.find_path(start_node, end_node);
-    cout << "Dijkstra: ";
-    print_path(grid, path);
-
     BiDijkstra bidijkstra(&grid);
-    path = bidijkstra.find_path(start_node, end_node);
-    cout << "BiDijkstra: ";
-    print_path(grid, path);
-
     AStar astar(&grid);
-    path = astar.find_path(start_node, end_node);
-    cout << "A*: ";
-    print_path(grid, path);
+    BiAStar biastar(&grid);
+
+    vector<pair<std::string, AbsPathFinder*>> finders = {
+        {"DFS", &dfs},
+        {"BFS", &bfs},
+        {"Bidirectional BFS", &bibfs},
+        {"Dijkstra", &dijkstra},
+        {"Bidirectional Dijkstra", &bidijkstra},
+        {"A*", &astar},
+        {"Bidirectional A*", &biastar}
+    };
+
+    vector<int> path;
+    for (auto &[name, finder] : finders) {
+        path = finder->find_path(start_node, end_node);
+        cout << name << ": ";
+        print_path(grid, path);
+    }
 
     cout << "\nSet passable_left_right_border = true" << endl;
     grid.passable_left_right_border = true;
@@ -159,7 +143,6 @@ void test_grid() {
     cout << "A*: ";
     print_path(grid, path);
 }
-
 
 int main() {
     test_graph();

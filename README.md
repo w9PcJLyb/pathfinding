@@ -10,6 +10,7 @@ Currently implemented:
 - Dijkstra
 - BiDijkstra (Bidirectional Dijkstra)
 - AStar (A*)
+- BiAStar (Bidirectional A*)
 
 # Installation
 
