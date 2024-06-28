@@ -49,7 +49,7 @@ double Graph::estimate_distance(int v1, int v2) const {
     throw std::runtime_error("Unable to estimate distance for graph.");
 }
 
-AbsGraph* Graph::reverse() const {
+Graph* Graph::create_reversed_graph() const {
     Graph* reversed_graph(new Graph(num_vertices_));
     for (int i = 0; i < num_vertices_; i++) {
         for (const Edge &e: edges_[i]) {
@@ -57,4 +57,23 @@ AbsGraph* Graph::reverse() const {
         }
     }
     return reversed_graph;
+}
+
+AbsGraph* Graph::reverse() const {
+    return create_reversed_graph();
+}
+
+void Graph::reverse_inplace() {
+    vector<int> new_starts, new_ends;
+    vector<double> new_costs;
+    for (int i = 0; i < num_vertices_; i++) {
+        for (const Edge &e: edges_[i]) {
+            new_starts.push_back(e.node_id);
+            new_ends.push_back(i);
+            new_costs.push_back(e.cost);
+        }
+        edges_[i].clear();
+    }
+
+    add_edges(new_starts, new_ends, new_costs);
 }

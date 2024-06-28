@@ -23,6 +23,8 @@ class Graph : public AbsGraph {
         vector<vector<double>> get_edges() const;
         double estimate_distance(int v1, int v2) const;
         AbsGraph* reverse() const;
+        Graph* create_reversed_graph() const;
+        void reverse_inplace();
 
     private:
         int num_vertices_; 

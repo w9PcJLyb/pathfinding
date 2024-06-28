@@ -12,7 +12,7 @@ from w9_pathfinding.cdefs cimport (
     BiBFS as CBiBFS,
     Dijkstra as CDijkstra,
     BiDijkstra as CBiDijkstra,
-    AStar as CAstar,
+    AStar as CAStar,
 )
 
 
@@ -70,6 +70,17 @@ cdef class Graph(_AbsGraph):
 
     def get_neighbours(self, int node_id):
         return self._obj.get_neighbours(node_id)
+
+    def reverse(self, *, bool inplace=False):
+        if inplace:
+            self._obj.reverse_inplace()
+            return
+
+        reversed_graph = Graph(self.num_vertices)
+        del reversed_graph._obj
+        reversed_graph._obj = self._obj.create_reversed_graph()
+        reversed_graph._baseobj = reversed_graph._obj
+        return reversed_graph
 
 
 cdef class Grid(_AbsGraph):
@@ -349,11 +360,11 @@ cdef class BiDijkstra(_AbsPathFinder):
 
 
 cdef class AStar(_AbsPathFinder):
-    cdef CAstar* _obj
+    cdef CAStar* _obj
 
     def __cinit__(self, Grid grid):
         self.graph = grid
-        self._obj = new CAstar(grid._obj)
+        self._obj = new CAStar(grid._obj)
         self._baseobj = self._obj
 
     def __dealloc__(self):

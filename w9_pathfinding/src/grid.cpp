@@ -204,3 +204,6 @@ AbsGraph* Grid::reverse() const {
     reversed_grid->diaganal_movement_cost_multiplier = diaganal_movement_cost_multiplier;
     return reversed_grid;
 }
+
+void Grid::reverse_inplace() {
+}

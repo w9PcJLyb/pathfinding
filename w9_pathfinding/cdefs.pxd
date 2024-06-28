@@ -13,6 +13,7 @@ cdef extern from "src/include/core.h":
         AbsGraph() except +
         size_t size()
         double calculate_cost(vector[int])
+        void reverse_inplace()
 
     cdef cppclass AbsPathFinder:
         AbsPathFinder() except +
@@ -31,6 +32,7 @@ cdef extern from "src/include/graph.h":
         size_t num_edges()
         vector[vector[double]] get_edges()
         vector[pair[int, double]] get_neighbours(int)
+        Graph* create_reversed_graph()
 
 
 cdef extern from "src/grid.cpp":
@@ -40,7 +42,6 @@ cdef extern from "src/grid.cpp":
 cdef extern from "src/include/grid.h":
 
     cdef cppclass Grid(AbsGraph):
-        int width, height
         bool passable_left_right_border, passable_up_down_border
         double diaganal_movement_cost_multiplier
 
