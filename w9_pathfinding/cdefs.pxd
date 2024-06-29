@@ -28,10 +28,13 @@ cdef extern from "src/include/graph.h":
 
     cdef cppclass Graph(AbsGraph):
         Graph(int) except +
+        Graph(int, vector[vector[double]]) except +
         void add_edges(vector[int], vector[int], vector[double])
         size_t num_edges()
         vector[vector[double]] get_edges()
         vector[pair[int, double]] get_neighbours(int)
+        void set_coordinates(vector[vector[double]])
+        bool has_coordinates()
         Graph* create_reversed_graph()
 
 
@@ -120,7 +123,7 @@ cdef extern from "src/a_star.cpp":
 cdef extern from "src/include/a_star.h":
 
     cdef cppclass AStar(AbsPathFinder):
-        AStar(Grid*) except +
+        AStar(AbsGraph*) except +
         vector[int] find_path(int, int)
 
 
@@ -131,5 +134,5 @@ cdef extern from "src/bi_a_star.cpp":
 cdef extern from "src/include/bi_a_star.h":
 
     cdef cppclass BiAStar(AbsPathFinder):
-        BiAStar(Grid*) except +
+        BiAStar(AbsGraph*) except +
         vector[int] find_path(int, int)

@@ -1,8 +1,27 @@
 #include "include/graph.h"
+#define _unused(x) ((void)(x))
 
 
 Graph::Graph(int num_vertices) : num_vertices_(num_vertices) {
     edges_.resize(num_vertices_, vector<Edge>(0));
+}
+
+Graph::Graph(int num_vertices, vector<vector<double>> coordinates) : Graph(num_vertices) {
+    set_coordinates(coordinates);
+}
+
+void Graph::set_coordinates(vector<vector<double>> coordinates) {
+    assert(coordinates.size() == num_vertices_);
+    if (num_vertices_ > 0) {
+        int d = coordinates[0].size();
+        _unused(d);
+        assert(d > 0);
+        for (const vector<double> &x : coordinates) {
+            _unused(x);
+            assert(x.size() == d);
+        }
+    }
+    coordinates_ = coordinates;
 }
 
 size_t Graph::size() const {
@@ -45,12 +64,24 @@ vector<pair<int, double>> Graph::get_neighbours(int node) const {
     return nb;
 }
 
+bool Graph::has_coordinates() const {
+    return (num_vertices_ == 0) || (coordinates_.size() > 0);
+}
+
 double Graph::estimate_distance(int v1, int v2) const {
-    throw std::runtime_error("Unable to estimate distance for graph.");
+    const vector<double> &c1 = coordinates_[v1];
+    const vector<double> &c2 = coordinates_[v2];
+
+    double distance = 0;
+    for (unsigned int i = 0; i < c1.size(); i++) {
+        distance += std::pow(c1[i] - c2[i], 2);
+    }
+    distance = std::sqrt(distance);
+    return distance;
 }
 
 Graph* Graph::create_reversed_graph() const {
-    Graph* reversed_graph(new Graph(num_vertices_));
+    Graph* reversed_graph = new Graph(num_vertices_, coordinates_);
     for (int i = 0; i < num_vertices_; i++) {
         for (const Edge &e: edges_[i]) {
             reversed_graph->add_edge(e.node_id, i, e.cost);

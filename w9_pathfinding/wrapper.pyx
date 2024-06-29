@@ -5,8 +5,8 @@ from libcpp.vector cimport vector
 from w9_pathfinding.cdefs cimport (
     AbsGraph as CAbsGraph,
     AbsPathFinder as CAbsPathFinder,
-    Grid as CGrid,
     Graph as CGraph,
+    Grid as CGrid,
     DFS as CDFS,
     BFS as CBFS,
     BiBFS as CBiBFS,
@@ -31,16 +31,43 @@ cdef class Graph(_AbsGraph):
     cdef CGraph* _obj
     cdef readonly int num_vertices
 
-    def __cinit__(self, unsigned int num_vertices):
+    def __cinit__(self, unsigned int num_vertices, coordinates=None, edges=None):
         self._obj = new CGraph(num_vertices)
         self._baseobj = self._obj
         self.num_vertices = num_vertices
+        if coordinates:
+            self.set_coordinates(coordinates)
+        if edges:
+            self.add_edges(edges)
 
     def __dealloc__(self):
         del self._obj
 
     def __repr__(self):
         return f"Graph(num_vertices={self.num_vertices}, num_edges={self.num_edges})"
+
+    def set_coordinates(self, vector[vector[double]] coordinates):
+        if (len(coordinates) != self.num_vertices):
+            raise ValueError(
+                "Number of elements must be equal to the number of vertices"
+            )
+
+        if self.num_vertices > 0:
+            num_dimensions = len(coordinates[0])
+            if any(len(x) != num_dimensions for x in coordinates):
+                raise ValueError(
+                    "The number of coordinates should not change from vertex to vertex"
+                )
+
+            if num_dimensions == 0:
+                raise ValueError(
+                    "The number of coordinates must be greater than zero"
+                )
+
+        self._obj.set_coordinates(coordinates)
+
+    def has_coordinates(self):
+        return self._obj.has_coordinates()
 
     @property
     def num_edges(self):
@@ -363,9 +390,15 @@ cdef class BiDijkstra(_AbsPathFinder):
 cdef class AStar(_AbsPathFinder):
     cdef CAStar* _obj
 
-    def __cinit__(self, Grid grid):
-        self.graph = grid
-        self._obj = new CAStar(grid._obj)
+    def __cinit__(self, _AbsGraph graph):
+        if isinstance(graph, Graph) and not graph.has_coordinates():
+            raise ValueError(
+                "A* cannot work with a graph without coordinates. "
+                "You can add coordinates using graph.add_coordinates(), "
+                "or choose some non-heuristic algorithm."
+            )
+        self.graph = graph
+        self._obj = new CAStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -375,9 +408,15 @@ cdef class AStar(_AbsPathFinder):
 cdef class BiAStar(_AbsPathFinder):
     cdef CBiAStar* _obj
 
-    def __cinit__(self, Grid grid):
-        self.graph = grid
-        self._obj = new CBiAStar(grid._obj)
+    def __cinit__(self, _AbsGraph graph):
+        if isinstance(graph, Graph) and not graph.has_coordinates():
+            raise ValueError(
+                "A* cannot work with a graph without coordinates. "
+                "You can add coordinates using graph.add_coordinates(), "
+                "or choose some non-heuristic algorithm."
+            )
+        self.graph = graph
+        self._obj = new CBiAStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
