@@ -1,43 +1,48 @@
 import time
-import random
 from copy import copy
 
-from w9_pathfinding import Graph, DFS, BFS, BiBFS, Dijkstra, BiDijkstra
-
+import w9_pathfinding as pf
+from tests.stress_tests.generator import GraphGenerator, GraphWithCoordinatesGenerator
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
-NUM_VERTICES = 2000
-BRANCHING_FACTOR = 10
 
-# - unweighted - can find the shortest path in an unweighted graph
-# - weighted - can find the shortest path in a weighted graph
+UNWEIGHTED_GRAPH_GENERATOR = GraphGenerator(
+    num_vertices=5000,
+    branching_factor=3,
+    weighted=False,
+    bidirectional=False,
+)
+
+WEIGHTED_GRAPH_GENERATOR = GraphGenerator(
+    num_vertices=5000,
+    branching_factor=3,
+    weighted=True,
+    bidirectional=False,
+    max_weight=1000,
+)
+
+GRAPH_WITH_COORDINATES_GENERATOR = GraphWithCoordinatesGenerator(
+    num_vertices=5000,
+    branching_factor=3,
+    bidirectional=False,
+    num_dimensions=3,
+    min_x=-1000,
+    max_x=1000,
+)
+
+# - unw - can find the shortest path in an unweighted graph
+# - w - can find the shortest path in a weighted graph
+# - h - heuristic algorithm
 ALGORITHMS = [
-    {"name": "DFS", "class": DFS, "unweighted": False, "weighted": False},
-    {"name": "BFS", "class": BFS, "unweighted": True, "weighted": False},
-    {"name": "BiBFS", "class": BiBFS, "unweighted": True, "weighted": False},
-    {"name": "Dijkstra", "class": Dijkstra, "unweighted": True, "weighted": True},
-    {"name": "BiDijkstra", "class": BiDijkstra, "unweighted": True, "weighted": True},
+    {"name": "DFS", "class": pf.DFS, "unw": 0, "w": 0, "h": 0},
+    {"name": "BFS", "class": pf.BFS, "unw": 1, "w": 0, "h": 0},
+    {"name": "BiBFS", "class": pf.BiBFS, "unw": 1, "w": 0, "h": 0},
+    {"name": "Dijkstra", "class": pf.Dijkstra, "unw": 1, "w": 1, "h": 0},
+    {"name": "BiDijkstra", "class": pf.BiDijkstra, "unw": 1, "w": 1, "h": 0},
+    {"name": "A*", "class": pf.AStar, "unw": 1, "w": 1, "h": 1},
+    {"name": "Bi A*", "class": pf.BiAStar, "unw": 1, "w": 1, "h": 1},
 ]
-
-
-def create_random_graph(num_vertices, branching_factor, weighted=True):
-    graph = Graph(num_vertices)
-
-    edges = []
-    num_edges = int(num_vertices * branching_factor)
-    for _ in range(num_edges):
-        start = random.randint(0, num_vertices-1)
-        end = random.randint(0, num_vertices-1)
-        if weighted:
-            cost = random.random() * 100
-        else:
-            cost = 1
-        edges.append([start, end, cost])
-
-    graph.add_edges(edges)
-
-    return graph
 
 
 def find_path(finder, start, end):
@@ -66,7 +71,7 @@ def compare_results(results):
     for x in results:
         if x["shortest_path"] and abs(x["cost"] - best_result) > 0.001:
             return False
-    
+
     return True
 
 
@@ -78,8 +83,8 @@ def run_graph(algrithms, graph, start, end):
 
         path_cost = graph.calculate_cost(path)
         if path_cost == -1:
-            print(f"Error algorithm {a['name']} return the wrong path {path}")
             show_graph_info(graph, start, end)
+            print(f"Error algorithm {a['name']} return the wrong path {path}")
             return False
 
         a["total_cost"] += path_cost
@@ -94,38 +99,49 @@ def run_graph(algrithms, graph, start, end):
         )
 
     if not compare_results(results):
-        print(compare_results(results))
+        show_graph_info(graph, start, end)
         print("Error, different results: ")
         for r in results:
             print(f" - {r['algorithm']} : cost = {r['cost']}, path = {r['path']}")
-        show_graph_info(graph, start, end)
         return False
-        
+
     return True
 
 
-def stress_test(algrithms, weighted):
+def stress_test(weighted, with_coordinates=False):
+
+    algrithms = copy(ALGORITHMS)
+
+    if not weighted:
+        print(f"\nStress test with unweighted graph...")
+        generator = UNWEIGHTED_GRAPH_GENERATOR
+        shortest_path_flag = "unw"
+    elif not with_coordinates:
+        print(f"\nStress test with weighted graph...")
+        generator = WEIGHTED_GRAPH_GENERATOR
+        shortest_path_flag = "w"
+    else:
+        print(f"\nStress test graph with coordinates...")
+        generator = GRAPH_WITH_COORDINATES_GENERATOR
+        shortest_path_flag = "w"
+
+    if not with_coordinates:
+        algrithms = [a for a in algrithms if not a["h"]]
 
     for a in algrithms:
+        a["shortest_path"] = a[shortest_path_flag]
         a["total_time"] = 0
         a["total_cost"] = 0
 
     for i in range(NUM_GRAPHS):
         print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
 
-        graph = create_random_graph(
-            num_vertices=NUM_VERTICES,
-            branching_factor=BRANCHING_FACTOR,
-            weighted=weighted,
-        )
+        graph, queries = generator.generate(num_queries=NUM_QUERIES_PER_GRAPH)
 
         for a in algrithms:
             a["finder"] = a["class"](graph)
 
-        for _ in range(NUM_QUERIES_PER_GRAPH):
-            start = random.randint(0, graph.num_vertices - 1)
-            end = random.randint(0, graph.num_vertices - 1)
-
+        for start, end in queries:
             r = run_graph(algrithms, graph, start, end)
             if not r:
                 return
@@ -133,32 +149,13 @@ def stress_test(algrithms, weighted):
     print("\nOverall results:")
     count = NUM_GRAPHS * NUM_QUERIES_PER_GRAPH
     for a in algrithms:
-        mean_time = a['total_time'] / count
-        mean_cost = a['total_cost'] / count
+        mean_time = a["total_time"] / count
+        mean_cost = a["total_cost"] / count
         print(f" - {a['name']}:")
         print(f"     mean time = {1000 * mean_time:.3f}ms, mean cost = {mean_cost:.2f}")
 
 
-def test_unweighted_graph():
-    print("\nStress test with unweighted graph...")
-
-    algrithms = copy(ALGORITHMS)
-    for a in algrithms:
-        a["shortest_path"] = a["unweighted"]
-    
-    stress_test(algrithms, weighted=False)
-
-
-def test_weighted_graph():
-    print("\nStress test with weighted graph...")
-
-    algrithms = copy(ALGORITHMS)
-    for a in algrithms:
-        a["shortest_path"] = a["weighted"]
-    
-    stress_test(algrithms, weighted=True)
-
-
 if __name__ == "__main__":
-    test_unweighted_graph()
-    test_weighted_graph()
+    stress_test(weighted=False)
+    stress_test(weighted=True)
+    stress_test(weighted=True, with_coordinates=True)

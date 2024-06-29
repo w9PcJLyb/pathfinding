@@ -56,6 +56,10 @@ vector<vector<double>> Graph::get_edges() const {
     return raw;
 }
 
+vector<vector<double>> Graph::get_coordinates() const {
+    return coordinates_;
+}
+
 vector<pair<int, double>> Graph::get_neighbours(int node) const {
     vector<pair<int, double>> nb;
     for (const Edge &e : edges_[node]) {

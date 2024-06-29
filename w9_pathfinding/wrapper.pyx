@@ -56,18 +56,25 @@ cdef class Graph(_AbsGraph):
             num_dimensions = len(coordinates[0])
             if any(len(x) != num_dimensions for x in coordinates):
                 raise ValueError(
-                    "The number of coordinates should not change from vertex to vertex"
+                    "The number of dimensions should not change from vertex to vertex"
                 )
 
             if num_dimensions == 0:
                 raise ValueError(
-                    "The number of coordinates must be greater than zero"
+                    "The number of dimensions must be greater than zero"
                 )
 
         self._obj.set_coordinates(coordinates)
 
     def has_coordinates(self):
         return self._obj.has_coordinates()
+
+    def estimate_distance(self, int v1, int v2):
+        if not self.has_coordinates():
+            return
+        self.assert_in(v1)
+        self.assert_in(v2)
+        return self._obj.estimate_distance(v1, v2)
 
     @property
     def num_edges(self):
@@ -79,6 +86,10 @@ cdef class Graph(_AbsGraph):
         for (start, end, cost) in self._obj.get_edges():
             data.append([int(start), int(end), cost])
         return data
+
+    @property
+    def coordinates(self):
+        return self._obj.get_coordinates()
 
     def assert_in(self, int node_id):
         if not 0 <= node_id < self.num_vertices:

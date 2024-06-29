@@ -32,9 +32,11 @@ cdef extern from "src/include/graph.h":
         void add_edges(vector[int], vector[int], vector[double])
         size_t num_edges()
         vector[vector[double]] get_edges()
+        vector[vector[double]] get_coordinates()
         vector[pair[int, double]] get_neighbours(int)
         void set_coordinates(vector[vector[double]])
         bool has_coordinates()
+        double estimate_distance(int v1, int v2)
         Graph* create_reversed_graph()
 
 

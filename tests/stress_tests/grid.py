@@ -1,59 +1,43 @@
 import time
-import random
-from collections import defaultdict
+from copy import copy
 
-from w9_pathfinding import Grid, BFS, BiBFS, Dijkstra, BiDijkstra, AStar
+import w9_pathfinding as pf
+from tests.stress_tests.generator import GridGrnerator
 
-SHORTEST_PATH_ALGORITHMS = [AStar, BFS, BiBFS, Dijkstra, BiDijkstra]
+NUM_GRAPHS = 100
+NUM_QUERIES_PER_GRAPH = 10
 
+UNWEIGHTED_GRID_GENERATOR = GridGrnerator(
+    width=100,
+    height=100,
+    obstacle_percentage=0.2,
+    weighted=False,
+)
 
-def create_random_map(width, height, obstacle_percentage):
-    obstacle_map = []
-    for _ in range(height):
-        row = [random.random() < obstacle_percentage for x in range(width)]
-        obstacle_map.append(row) 
-    
-    return obstacle_map
+WEIGHTED_GRID_GENERATOR = GridGrnerator(
+    width=100,
+    height=100,
+    obstacle_percentage=0.2,
+    weighted=True,
+)
 
-
-def create_random_grid(width, height, obstacle_percentage):
-    obstacle_map = create_random_map(width, height, obstacle_percentage)
-    grid = Grid(obstacle_map)
-    grid.diagonal_movement = random.randint(0, 3)
-    grid.passable_left_right_border = random.randint(0, 1)
-    grid.passable_up_down_border = random.randint(0, 1)
-    return grid
+# - unweighted - can find the shortest path in an unweighted graph
+# - weighted - can find the shortest path in a weighted graph
+ALGORITHMS = [
+    {"name": "DFS", "class": pf.DFS, "unw": 0, "w": 0},
+    {"name": "BFS", "class": pf.BFS, "unw": 1, "w": 0},
+    {"name": "BiBFS", "class": pf.BiBFS, "unw": 1, "w": 0},
+    {"name": "Dijkstra", "class": pf.Dijkstra, "unw": 1, "w": 1},
+    {"name": "BiDijkstra", "class": pf.BiDijkstra, "unw": 1, "w": 1},
+    {"name": "A*", "class": pf.AStar, "unw": 1, "w": 1},
+    {"name": "Bi A*", "class": pf.BiAStar, "unw": 1, "w": 1},
+]
 
 
 def find_path(finder, start, end):
     t = time.time()
     path = finder.find_path(start, end)
     return path, time.time() - t
-
-
-def find_free_point(grid):
-    while True:
-        x = random.randint(0, grid.width - 1)
-        y = random.randint(0, grid.height - 1)
-        if not grid.has_obstacle(x, y):
-            return x, y
-
-
-def check_path(grid, path, start, end):
-    if not path:
-        return True
-    
-    if path[0] != start or path[-1] != end:
-        return False
-
-    for i in range(len(path) - 1):
-        p = path[i]
-        next_p = path[i + 1]
-        neighbours = grid.get_neighbours(*p)
-        if next_p not in neighbours:
-            return False
-
-    return True
 
 
 def show_grid_info(grid, start, end):
@@ -64,61 +48,94 @@ def show_grid_info(grid, start, end):
     print(f"start, end = {start}, {end}")
 
 
-def run_random_grid(width=12, height=8, obstacle_percentage=0.3, num_runs=1, timer=None):
-    grid = create_random_grid(width, height, obstacle_percentage)
-    algrithms = [(a.__name__, a(grid)) for a in SHORTEST_PATH_ALGORITHMS] 
+def compare_results(results):
+    # If one cant find a path, no one should find
+    without_path = [x for x in results if x["path"] == []]
+    if without_path and len(without_path) != len(results):
+        return False
 
-    for _ in range(num_runs):
-        
-        start = find_free_point(grid)
-        end = find_free_point(grid)
-
-        results = []
-        for alg_name, finder in algrithms:
-            path, time = find_path(finder, start, end)
-            if timer is not None:
-                timer[alg_name] += time
-
-            if not check_path(grid, path, start, end):
-                print(f"Error algorithm {alg_name} return wrong path {path}")
-                grid.show_path(path)
-                show_grid_info(grid, start, end)
-                return False
-
-            results.append((alg_name, path))
-
-        if len({len(x[1]) for x in results}) > 1:
-            print("Error, different results: ")
-            for alg_name, path in results:
-                print(f" - {alg_name} : {len(path)}, {path}")
-                grid.show_path(path)
-            show_grid_info(grid, start, end)
+    # all algorithms that should find the shortest path must find it.
+    best_result = min(x["cost"] for x in results)
+    for x in results:
+        if x["shortest_path"] and abs(x["cost"] - best_result) > 0.001:
             return False
-        
+
     return True
 
 
-def stress_test():
-    num_tests = 100
+def run_grid(algrithms, graph, start, end):
+    results = []
+    for a in algrithms:
+        path, time = find_path(a["finder"], start, end)
+        a["total_time"] += time
 
-    timer = defaultdict(int)
-    
-    for i in range(num_tests):
-        print(f"run {i + 1}/{num_tests}")
-        r = run_random_grid(
-            width=100,
-            height=100,
-            obstacle_percentage=0.2,
-            num_runs=10,
-            timer=timer
+        path_cost = graph.calculate_cost(path)
+        if path_cost == -1:
+            show_grid_info(graph, start, end)
+            print(f"Error algorithm {a['name']} return the wrong path {path}")
+            return False
+
+        a["total_cost"] += path_cost
+
+        results.append(
+            {
+                "algorithm": a["name"],
+                "path": path,
+                "cost": path_cost,
+                "shortest_path": a["shortest_path"],
+            }
         )
-        if not r:
-            break
 
-    print("Total time:")
-    for alg_name, time in timer.items():
-        print(f" - {alg_name} {time}")
+    if not compare_results(results):
+        show_grid_info(graph, start, end)
+        print("Error, different results: ")
+        for r in results:
+            print(f" - {r['algorithm']} : cost = {r['cost']}, path = {r['path']}")
+        return False
+
+    return True
+
+
+def stress_test(weighted):
+
+    algrithms = copy(ALGORITHMS)
+
+    if not weighted:
+        print(f"\nStress test with unweighted grid...")
+        generator = UNWEIGHTED_GRID_GENERATOR
+        shortest_path_flag = "unw"
+    else:
+        print(f"\nStress test with weighted grid...")
+        generator = WEIGHTED_GRID_GENERATOR
+        shortest_path_flag = "w"
+
+    for a in algrithms:
+        a["shortest_path"] = a[shortest_path_flag]
+        a["total_time"] = 0
+        a["total_cost"] = 0
+
+    for i in range(NUM_GRAPHS):
+        print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
+
+        graph, queries = generator.generate(num_queries=NUM_QUERIES_PER_GRAPH)
+
+        for a in algrithms:
+            a["finder"] = a["class"](graph)
+
+        for start, end in queries:
+            r = run_grid(algrithms, graph, start, end)
+            if not r:
+                return
+
+    print("\nOverall results:")
+    count = NUM_GRAPHS * NUM_QUERIES_PER_GRAPH
+    for a in algrithms:
+        mean_time = a["total_time"] / count
+        mean_cost = a["total_cost"] / count
+        print(f" - {a['name']}:")
+        print(f"     mean time = {1000 * mean_time:.3f}ms, mean cost = {mean_cost:.2f}")
 
 
 if __name__ == "__main__":
-    stress_test()
+    stress_test(weighted=False)
+    stress_test(weighted=True)
