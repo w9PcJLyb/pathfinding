@@ -3,24 +3,21 @@
 
 Grid::Grid(int width, int height) : width(width), height(height) {
     diagonal_movement_ = 0;
-    // 0 - without diagonal movements
-    // 1 - allow only when no obstacle
-    // 2 - allow if at most one obstacle
-    // 3 - always allow
-
     passable_left_right_border = false;
     passable_up_down_border = false;
-    diaganal_movement_cost_multiplier = 1.0;
+    diagonal_movement_cost_multiplier = 1.0;
 
-    obstacle_map_.resize(size(), 0);
+    weights_.resize(size(), 1);
+    reversed_ = false;
 }
 
-Grid::Grid(int width, int height, vector<int> obstacle_map) : width(width), height(height) {
+Grid::Grid(int width, int height, vector<double> weights) : width(width), height(height) {
     diagonal_movement_ = 0;
     passable_left_right_border = false;
     passable_up_down_border = false;
-    diaganal_movement_cost_multiplier = 1.0;
-    set_obstacle_map(obstacle_map);
+    diagonal_movement_cost_multiplier = 1.0;
+    set_weights(weights);
+    reversed_ = false;
 }
 
 size_t Grid::size() const {
@@ -41,14 +38,20 @@ bool Grid::is_inside(const Point &p) const {
     return (p.x >= 0 && p.x < width && p.y >= 0 && p.y < height);
 }
 
-void Grid::set_obstacle_map(vector<int> &map) {
-    if (map.size() != size())
+void Grid::set_weights(vector<double> &weights) {
+    if (weights.size() != size())
         throw std::invalid_argument("Wrong shape");
-    obstacle_map_ = map;
+
+    for (double w : weights) {
+        if (w < 0 && w != -1) {
+            throw std::invalid_argument("Weight must be positive or equal to -1");
+        }
+    }
+    weights_ = weights;
 }
 
-vector<int> Grid::get_obstacle_map() const {
-    return obstacle_map_;
+vector<double> Grid::get_weights() const {
+    return weights_;
 }
 
 void Grid::show_obstacle_map() const {
@@ -61,19 +64,19 @@ void Grid::show_obstacle_map() const {
 }
 
 bool Grid::has_obstacle(int node) const {
-    return obstacle_map_.at(node);
+    return weights_.at(node) == -1;
 }
 
 void Grid::add_obstacle(int node) {
-    obstacle_map_.at(node) = true;
+    weights_.at(node) = -1;
 }
 
 void Grid::remove_obstacle(int node) {
-    obstacle_map_.at(node) = false;
+    weights_.at(node) = 1;
 }
 
-void Grid::clear_obstacles() {
-    std::fill(obstacle_map_.begin(), obstacle_map_.end(), 0);
+void Grid::clear_weights() {
+    std::fill(weights_.begin(), weights_.end(), 1);
 }
 
 void Grid::warp_point(Point &p) const {
@@ -114,6 +117,8 @@ vector<pair<int, double>> Grid::get_neighbours(int node) const {
     
     Point p0 = get_coordinates(node);
 
+    double node_weight = weights_.at(node);
+
     auto add_direction = [&] (int direction_id) {
         Point p = p0 + directions_[direction_id];
 
@@ -126,10 +131,18 @@ vector<pair<int, double>> Grid::get_neighbours(int node) const {
             return -1;
 
         int node_id = get_node_id(p);
-        if (has_obstacle(node_id))
+        double weight = weights_.at(node_id);
+        if (weight == -1)
             return -1;
 
-        nb.push_back({node_id, (direction_id < 4) ? 1.0 : diaganal_movement_cost_multiplier});
+        if (reversed_)
+            weight = node_weight;
+
+        if (direction_id < 4)
+            nb.push_back({node_id, weight});
+        else
+            nb.push_back({node_id, weight * diagonal_movement_cost_multiplier});
+
         return node_id;
     };
 
@@ -189,21 +202,23 @@ double Grid::estimate_distance(int v1, int v2) const {
 
     // octile
     if (dx > dy) {
-        return dx + dy * (diaganal_movement_cost_multiplier - 1);
+        return dx + dy * (diagonal_movement_cost_multiplier - 1);
     }
     else {
-        return dy + dx * (diaganal_movement_cost_multiplier - 1);
+        return dy + dx * (diagonal_movement_cost_multiplier - 1);
     }
 }
 
 AbsGraph* Grid::reverse() const {
-    Grid* reversed_grid(new Grid(width, height, obstacle_map_));
+    Grid* reversed_grid(new Grid(width, height, weights_));
     reversed_grid->set_diagonal_movement(diagonal_movement_);
     reversed_grid->passable_left_right_border = passable_left_right_border;
     reversed_grid->passable_up_down_border = passable_up_down_border;
-    reversed_grid->diaganal_movement_cost_multiplier = diaganal_movement_cost_multiplier;
+    reversed_grid->diagonal_movement_cost_multiplier = diagonal_movement_cost_multiplier;
+    reversed_grid->reversed_ = !reversed_;
     return reversed_grid;
 }
 
 void Grid::reverse_inplace() {
+    reversed_ = !reversed_;
 }

@@ -109,17 +109,25 @@ class GraphWithCoordinatesGenerator(GraphGenerator):
 
 
 class GridGrnerator(_Generator):
-    def __init__(self, width=10, height=10, obstacle_percentage=0.2, weighted=False):
+    def __init__(
+        self,
+        width=10,
+        height=10,
+        obstacle_percentage=0.2,
+        weighted=False,
+        max_weight=100,
+    ):
         self.width = width
         self.height = height
         self.obstacle_percentage = obstacle_percentage
         self.weighted = weighted
+        self.max_weight = max_weight
 
     def _generate_obstacle_map(self):
         obstacle_map = []
         for _ in range(self.height):
             row = [
-                random.random() < self.obstacle_percentage for x in range(self.width)
+                random.random() < self.obstacle_percentage for _ in range(self.width)
             ]
             obstacle_map.append(row)
         return obstacle_map
@@ -138,7 +146,14 @@ class GridGrnerator(_Generator):
         if not self.weighted:
             return
 
-        grid.diaganal_movement_cost_multiplier = random.uniform(1, 2)
+        grid.diagonal_movement_cost_multiplier = random.uniform(1, 2)
+
+        weights = []
+        for _ in range(grid.height):
+            row = [random.uniform(0, self.max_weight) for _ in range(grid.width)]
+            weights.append(row)
+
+        grid.weights = weights
 
     def _find_free_point(self, grid):
         while True:

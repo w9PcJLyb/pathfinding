@@ -132,10 +132,11 @@ cdef class Grid(_AbsGraph):
         *,
         width=None,
         height=None,
+        weights=None,
         int diagonal_movement=0,
         bool passable_left_right_border=False,
         bool passable_up_down_border=False,
-        double diaganal_movement_cost_multiplier=1,
+        double diagonal_movement_cost_multiplier=1,
     ):
 
         if obstacle_map is None:
@@ -159,6 +160,9 @@ cdef class Grid(_AbsGraph):
         if obstacle_map is not None:
             self.obstacle_map = obstacle_map
 
+        if weights is not None:
+            self.weights = weights
+
         if diagonal_movement:
             self.diagonal_movement = diagonal_movement
 
@@ -168,8 +172,8 @@ cdef class Grid(_AbsGraph):
         if passable_up_down_border:
             self.passable_up_down_border = passable_up_down_border
 
-        if diaganal_movement_cost_multiplier != 1:
-            self.diaganal_movement_cost_multiplier = diaganal_movement_cost_multiplier
+        if diagonal_movement_cost_multiplier != 1:
+            self.diagonal_movement_cost_multiplier = diagonal_movement_cost_multiplier
 
     def __dealloc__(self):
         del self._obj
@@ -202,14 +206,14 @@ cdef class Grid(_AbsGraph):
         self._obj.passable_up_down_border = _b
 
     @property
-    def diaganal_movement_cost_multiplier(self):
-        return self._obj.diaganal_movement_cost_multiplier
+    def diagonal_movement_cost_multiplier(self):
+        return self._obj.diagonal_movement_cost_multiplier
 
-    @diaganal_movement_cost_multiplier.setter
-    def diaganal_movement_cost_multiplier(self, double m):
+    @diagonal_movement_cost_multiplier.setter
+    def diagonal_movement_cost_multiplier(self, double m):
         if not 1 <= m <= 2:
-            raise ValueError("diaganal_movement_cost_multiplier must be in range [1, 2].")
-        self._obj.diaganal_movement_cost_multiplier = m
+            raise ValueError("diagonal_movement_cost_multiplier must be in range [1, 2].")
+        self._obj.diagonal_movement_cost_multiplier = m
 
     def assert_in(self, int x, int y):
         if not 0 <= x < self.width or not 0 <= y < self.height:
@@ -227,9 +231,6 @@ cdef class Grid(_AbsGraph):
         self.assert_in(x, y)
         self._obj.remove_obstacle(x + y * self.width)
 
-    def clear_obstacles(self):
-        self._obj.clear_obstacles()
-
     def get_node_id(self, int x, int y):
         self.assert_in(x, y)
         return x + y * self.width
@@ -246,28 +247,52 @@ cdef class Grid(_AbsGraph):
 
     @property
     def obstacle_map(self):
-        flat_map = self._obj.get_obstacle_map()
+        flat_map = self._obj.get_weights()
+        map = []
+        for y in range(self.height):
+            row = [int(flat_map[self.get_node_id(x, y)] == -1) for x in range(self.width)]
+            map.append(row)
+        return map
+
+    @obstacle_map.setter
+    def obstacle_map(self, _map):
+        weights = self._obj.get_weights()
+
+        height, width = len(_map), len(_map[0])
+        if height != self.height or width != self.width:
+            raise ValueError(f"obstacle_map.shape must be {self.width}x{self.height}")
+
+        for y in range(height):
+            for x in range(width):
+                if _map[y][x] != 0:
+                    weights[self.get_node_id(x, y)] = -1
+
+        self._obj.set_weights(weights)
+
+    @property
+    def weights(self):
+        flat_map = self._obj.get_weights()
         map = []
         for y in range(self.height):
             row = [int(flat_map[self.get_node_id(x, y)]) for x in range(self.width)]
             map.append(row)
         return map
 
-    @obstacle_map.setter
-    def obstacle_map(self, _map):
+    @weights.setter
+    def weights(self, _map):
+        weights = self._obj.get_weights()
+
         height, width = len(_map), len(_map[0])
         if height != self.height or width != self.width:
-            raise ValueError(f"obstacle_map.shape must be {self.width}x{self.height}")
- 
-        obstacle_map = []
-        for row in _map:
-            for x in row:
-               obstacle_map.append(x != 0) 
- 
-        if len(obstacle_map) != self.width * self.height:
-            raise ValueError(f"obstacle_map.shape must be {self.width}x{self.height}")
- 
-        self._obj.set_obstacle_map(obstacle_map)
+            raise ValueError(f"weights.shape must be {self.width}x{self.height}")
+
+        for y in range(height):
+            for x in range(width):
+                node_id = self.get_node_id(x, y)
+                if weights[node_id] >= 0:
+                    weights[node_id] = _map[y][x]
+
+        self._obj.set_weights(weights)
 
     def calculate_cost(self, path):
         cdef vector[int] nodes

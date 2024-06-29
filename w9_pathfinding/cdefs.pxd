@@ -48,7 +48,7 @@ cdef extern from "src/include/grid.h":
 
     cdef cppclass Grid(AbsGraph):
         bool passable_left_right_border, passable_up_down_border
-        double diaganal_movement_cost_multiplier
+        double diagonal_movement_cost_multiplier
 
         Grid(int, int) except +
         Grid(int, int, vector[int]) except +
@@ -57,9 +57,9 @@ cdef extern from "src/include/grid.h":
         bool has_obstacle(int)
         void add_obstacle(int)
         void remove_obstacle(int)
-        void clear_obstacles()
-        void set_obstacle_map(vector[int]&)
-        vector[int] get_obstacle_map()
+        void clear_weights()
+        void set_weights(vector[double]&)
+        vector[double] get_weights()
         vector[pair[int, double]] get_neighbours(int)
 
 

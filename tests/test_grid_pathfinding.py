@@ -1,6 +1,16 @@
 import math
 import unittest
-from w9_pathfinding import Grid, DFS, BFS, BiBFS, Dijkstra, BiDijkstra, AStar, BiAStar, DiagonalMovement
+from w9_pathfinding import (
+    Grid,
+    DFS,
+    BFS,
+    BiBFS,
+    Dijkstra,
+    BiDijkstra,
+    AStar,
+    BiAStar,
+    DiagonalMovement,
+)
 
 SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar]
 ALL_ALGORITHMS = [DFS, BFS, BiBFS] + SHORTEST_PATH_ALGORITHMS
@@ -13,9 +23,9 @@ class TestSimpleGrid(unittest.TestCase):
 
     def test_0d(self):
         """
-            + - +
-            | s |
-            + - +
+        + - +
+        | s |
+        + - +
         """
         obstacle_matrix = [[0]]
         start, end = (0, 0), (0, 0)
@@ -30,9 +40,9 @@ class TestSimpleGrid(unittest.TestCase):
 
     def test_out_of_the_grid(self):
         """
-            + - +
-            | s |
-            + - +
+        + - +
+        | s |
+        + - +
         """
         obstacle_matrix = [[0]]
         start, end = (0, 0), (10, 10)
@@ -46,9 +56,9 @@ class TestSimpleGrid(unittest.TestCase):
 
     def test_1d(self):
         """
-            + -  -  -  -  - +
-            | s  *  *  *  e |
-            + -  -  -  -  - +
+        + -  -  -  -  - +
+        | s  *  *  *  e |
+        + -  -  -  -  - +
         """
         obstacle_matrix = [[0, 0, 0, 0, 0]]
         start, end = (0, 0), (4, 0)
@@ -63,9 +73,9 @@ class TestSimpleGrid(unittest.TestCase):
 
     def test_1d_no_path(self):
         """
-            + -  -  -  -  - +
-            | s        #  e |
-            + -  -  -  -  - +
+        + -  -  -  -  - +
+        | s        #  e |
+        + -  -  -  -  - +
         """
         obstacle_matrix = [[0, 0, 0, 1, 0]]
         start, end = (0, 0), (4, 0)
@@ -80,9 +90,9 @@ class TestSimpleGrid(unittest.TestCase):
 
     def test_passable_left_right_border(self):
         """
-            + -  -  -  -  - +
-            | s        #  e |
-            + -  -  -  -  - +
+        + -  -  -  -  - +
+        | s        #  e |
+        + -  -  -  -  - +
         """
         obstacle_matrix = [[0, 0, 0, 1, 0]]
         start, end = (0, 0), (4, 0)
@@ -97,12 +107,12 @@ class TestSimpleGrid(unittest.TestCase):
 
     def test_passable_up_down_border(self):
         """
-            + -  -  +
-            | s  #  |
-            | #     |
-            |       |
-            | e  #  |
-            + -  -  +
+        + -  -  +
+        | s  #  |
+        | #     |
+        |       |
+        | e  #  |
+        + -  -  +
         """
         obstacle_matrix = [[0, 1], [1, 0], [0, 0], [0, 1]]
         start, end = (0, 0), (0, 3)
@@ -117,11 +127,11 @@ class TestSimpleGrid(unittest.TestCase):
 
     def test_diagonal_movement(self):
         """
-            + -  -  - +
-            | s     # |
-            |    #    |
-            | #     e |
-            + -  -  - +
+        + -  -  - +
+        | s     # |
+        |    #    |
+        | #     e |
+        + -  -  - +
         """
         obstacle_matrix = [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
         start, end = (0, 0), (2, 2)
@@ -135,17 +145,19 @@ class TestSimpleGrid(unittest.TestCase):
         for diagonal_movement, answer_len in path_len.items():
             grid = Grid(obstacle_matrix, diagonal_movement=diagonal_movement)
             for a in ALL_ALGORITHMS:
-                with self.subTest(f"{a.__name__}, diagonal_movement={diagonal_movement}"):
+                with self.subTest(
+                    f"{a.__name__}, diagonal_movement={diagonal_movement}"
+                ):
                     path = a(grid).find_path(start, end)
                     self.assertEqual(len(path), answer_len)
 
     def test_diagonal_movement_2(self):
         """
-            + -  -  - +
-            | s  #  e |
-            |    #    |
-            |         |
-            + -  -  - +
+        + -  -  - +
+        | s  #  e |
+        |    #    |
+        |         |
+        + -  -  - +
         """
         obstacle_matrix = [[0, 1, 0], [0, 1, 0], [0, 0, 0]]
         start, end = (0, 0), (2, 0)
@@ -159,17 +171,19 @@ class TestSimpleGrid(unittest.TestCase):
         for diagonal_movement, answer_len in path_len.items():
             grid = Grid(obstacle_matrix, diagonal_movement=diagonal_movement)
             for a in ALL_ALGORITHMS:
-                with self.subTest(f"{a.__name__}, diagonal_movement={diagonal_movement}"):
+                with self.subTest(
+                    f"{a.__name__}, diagonal_movement={diagonal_movement}"
+                ):
                     path = a(grid).find_path(start, end)
                     self.assertEqual(len(path), answer_len)
 
     def test_diagonal_movement_3(self):
         """
-            + -  -  - +
-            | s     # |
-            |         |
-            | #     e |
-            + -  -  - +
+        + -  -  - +
+        | s     # |
+        |         |
+        | #     e |
+        + -  -  - +
         """
         obstacle_matrix = [[0, 0, 1], [0, 0, 0], [1, 0, 0]]
         start, end = (0, 0), (2, 2)
@@ -183,9 +197,12 @@ class TestSimpleGrid(unittest.TestCase):
         for diagonal_movement, answer_len in path_len.items():
             grid = Grid(obstacle_matrix, diagonal_movement=diagonal_movement)
             for a in SHORTEST_PATH_ALGORITHMS:
-                with self.subTest(f"{a.__name__}, diagonal_movement={diagonal_movement}"):
+                with self.subTest(
+                    f"{a.__name__}, diagonal_movement={diagonal_movement}"
+                ):
                     path = a(grid).find_path(start, end)
                     self.assertEqual(len(path), answer_len)
+
 
 class TestShortestPath(unittest.TestCase):
     """
@@ -194,14 +211,19 @@ class TestShortestPath(unittest.TestCase):
 
     def test_case_1(self):
         """
-            + - - - - - - +
-            |   #     # e |
-            |     #   x # |
-            |   x # x     |
-            | s   x # # # |
-            + - - - - - - +
+        + - - - - - - +
+        |   #     # e |
+        |     #   x # |
+        |   x # x     |
+        | s   x # # # |
+        + - - - - - - +
         """
-        obstacle_matrix = [[0, 1, 0, 0, 1, 0], [0, 0, 1, 0, 0, 1], [0, 0, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1]]
+        obstacle_matrix = [
+            [0, 1, 0, 0, 1, 0],
+            [0, 0, 1, 0, 0, 1],
+            [0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1],
+        ]
         start, end = (0, 3), (5, 0)
         grid = Grid(obstacle_matrix, diagonal_movement=DiagonalMovement.always)
         answer_len = 6
@@ -213,20 +235,26 @@ class TestShortestPath(unittest.TestCase):
 
     def test_case_2(self):
         """
-            + - - - - - - +
-            |     # #   # |
-            |   #   x s   |
-            | #   x #   # |
-            |   x       # |
-            | e         # |
-            + - - - - - - +
+        + - - - - - - +
+        |     # #   # |
+        |   #   x s   |
+        | #   x #   # |
+        |   x       # |
+        | e         # |
+        + - - - - - - +
         """
-        obstacle_matrix = [[0, 0, 1, 1, 0, 1], [0, 1, 0, 0, 0, 0], [1, 0, 0, 1, 0, 1], [0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 1]]
+        obstacle_matrix = [
+            [0, 0, 1, 1, 0, 1],
+            [0, 1, 0, 0, 0, 0],
+            [1, 0, 0, 1, 0, 1],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 1],
+        ]
         start, end = (4, 1), (0, 4)
         grid = Grid(
             obstacle_matrix,
             diagonal_movement=DiagonalMovement.if_at_most_one_obstacle,
-            passable_left_right_border=True
+            passable_left_right_border=True,
         )
         answer_len = 5
 
@@ -237,21 +265,28 @@ class TestShortestPath(unittest.TestCase):
 
     def test_case_3(self):
         """
-            + - - - - - - +
-            | s x x x     |
-            |         x   |
-            |   # # # # x |
-            |   #       x |
-            |           x |
-            |           e |
-            + - - - - - - +
+        + - - - - - - +
+        | s x x x     |
+        |         x   |
+        |   # # # # x |
+        |   #       x |
+        |           x |
+        |           e |
+        + - - - - - - +
         """
-        obstacle_matrix = [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]
+        obstacle_matrix = [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 1, 1, 1, 1, 0],
+            [0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+        ]
         start, end = (0, 0), (5, 5)
         grid = Grid(
             obstacle_matrix,
             diagonal_movement=DiagonalMovement.always,
-            diaganal_movement_cost_multiplier=math.sqrt(2),
+            diagonal_movement_cost_multiplier=math.sqrt(2),
         )
         answer_cost = 6 + 2 * math.sqrt(2)
 

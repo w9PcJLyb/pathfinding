@@ -10,10 +10,13 @@ Graph::Graph(int num_vertices, vector<vector<double>> coordinates) : Graph(num_v
     set_coordinates(coordinates);
 }
 
-void Graph::set_coordinates(vector<vector<double>> coordinates) {
-    assert(coordinates.size() == num_vertices_);
+void Graph::set_coordinates(vector<vector<double>> &coordinates) {
+    if (coordinates.size() == 0)
+        return;
+
+    assert(int(coordinates.size()) == num_vertices_);
     if (num_vertices_ > 0) {
-        int d = coordinates[0].size();
+        size_t d = coordinates[0].size();
         _unused(d);
         assert(d > 0);
         for (const vector<double> &x : coordinates) {
