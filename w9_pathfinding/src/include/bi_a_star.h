@@ -12,13 +12,15 @@ class BiAStar : public AbsPathFinder {
         int parent;
         double distance;  // from start to this node
         double f;  // distance + heuristic
+        bool visited;
 
-        Node() : parent(-1), distance(-1), f(0) {};
+        Node() : parent(-1), distance(-1), f(0), visited(false) {};
 
         void clear() {
             parent = -1;
             distance = -1;
             f = 0;
+            visited = false;
         }
     };
 
@@ -30,14 +32,12 @@ class BiAStar : public AbsPathFinder {
         vector<int> find_path(int start, int end);
 
     private:
-        double epsilon = 0.000001;
-        int start_node, end_node;
+        int start_node_, end_node_;
         AbsGraph* reversed_graph_;
-        vector<Node> forward_nodes_, backward_nodes_;
+        vector<vector<Node>> nodes_;
         vector<int> workset_;
-        vector<bool> closedset_;
         vector<int> reconstruct_path(int start, int end); 
         void clear();
-        bool step(Queue &queue, vector<Node> &nodes, AbsGraph* g, bool is_backward);
-        double potential(int node_id, bool is_backward);
+        bool step(int side, Queue &queue, AbsGraph* g);
+        double potential(int node_id, int side);
 };
