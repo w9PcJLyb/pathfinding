@@ -115,12 +115,14 @@ class GridGrnerator(_Generator):
         height=10,
         obstacle_percentage=0.2,
         weighted=False,
+        min_weight=0,
         max_weight=100,
     ):
         self.width = width
         self.height = height
         self.obstacle_percentage = obstacle_percentage
         self.weighted = weighted
+        self.min_weight = min_weight
         self.max_weight = max_weight
 
     def _generate_obstacle_map(self):
@@ -148,9 +150,16 @@ class GridGrnerator(_Generator):
 
         grid.diagonal_movement_cost_multiplier = random.uniform(1, 2)
 
+        obstacle_map = grid.obstacle_map
+
         weights = []
-        for _ in range(grid.height):
-            row = [random.uniform(0, self.max_weight) for _ in range(grid.width)]
+        for y in range(grid.height):
+            row = []
+            for x in range(grid.width):
+                if obstacle_map[y][x]:
+                    row.append(-1)
+                else:
+                    row.append(random.uniform(self.min_weight, self.max_weight))
             weights.append(row)
 
         grid.weights = weights

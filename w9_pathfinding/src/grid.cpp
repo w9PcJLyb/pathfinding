@@ -44,12 +44,15 @@ void Grid::set_weights(vector<double> &weights) {
         throw std::invalid_argument("Wrong shape");
 
     if (!weights.empty()) {
-        min_weight_ = weights[0];
+        min_weight_ = -1;
         for (double w : weights) {
             if (w < 0 && w != -1) {
                 throw std::invalid_argument("Weight must be positive or equal to -1");
             }
-            min_weight_ = std::min(min_weight_, w);
+            if (w != -1) {
+                if (min_weight_ == -1 || min_weight_ > w)
+                    min_weight_ = w;
+            }
         }
     }
 
