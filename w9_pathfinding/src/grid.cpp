@@ -8,6 +8,7 @@ Grid::Grid(int width, int height) : width(width), height(height) {
     diagonal_movement_cost_multiplier = 1.0;
 
     weights_.resize(size(), 1);
+    min_weight_ = 1;
     reversed_ = false;
 }
 
@@ -42,11 +43,16 @@ void Grid::set_weights(vector<double> &weights) {
     if (weights.size() != size())
         throw std::invalid_argument("Wrong shape");
 
-    for (double w : weights) {
-        if (w < 0 && w != -1) {
-            throw std::invalid_argument("Weight must be positive or equal to -1");
+    if (!weights.empty()) {
+        min_weight_ = weights[0];
+        for (double w : weights) {
+            if (w < 0 && w != -1) {
+                throw std::invalid_argument("Weight must be positive or equal to -1");
+            }
+            min_weight_ = std::min(min_weight_, w);
         }
     }
+
     weights_ = weights;
 }
 
@@ -197,15 +203,15 @@ double Grid::estimate_distance(int v1, int v2) const {
     }
 
     if (!diagonal_movement_) {
-        return dx + dy;  // manhattan
+        return min_weight_ * (dx + dy);  // manhattan
     }
 
     // octile
     if (dx > dy) {
-        return dx + dy * (diagonal_movement_cost_multiplier - 1);
+        return min_weight_ * (dx + dy * (diagonal_movement_cost_multiplier - 1));
     }
     else {
-        return dy + dx * (diagonal_movement_cost_multiplier - 1);
+        return min_weight_ * (dy + dx * (diagonal_movement_cost_multiplier - 1));
     }
 }
 

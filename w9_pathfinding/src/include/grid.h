@@ -68,6 +68,10 @@ class Grid : public AbsGraph {
         // if weight >= 0 - weight is the cost of entering this node
         vector<double> weights_;
 
+        // the minimum value in weights, used in the heuristic function (estimate_distance)
+        double min_weight_;
+
+        // is a reversed graph, used in bidirectional algorithms
         bool reversed_;
 
         void warp_point(Point &p) const;

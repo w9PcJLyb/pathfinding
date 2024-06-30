@@ -294,3 +294,27 @@ class TestShortestPath(unittest.TestCase):
             with self.subTest(a.__name__):
                 path = a(grid).find_path(start, end)
                 self.assertAlmostEqual(grid.calculate_cost(path), answer_cost, places=3)
+
+    def test_case_4(self):
+        """
+        + - - +
+        | e x |
+        |   s |
+        + - - +
+        """
+        grid = Grid(
+            height=2,
+            width=2,
+            weights=[[0.25, 0.04], [100, 1]],
+            diagonal_movement=DiagonalMovement.always,
+            diagonal_movement_cost_multiplier=1.2,
+        )
+        start, end = (1, 1), (0, 0)
+        answer = [(1, 1), (1, 0), (0, 0)]
+        answer_cost = 0.25 + 0.04
+
+        for a in SHORTEST_PATH_ALGORITHMS:
+            with self.subTest(a.__name__):
+                path = a(grid).find_path(start, end)
+                self.assertListEqual(path, answer)
+                self.assertEqual(grid.calculate_cost(path), answer_cost)

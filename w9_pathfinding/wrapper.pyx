@@ -247,10 +247,10 @@ cdef class Grid(_AbsGraph):
 
     @property
     def obstacle_map(self):
-        flat_map = self._obj.get_weights()
+        weights = self._obj.get_weights()
         map = []
         for y in range(self.height):
-            row = [int(flat_map[self.get_node_id(x, y)] == -1) for x in range(self.width)]
+            row = [int(weights[self.get_node_id(x, y)] == -1) for x in range(self.width)]
             map.append(row)
         return map
 
@@ -271,28 +271,20 @@ cdef class Grid(_AbsGraph):
 
     @property
     def weights(self):
-        flat_map = self._obj.get_weights()
-        map = []
+        weights = self._obj.get_weights()
+        matrix = []
         for y in range(self.height):
-            row = [int(flat_map[self.get_node_id(x, y)]) for x in range(self.width)]
-            map.append(row)
-        return map
+            row = [weights[self.get_node_id(x, y)] for x in range(self.width)]
+            matrix.append(row)
+        return matrix
 
     @weights.setter
-    def weights(self, _map):
-        weights = self._obj.get_weights()
-
-        height, width = len(_map), len(_map[0])
+    def weights(self, matrix):
+        height, width = len(matrix), len(matrix[0])
         if height != self.height or width != self.width:
             raise ValueError(f"weights.shape must be {self.width}x{self.height}")
 
-        for y in range(height):
-            for x in range(width):
-                node_id = self.get_node_id(x, y)
-                if weights[node_id] >= 0:
-                    weights[node_id] = _map[y][x]
-
-        self._obj.set_weights(weights)
+        self._obj.set_weights(sum(matrix, []))
 
     def calculate_cost(self, path):
         cdef vector[int] nodes
