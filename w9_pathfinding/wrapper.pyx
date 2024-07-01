@@ -26,15 +26,28 @@ cdef class _AbsGraph:
     def calculate_cost(self, vector[int] path):
         return self._baseobj.calculate_cost(path)
 
+    def get_neighbours(self, int node_id):
+        # return [[neighbour_id, cost], ...]
+        return self._baseobj.get_neighbours(node_id)
+
 
 cdef class Graph(_AbsGraph):
     cdef CGraph* _obj
     cdef readonly int num_vertices
+    cdef readonly bool directed
 
-    def __cinit__(self, unsigned int num_vertices, coordinates=None, edges=None):
-        self._obj = new CGraph(num_vertices)
+    def __cinit__(
+        self,
+        unsigned int num_vertices,
+        *,
+        bool directed=True,
+        coordinates=None,
+        edges=None
+    ):
+        self._obj = new CGraph(num_vertices, directed)
         self._baseobj = self._obj
         self.num_vertices = num_vertices
+        self.directed = directed
         if coordinates:
             self.set_coordinates(coordinates)
         if edges:
@@ -107,9 +120,6 @@ cdef class Graph(_AbsGraph):
             costs.append(cost)
         self._obj.add_edges(starts, ends, costs)
 
-    def get_neighbours(self, int node_id):
-        return self._obj.get_neighbours(node_id)
-
     def reverse(self, *, bool inplace=False):
         if inplace:
             self._obj.reverse_inplace()
@@ -120,6 +130,11 @@ cdef class Graph(_AbsGraph):
         reversed_graph._obj = self._obj.create_reversed_graph()
         reversed_graph._baseobj = reversed_graph._obj
         return reversed_graph
+
+    def find_components(self):
+        if self.directed:
+            raise ValueError("find_components only works for an undirected graph")
+        return self._obj.find_components()
 
 
 cdef class Grid(_AbsGraph):
@@ -290,6 +305,12 @@ cdef class Grid(_AbsGraph):
         cdef vector[int] nodes
         nodes = [self.get_node_id(*x) for x in path]
         return self._obj.calculate_cost(nodes)
+
+    def find_components(self):
+        return [
+            [self.get_coordinates(node_id) for node_id in component]
+            for component in self._obj.find_components()
+        ]
 
     def show_path(self, path):
         if path:

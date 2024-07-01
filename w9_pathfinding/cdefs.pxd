@@ -14,6 +14,8 @@ cdef extern from "src/include/core.h":
         size_t size()
         double calculate_cost(vector[int])
         void reverse_inplace()
+        vector[pair[int, double]] get_neighbours(int)
+        vector[vector[int]] find_components()
 
     cdef cppclass AbsPathFinder:
         AbsPathFinder() except +
@@ -27,13 +29,12 @@ cdef extern from "src/graph.cpp":
 cdef extern from "src/include/graph.h":
 
     cdef cppclass Graph(AbsGraph):
-        Graph(int) except +
-        Graph(int, vector[vector[double]]) except +
+        Graph(int, bool) except +
+        Graph(int, bool, vector[vector[double]]) except +
         void add_edges(vector[int], vector[int], vector[double])
         size_t num_edges()
         vector[vector[double]] get_edges()
         vector[vector[double]] get_coordinates()
-        vector[pair[int, double]] get_neighbours(int)
         void set_coordinates(vector[vector[double]])
         bool has_coordinates()
         double estimate_distance(int v1, int v2)
@@ -60,7 +61,6 @@ cdef extern from "src/include/grid.h":
         void clear_weights()
         void set_weights(vector[double]&)
         vector[double] get_weights()
-        vector[pair[int, double]] get_neighbours(int)
 
 
 cdef extern from "src/dfs.cpp":

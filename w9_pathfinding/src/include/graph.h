@@ -14,8 +14,9 @@ class Graph : public AbsGraph {
     };
 
     public:
-        Graph(int num_vertices);
-        Graph(int num_vertices, vector<vector<double>> coordinates);
+        Graph(int num_vertices, bool directed);
+        Graph(int num_vertices, bool directed, vector<vector<double>> coordinates);
+        bool is_directed_graph() const;
         size_t size() const;
         size_t num_edges() const;
         void add_edge(int start, int end, double cost);
@@ -32,6 +33,7 @@ class Graph : public AbsGraph {
 
     private:
         int num_vertices_;
+        bool directed_;
         vector<vector<Edge>> edges_;
         vector<vector<double>> coordinates_;
 };

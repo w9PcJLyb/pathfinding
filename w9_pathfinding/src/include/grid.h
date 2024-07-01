@@ -32,6 +32,7 @@ class Grid : public AbsGraph {
         bool passable_left_right_border, passable_up_down_border;
 
         size_t size() const;
+        bool is_directed_graph() const {return false;};
         void set_diagonal_movement(int);
         int get_diagonal_movement() const;
         void set_weights(vector<double> &map);
@@ -49,6 +50,7 @@ class Grid : public AbsGraph {
         double estimate_distance(int v1, int v2) const;
         AbsGraph* reverse() const;
         void reverse_inplace();
+        vector<vector<int>> find_components() const override;
 
     private:
         // 0 - without diagonal movements

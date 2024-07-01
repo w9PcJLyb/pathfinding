@@ -127,6 +127,8 @@ vector<pair<int, double>> Grid::get_neighbours(int node) const {
     Point p0 = get_coordinates(node);
 
     double node_weight = weights_.at(node);
+    if (node_weight == -1)
+        return nb;
 
     auto add_direction = [&] (int direction_id) {
         Point p = p0 + directions_[direction_id];
@@ -230,4 +232,15 @@ AbsGraph* Grid::reverse() const {
 
 void Grid::reverse_inplace() {
     reversed_ = !reversed_;
+}
+
+vector<vector<int>> Grid::find_components() const {
+    vector<vector<int>> components = AbsGraph::find_components();
+    vector<vector<int>> components_without_walls;
+    for (vector<int> x : components) {
+        if (x.size() == 1 && has_obstacle(x[0]))
+            continue;
+        components_without_walls.push_back(x);
+    }
+    return components_without_walls;
 }

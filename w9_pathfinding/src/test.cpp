@@ -27,8 +27,8 @@ void print_path(Grid &grid, vector<int> nodes) {
 void test_graph() {
     cout << "\nTest graph" << endl;
 
-    Graph graph(6);
-    
+    Graph graph(6, true);
+
     graph.add_edge(0, 1, 1);
     graph.add_edge(0, 2, 3);
     graph.add_edge(0, 3, 1);
@@ -38,7 +38,7 @@ void test_graph() {
     graph.add_edge(3, 2, 4);
     graph.add_edge(3, 4, 2);
     graph.add_edge(4, 5, 1);
-    
+
     int start_node = 0;
     int end_node = 5;
 

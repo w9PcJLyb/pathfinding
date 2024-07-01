@@ -45,3 +45,26 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(graph.calculate_cost([0, 1]), 2)
         self.assertEqual(graph.calculate_cost([1, 2]), 3)
         self.assertEqual(graph.calculate_cost([0, 1, 2]), 2 + 3)
+
+    def test_find_components(self):
+        graph = Graph(5, directed=False)
+
+        def sorted_components(graph):
+            components = graph.find_components()
+            for i, x in enumerate(components):
+                components[i] = sorted(x)
+            components = sorted(components)
+            return components
+
+        self.assertListEqual(sorted_components(graph), [[0], [1], [2], [3], [4]])
+
+        graph.add_edges([[1, 2, 100], [4, 3, 0]])
+        self.assertListEqual(sorted_components(graph), [[0], [1, 2], [3, 4]])
+
+        graph.add_edges([[2, 3, 100]])
+        self.assertListEqual(sorted_components(graph), [[0], [1, 2, 3, 4]])
+
+    def test_find_components_with_directed_graph(self):
+        graph = Graph(5, directed=True)
+        with self.assertRaises(ValueError):
+            graph.find_components()

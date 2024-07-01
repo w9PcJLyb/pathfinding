@@ -2,12 +2,16 @@
 #define _unused(x) ((void)(x))
 
 
-Graph::Graph(int num_vertices) : num_vertices_(num_vertices) {
+Graph::Graph(int num_vertices, bool directed) : num_vertices_(num_vertices), directed_(directed) {
     edges_.resize(num_vertices_, vector<Edge>(0));
 }
 
-Graph::Graph(int num_vertices, vector<vector<double>> coordinates) : Graph(num_vertices) {
+Graph::Graph(int num_vertices, bool undirected, vector<vector<double>> coordinates) : Graph(num_vertices, undirected) {
     set_coordinates(coordinates);
+}
+
+bool Graph::is_directed_graph() const {
+    return directed_;
 }
 
 void Graph::set_coordinates(vector<vector<double>> &coordinates) {
@@ -41,6 +45,8 @@ size_t Graph::num_edges() const {
 
 void Graph::add_edge(int start, int end, double cost) {
     edges_[start].push_back(Edge(end, cost));
+    if (!directed_)
+        edges_[end].push_back(Edge(start, cost));
 }
 
 void Graph::add_edges(vector<int> starts, vector<int> ends, vector<double> costs) {
@@ -88,7 +94,7 @@ double Graph::estimate_distance(int v1, int v2) const {
 }
 
 Graph* Graph::create_reversed_graph() const {
-    Graph* reversed_graph = new Graph(num_vertices_, coordinates_);
+    Graph* reversed_graph = new Graph(num_vertices_, directed_, coordinates_);
     for (int i = 0; i < num_vertices_; i++) {
         for (const Edge &e: edges_[i]) {
             reversed_graph->add_edge(e.node_id, i, e.cost);

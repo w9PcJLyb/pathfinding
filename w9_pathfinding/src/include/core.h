@@ -25,7 +25,12 @@ class AbsGraph {
         virtual AbsGraph* reverse() const = 0;
         virtual void reverse_inplace() = 0;
         virtual double estimate_distance(int v1, int v2) const = 0;
+        virtual bool is_directed_graph() const = 0;
         double calculate_cost(vector<int> &path) const;
+        virtual vector<vector<int>> find_components() const;
+
+    private:
+        vector<int> find_component_(vector<bool> &visited, int start) const;
 };
 
 
