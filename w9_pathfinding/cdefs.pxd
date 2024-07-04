@@ -16,6 +16,7 @@ cdef extern from "src/include/core.h":
         void reverse_inplace()
         vector[pair[int, double]] get_neighbours(int)
         vector[vector[int]] find_components()
+        vector[vector[int]] find_scc()
 
     cdef cppclass AbsPathFinder:
         AbsPathFinder() except +

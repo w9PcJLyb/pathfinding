@@ -68,3 +68,41 @@ class TestGraph(unittest.TestCase):
         graph = Graph(5, directed=True)
         with self.assertRaises(ValueError):
             graph.find_components()
+
+    def test_find_scc(self):
+        with self.subTest("case 1"):
+            graph = Graph(5, directed=True)
+
+            def sorted_scc(graph):
+                components = graph.find_scc()
+                for i, x in enumerate(components):
+                    components[i] = sorted(x)
+                components = sorted(components)
+                return components
+
+            self.assertListEqual(sorted_scc(graph), [[0], [1], [2], [3], [4]])
+
+            graph.add_edges([[2, 1, 1], [3, 2, 1]])
+            self.assertListEqual(sorted_scc(graph), [[0], [1], [2], [3], [4]])
+
+            graph.add_edges([[1, 3, 1]])
+            self.assertListEqual(sorted_scc(graph), [[0], [1, 2, 3], [4]])
+
+        with self.subTest("case 2"):
+            graph = Graph(4, directed=True)
+            graph.add_edges([[0, 1, 1], [3, 0, 1], [1, 2, 1], [2, 0, 1]])
+            self.assertListEqual(sorted_scc(graph), [[0, 1, 2], [3]])
+
+        with self.subTest("case 3"):
+            graph = Graph(5, directed=True)
+            edges = [
+                [1, 0, 1],
+                [2, 1, 1],
+                [2, 0, 1],
+                [3, 2, 1],
+                [3, 0, 1],
+                [4, 1, 1],
+                [4, 2, 1],
+            ]
+            graph.add_edges(edges)
+            self.assertListEqual(sorted_scc(graph), [[0], [1], [2], [3], [4]])

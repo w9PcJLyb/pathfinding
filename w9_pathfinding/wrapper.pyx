@@ -136,6 +136,13 @@ cdef class Graph(_AbsGraph):
             raise ValueError("find_components only works for an undirected graph")
         return self._obj.find_components()
 
+    def find_scc(self):
+        # find the strongly connected components of a directed graph
+        if not self.directed:
+            raise ValueError("find_scc only works for a directed graph")
+
+        return self._obj.find_scc()
+
 
 cdef class Grid(_AbsGraph):
     cdef CGrid* _obj
