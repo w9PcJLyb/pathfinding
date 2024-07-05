@@ -53,7 +53,7 @@ cdef extern from "src/include/grid.h":
         double diagonal_movement_cost_multiplier
 
         Grid(int, int) except +
-        Grid(int, int, vector[int]) except +
+        Grid(int, int, vector[double]) except +
         unsigned int get_diagonal_movement()
         void set_diagonal_movement(int)
         bool has_obstacle(int)

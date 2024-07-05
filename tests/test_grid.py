@@ -15,8 +15,8 @@ class TestGrid(unittest.TestCase):
         |         |
         + -  -  - +
         """
-        obstacle_matrix = [[0, 1, 1], [1, 1, 0], [0, 0, 0]]
-        grid = Grid(obstacle_matrix)
+        weights = [[1, -1, -1], [-1, -1, 1], [1, 1, 1]]
+        grid = Grid(weights)
 
         def sorted_components(graph):
             components = graph.find_components()

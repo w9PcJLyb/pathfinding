@@ -129,7 +129,8 @@ class GridGrnerator(_Generator):
         obstacle_map = []
         for _ in range(self.height):
             row = [
-                random.random() < self.obstacle_percentage for _ in range(self.width)
+                -1 if random.random() < self.obstacle_percentage else 1
+                for _ in range(self.width)
             ]
             obstacle_map.append(row)
         return obstacle_map

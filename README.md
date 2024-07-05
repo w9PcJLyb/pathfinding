@@ -51,17 +51,19 @@ path = dijkstra.find_path(start=0, end=3)
 print(path)  # [0, 1, 3]
 ```
 
-Example 2. 2D Grid and A*
+Example 2. Two-dimensional grid and A*
 
 ```python
 from w9_pathfinding import Grid, AStar, DiagonalMovement
 
 grid = Grid(
-    [
-        [0, 0, 0, 1],
-        [1, 0, 0, 1],
-        [0, 0, 1, 1],
-        [0, 0, 0, 0],
+    weights =[
+        # -1 - unwalkable cell
+        # >= 0 - walkable, value is the cost of moving to this cell
+        [1,  1,  1, -1],
+        [-1, 1,  1, -1],
+        [1,  1, -1, -1],
+        [1,  1,  1,  1],
     ],
     diagonal_movement=DiagonalMovement.never,
     passable_left_right_border=False,

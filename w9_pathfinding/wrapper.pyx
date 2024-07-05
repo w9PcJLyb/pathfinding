@@ -150,22 +150,21 @@ cdef class Grid(_AbsGraph):
 
     def __cinit__(
         self,
-        obstacle_map=None,
+        weights=None,
         *,
         width=None,
         height=None,
-        weights=None,
         int diagonal_movement=0,
         bool passable_left_right_border=False,
         bool passable_up_down_border=False,
         double diagonal_movement_cost_multiplier=1,
     ):
 
-        if obstacle_map is None:
+        if weights is None:
             if not isinstance(width, int) or not isinstance(height, int):
-                raise ValueError("Either obstacle_map or height and width must be provided.")
+                raise ValueError("Either weights or height and width must be provided.")
         else:
-            height, width = len(obstacle_map), len(obstacle_map[0])
+            height, width = len(weights), len(weights[0])
 
         if width <= 0:
             raise ValueError("Width must be greater than zero.")
@@ -176,14 +175,13 @@ cdef class Grid(_AbsGraph):
         self.width = width
         self.height = height
 
-        self._obj = new CGrid(width, height)
+        if weights is None:
+            self._obj = new CGrid(width, height)
+        else:
+            self._check_weights(weights)
+            self._obj = new CGrid(width, height, sum(weights, []))
+
         self._baseobj = self._obj
-
-        if obstacle_map is not None:
-            self.obstacle_map = obstacle_map
-
-        if weights is not None:
-            self.weights = weights
 
         if diagonal_movement:
             self.diagonal_movement = diagonal_movement
@@ -276,20 +274,14 @@ cdef class Grid(_AbsGraph):
             map.append(row)
         return map
 
-    @obstacle_map.setter
-    def obstacle_map(self, _map):
-        weights = self._obj.get_weights()
-
-        height, width = len(_map), len(_map[0])
+    def _check_weights(self, weights):
+        height, width = len(weights), len(weights[0])
         if height != self.height or width != self.width:
-            raise ValueError(f"obstacle_map.shape must be {self.width}x{self.height}")
-
-        for y in range(height):
-            for x in range(width):
-                if _map[y][x] != 0:
-                    weights[self.get_node_id(x, y)] = -1
-
-        self._obj.set_weights(weights)
+            raise ValueError(f"weights.shape must be {self.width}x{self.height}")
+        for row in weights:
+            for w in row:
+                if w < 0 and w != -1:
+                    raise ValueError("Weight must be positive or equal to -1")
 
     @property
     def weights(self):
@@ -302,10 +294,7 @@ cdef class Grid(_AbsGraph):
 
     @weights.setter
     def weights(self, matrix):
-        height, width = len(matrix), len(matrix[0])
-        if height != self.height or width != self.width:
-            raise ValueError(f"weights.shape must be {self.width}x{self.height}")
-
+        self._check_weights(matrix)
         self._obj.set_weights(sum(matrix, []))
 
     def calculate_cost(self, path):
