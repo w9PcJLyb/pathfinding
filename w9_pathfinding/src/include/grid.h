@@ -49,7 +49,6 @@ class Grid : public AbsGraph {
         vector<Point> get_coordinates(vector<int> &p) const;
         double estimate_distance(int v1, int v2) const;
         AbsGraph* reverse() const;
-        void reverse_inplace();
         vector<vector<int>> find_components() const override;
 
     private:

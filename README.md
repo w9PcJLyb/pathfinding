@@ -4,13 +4,21 @@ Implementation of some pathfinding algorithms.
 
 Currently implemented:
 
-- DFS (Depth-first search)
-- BFS (Breadth-first search)
-- BiBFS (Bidirectional Breadth-first search)
-- Dijkstra
-- BiDijkstra (Bidirectional Dijkstra)
-- AStar (A*)
-- BiAStar (Bidirectional A*)
+| Algorithm   | Class name  | Finds the shortest path on an unweighted graph | Finds the shortest path on a weighted graph |
+| ----------- | ----------- |----------- | ----------- |
+| Depth-first search | DFS | False | False |
+| Breadth-first search | BFS | True | False |
+| Bidirectional Breadth-first search | BiBFS | True | False |
+| Dijkstra | Dijkstra | True | True |
+| Bidirectional Dijkstra | BiDijkstra | True | True |
+| A* | AStar | True | True |
+| Bidirectional A* | BiAStar | True | True |
+
+There are several types of graphs available:
+
+ - Graph - Directed or undirected graph
+ - Grid - Two-dimensional grid
+ - Grid3D - Three-dimensional grid
 
 # Installation
 

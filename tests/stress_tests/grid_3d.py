@@ -2,21 +2,23 @@ import time
 from copy import copy
 
 import w9_pathfinding as pf
-from tests.stress_tests.generator import GridGrnerator
+from tests.stress_tests.generator import Grid3DGrnerator
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
 
-UNWEIGHTED_GRID_GENERATOR = GridGrnerator(
-    width=100,
-    height=100,
+UNWEIGHTED_GRID_GENERATOR = Grid3DGrnerator(
+    width=20,
+    height=20,
+    depth=20,
     obstacle_percentage=0.2,
     weighted=False,
 )
 
-WEIGHTED_GRID_GENERATOR = GridGrnerator(
-    width=100,
-    height=100,
+WEIGHTED_GRID_GENERATOR = Grid3DGrnerator(
+    width=20,
+    height=20,
+    depth=20,
     obstacle_percentage=0.2,
     weighted=True,
 )
@@ -43,8 +45,7 @@ def find_path(finder, start, end):
 def show_grid_info(grid, start, end):
     print("weights =", grid.weights)
     print("diagonal_movement =", grid.diagonal_movement)
-    print("passable_left_right_border =", grid.passable_left_right_border)
-    print("passable_up_down_border =", grid.passable_up_down_border)
+    print("passable_borders =", grid.passable_borders)
     print(f"start, end = {start}, {end}")
 
 

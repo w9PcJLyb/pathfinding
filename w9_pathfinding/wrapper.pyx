@@ -7,6 +7,7 @@ from w9_pathfinding.cdefs cimport (
     AbsPathFinder as CAbsPathFinder,
     Graph as CGraph,
     Grid as CGrid,
+    Grid3D as CGrid3D,
     DFS as CDFS,
     BFS as CBFS,
     BiBFS as CBiBFS,
@@ -342,6 +343,145 @@ cdef class Grid(_AbsGraph):
         self.show_path(None)
 
 
+cdef class Grid3D(_AbsGraph):
+    cdef CGrid3D* _obj
+    cdef readonly int width, height, depth
+
+    def __cinit__(
+        self,
+        weights=None,
+        *,
+        width=None,
+        height=None,
+        depth=None,
+        bool passable_borders=False,
+    ):
+
+        if weights is None:
+            if not isinstance(width, int) or not isinstance(height, int) or not isinstance(depth, int):
+                raise ValueError("Either weights or height and width and depth must be provided.")
+        else:
+            cut = weights[0]
+            depth, height, width = len(weights), len(cut), len(cut[0])
+
+        if width <= 0:
+            raise ValueError("Width must be greater than zero.")
+
+        if height <= 0:
+            raise ValueError("Height must be greater than zero.")
+
+        if depth <= 0:
+            raise ValueError("Depth must be greater than zero.")
+
+        self.width = width
+        self.height = height
+        self.depth = depth
+
+        if weights is None:
+            self._obj = new CGrid3D(width, height, depth)
+        else:
+            self._check_weights(weights)
+            self._obj = new CGrid3D(width, height, depth, sum(sum(weights, []), []))
+
+        self._baseobj = self._obj
+
+        if passable_borders:
+            self.passable_borders = passable_borders
+
+    def __dealloc__(self):
+        del self._obj
+
+    def __repr__(self):
+        return f"Grid3D({self.width}x{self.height}x{self.depth})"
+
+    @property
+    def diagonal_movement(self):
+        return 0
+
+    @property
+    def passable_borders(self):
+        return self._obj.passable_borders
+
+    @passable_borders.setter
+    def passable_borders(self, bool _b):
+        self._obj.passable_borders = _b
+
+    def assert_in(self, int x, int y, int z):
+        if not 0 <= x < self.width or not 0 <= y < self.height or not 0 <= z < self.depth:
+            raise ValueError(f"Point({x}, {y}, {z}) is out of the {self}")
+
+    def has_obstacle(self, int x, int y, int z):
+        return self._obj.has_obstacle(self.get_node_id(x, y, z))
+
+    def add_obstacle(self, int x, int y, int z):
+        self._obj.add_obstacle(self.get_node_id(x, y, z))
+
+    def remove_obstacle(self, int x, int y, int z):
+        self._obj.remove_obstacle(self.get_node_id(x, y, z))
+
+    def get_node_id(self, int x, int y, int z):
+        self.assert_in(x, y, z)
+        return x + y * self.width + z * self.width * self.height
+
+    def get_coordinates(self, int node_id):
+        xy = node_id % (self.width * self.height)
+        return xy % self.width, xy // self.width, node_id // (self.width * self.height)
+
+    def get_neighbours(self, int x, int y, int z):
+        node_id = self.get_node_id(x, y, z)
+        neighbours = []
+        for n, cost in self._obj.get_neighbours(node_id):
+            neighbours.append((self.get_coordinates(n), cost))
+        return neighbours
+
+    @property
+    def obstacle_map(self):
+        weights = self.weights
+        for i in range(self.depth):
+            for j in range(self.height):
+                weights[i][j] = [int(x < 0) for x in weights[i][j]]
+        return map
+
+    def _check_weights(self, weights):
+        cut = weights[0]
+        depth, height, width = len(weights), len(cut), len(cut[0])
+        if depth != self.depth or height != self.height or width != self.width:
+            raise ValueError(f"weights.shape must be {self.width}x{self.height}x{self.depth}")
+        for cut in weights:
+            for row in cut:
+                for w in row:
+                    if w < 0 and w != -1:
+                        raise ValueError("Weight must be positive or equal to -1")
+
+    @property
+    def weights(self):
+        weights = self._obj.get_weights()
+        matrix = []
+        for z in range(self.depth):
+            matrix.append([])
+            for y in range(self.height):
+                row = [weights[self.get_node_id(x, y, z)] for x in range(self.width)]
+                matrix[-1].append(row)
+        return matrix
+
+    @weights.setter
+    def weights(self, matrix):
+        self._check_weights(matrix)
+        self._obj.set_weights(sum(sum(matrix, []), []))
+
+    def calculate_cost(self, path):
+        cdef vector[int] nodes
+        nodes = [self.get_node_id(*x) for x in path]
+        return self._obj.calculate_cost(nodes)
+
+    def find_components(self):
+        return [
+            [self.get_coordinates(node_id) for node_id in component]
+            for component in self._obj.find_components()
+        ]
+
+
+
 cdef class _AbsPathFinder():
     cdef CAbsPathFinder* _baseobj
     cdef public _AbsGraph graph
@@ -355,17 +495,17 @@ cdef class _AbsPathFinder():
     def find_path(self, start, end):
         g = self.graph
         
-        if type(g) is Graph:
+        if isinstance(g, Graph):
             g.assert_in(start)
             g.assert_in(end)
             path = self._baseobj.find_path(start, end)
 
-        elif type(g) is Grid:
+        elif isinstance(g, (Grid, Grid3D)):
             start = g.get_node_id(*start)
             end = g.get_node_id(*end)
             path = self._baseobj.find_path(start, end)
             path = [g.get_coordinates(node) for node in path]
-        
+
         else:
             raise NotImplementedError
         

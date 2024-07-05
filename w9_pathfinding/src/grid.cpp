@@ -230,10 +230,6 @@ AbsGraph* Grid::reverse() const {
     return reversed_grid;
 }
 
-void Grid::reverse_inplace() {
-    reversed_ = !reversed_;
-}
-
 vector<vector<int>> Grid::find_components() const {
     vector<vector<int>> components = AbsGraph::find_components();
     vector<vector<int>> components_without_walls;

@@ -64,6 +64,25 @@ cdef extern from "src/include/grid.h":
         vector[double] get_weights()
 
 
+cdef extern from "src/grid_3d.cpp":
+    pass
+
+
+cdef extern from "src/include/grid_3d.h":
+
+    cdef cppclass Grid3D(AbsGraph):
+        bool passable_borders
+
+        Grid3D(int, int, int) except +
+        Grid3D(int, int, int, vector[double]) except +
+        bool has_obstacle(int)
+        void add_obstacle(int)
+        void remove_obstacle(int)
+        void clear_weights()
+        void set_weights(vector[double]&)
+        vector[double] get_weights()
+
+
 cdef extern from "src/dfs.cpp":
     pass
 

@@ -1,5 +1,5 @@
 import random
-from w9_pathfinding import Grid, Graph
+from w9_pathfinding import Grid, Graph, Grid3D
 
 
 class _Generator:
@@ -182,3 +182,66 @@ class GridGrnerator(_Generator):
             queries.append((start, end))
 
         return grid, queries
+
+
+class Grid3DGrnerator(GridGrnerator):
+    def __init__(
+        self,
+        width=10,
+        height=10,
+        depth=10,
+        obstacle_percentage=0.2,
+        weighted=False,
+        min_weight=0,
+        max_weight=100,
+    ):
+        self.width = width
+        self.height = height
+        self.depth = depth
+        self.obstacle_percentage = obstacle_percentage
+        self.weighted = weighted
+        self.min_weight = min_weight
+        self.max_weight = max_weight
+
+    def _generate_obstacle_map(self):
+        obstacle_map = []
+        for _ in range(self.depth):
+            obstacle_map.append([])
+            for _ in range(self.height):
+                row = [
+                    -1 if random.random() < self.obstacle_percentage else 1
+                    for _ in range(self.width)
+                ]
+                obstacle_map[-1].append(row)
+        return obstacle_map
+
+    def _generate_grid(self):
+        grid = Grid3D(
+            self._generate_obstacle_map(),
+            passable_borders=random.randint(0, 1),
+        )
+        self._add_widths(grid)
+        return grid
+
+    def _add_widths(self, grid):
+        if not self.weighted:
+            return
+
+        weights = grid.weights
+        for z in range(self.depth):
+            for y in range(self.height):
+                for x in range(self.width):
+                    if weights[z][y][x] >= 0:
+                        weights[z][y][x] = random.uniform(
+                            self.min_weight, self.max_weight
+                        )
+
+        grid.weights = weights
+
+    def _find_free_point(self, grid):
+        while True:
+            x = random.randint(0, grid.width - 1)
+            y = random.randint(0, grid.height - 1)
+            z = random.randint(0, grid.depth - 1)
+            if not grid.has_obstacle(x, y, z):
+                return x, y, z
