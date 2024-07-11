@@ -8,17 +8,19 @@ NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
 
 UNWEIGHTED_GRID_GENERATOR = GridGrnerator(
-    width=100,
-    height=100,
+    width=64,
+    height=64,
     obstacle_percentage=0.2,
     weighted=False,
 )
 
 WEIGHTED_GRID_GENERATOR = GridGrnerator(
-    width=100,
-    height=100,
+    width=64,
+    height=64,
     obstacle_percentage=0.2,
     weighted=True,
+    min_weight=0.5,
+    max_weight=1.5,
 )
 
 # - unweighted - can find the shortest path in an unweighted graph
@@ -31,6 +33,7 @@ ALGORITHMS = [
     {"name": "BiDijkstra", "class": pf.BiDijkstra, "unw": 1, "w": 1},
     {"name": "A*", "class": pf.AStar, "unw": 1, "w": 1},
     {"name": "Bi A*", "class": pf.BiAStar, "unw": 1, "w": 1},
+    {"name": "Space-Time A*", "class": pf.SpaceTimeAStar, "unw": 1, "w": 1},
 ]
 
 
@@ -41,7 +44,7 @@ def find_path(finder, start, end):
 
 
 def show_grid_info(grid, start, end):
-    print("weights =", grid.weights)
+    print("weights =", sum(grid.weights, []))
     print("diagonal_movement =", grid.diagonal_movement)
     print("passable_left_right_border =", grid.passable_left_right_border)
     print("passable_up_down_border =", grid.passable_up_down_border)

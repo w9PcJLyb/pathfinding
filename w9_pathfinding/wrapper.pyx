@@ -15,6 +15,7 @@ from w9_pathfinding.cdefs cimport (
     BiDijkstra as CBiDijkstra,
     AStar as CAStar,
     BiAStar as CBiAStar,
+    SpaceTimeAStar as CSpaceTimeAStar,
 )
 
 
@@ -30,6 +31,28 @@ cdef class _AbsGraph:
     def get_neighbours(self, int node_id):
         # return [[neighbour_id, cost], ...]
         return self._baseobj.get_neighbours(node_id)
+
+    def set_dynamic_obstacles(self, dynamic_obstacles):
+        self._baseobj.set_dynamic_obstacles(dynamic_obstacles)
+
+    def add_dynamic_obstacles(self, vector[int] path):
+        self._baseobj.add_dynamic_obstacles(path)
+
+    def has_dynamic_obstacle(self, int time, int node_id):
+        return self._baseobj.has_dynamic_obstacle(time, node_id)
+
+    @property
+    def pause_action_cost(self):
+        return self._baseobj.get_pause_action_cost()
+
+    @pause_action_cost.setter
+    def pause_action_cost(self, double cost):
+        if cost < 0 and cost != -1:
+            raise ValueError("pause_action_cost must be either non-negative or equal to -1")
+        self._baseobj.set_pause_action_cost(cost)
+
+    def is_pause_action_allowed(self):
+        return self._baseobj.is_pause_action_allowed()
 
 
 cdef class Graph(_AbsGraph):
@@ -145,7 +168,48 @@ cdef class Graph(_AbsGraph):
         return self._obj.find_scc()
 
 
-cdef class Grid(_AbsGraph):
+cdef class _AbsGrid(_AbsGraph):
+    def assert_in(self, point):
+        raise NotImplementedError()
+
+    def get_node_id(self, point):
+        raise NotImplementedError()
+
+    def get_coordinates(self, int node_id):
+        raise NotImplementedError()
+
+    def get_neighbours(self, point):
+        node_id = self.get_node_id(point)
+        neighbours = []
+        for n, cost in self._baseobj.get_neighbours(node_id):
+            neighbours.append((self.get_coordinates(n), cost))
+        return neighbours
+
+    def set_dynamic_obstacles(self, dynamic_obstacles):
+        for i in range(len(dynamic_obstacles)):
+            dynamic_obstacles[i] = {self.get_node_id(point) for point in dynamic_obstacles[i]}
+        return super().set_dynamic_obstacles(dynamic_obstacles)
+
+    def add_dynamic_obstacles(self, path):
+        path = [self.get_node_id(point) for point in path]
+        return super().add_dynamic_obstacles(path)
+
+    def has_dynamic_obstacle(self, int time, point):
+        return super().has_dynamic_obstacle(time, self.get_node_id(point))
+
+    def calculate_cost(self, path):
+        cdef vector[int] nodes
+        nodes = [self.get_node_id(x) for x in path]
+        return self._baseobj.calculate_cost(nodes)
+
+    def find_components(self):
+        return [
+            [self.get_coordinates(node_id) for node_id in component]
+            for component in self._baseobj.find_components()
+        ]
+
+
+cdef class Grid(_AbsGrid):
     cdef CGrid* _obj
     cdef readonly int width, height
 
@@ -202,6 +266,29 @@ cdef class Grid(_AbsGraph):
     def __repr__(self):
         return f"Grid({self.width}x{self.height})"
 
+    def assert_in(self, point):
+        if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height:
+            raise ValueError(f"Point {point} is out of the {self}")
+
+    def get_node_id(self, point):
+        self.assert_in(point)
+        return point[0] + point[1] * self.width
+
+    def get_coordinates(self, int node_id):
+        return node_id % self.width, node_id // self.width
+
+    def has_obstacle(self, point):
+        self.assert_in(point)
+        return self._obj.has_obstacle(self.get_node_id(point))
+
+    def add_obstacle(self, point):
+        self.assert_in(point)
+        self._obj.add_obstacle(self.get_node_id(point))
+
+    def remove_obstacle(self, point):
+        self.assert_in(point)
+        self._obj.remove_obstacle(self.get_node_id(point))
+
     @property
     def diagonal_movement(self):
         return self._obj.get_diagonal_movement()
@@ -236,42 +323,12 @@ cdef class Grid(_AbsGraph):
             raise ValueError("diagonal_movement_cost_multiplier must be in range [1, 2].")
         self._obj.diagonal_movement_cost_multiplier = m
 
-    def assert_in(self, int x, int y):
-        if not 0 <= x < self.width or not 0 <= y < self.height:
-            raise ValueError(f"Point({x}, {y}) is out of the {self}")
-
-    def has_obstacle(self, int x, int y):
-        self.assert_in(x, y)
-        return self._obj.has_obstacle(x + y * self.width)
-
-    def add_obstacle(self, int x, int y):
-        self.assert_in(x, y)
-        self._obj.add_obstacle(x + y * self.width)
-
-    def remove_obstacle(self, int x, int y):
-        self.assert_in(x, y)
-        self._obj.remove_obstacle(x + y * self.width)
-
-    def get_node_id(self, int x, int y):
-        self.assert_in(x, y)
-        return x + y * self.width
-
-    def get_coordinates(self, int node_id):
-        return node_id % self.width, node_id // self.width
-
-    def get_neighbours(self, int x, int y):
-        node_id = self.get_node_id(x, y)
-        neighbours = []
-        for n, cost in self._obj.get_neighbours(node_id):
-            neighbours.append((self.get_coordinates(n), cost))
-        return neighbours
-
     @property
     def obstacle_map(self):
         weights = self._obj.get_weights()
         map = []
         for y in range(self.height):
-            row = [int(weights[self.get_node_id(x, y)] == -1) for x in range(self.width)]
+            row = [int(weights[self.get_node_id((x, y))] == -1) for x in range(self.width)]
             map.append(row)
         return map
 
@@ -282,14 +339,14 @@ cdef class Grid(_AbsGraph):
         for row in weights:
             for w in row:
                 if w < 0 and w != -1:
-                    raise ValueError("Weight must be positive or equal to -1")
+                    raise ValueError("Weight must be either non-negative or equal to -1")
 
     @property
     def weights(self):
         weights = self._obj.get_weights()
         matrix = []
         for y in range(self.height):
-            row = [weights[self.get_node_id(x, y)] for x in range(self.width)]
+            row = [weights[self.get_node_id((x, y))] for x in range(self.width)]
             matrix.append(row)
         return matrix
 
@@ -297,17 +354,6 @@ cdef class Grid(_AbsGraph):
     def weights(self, matrix):
         self._check_weights(matrix)
         self._obj.set_weights(sum(matrix, []))
-
-    def calculate_cost(self, path):
-        cdef vector[int] nodes
-        nodes = [self.get_node_id(*x) for x in path]
-        return self._obj.calculate_cost(nodes)
-
-    def find_components(self):
-        return [
-            [self.get_coordinates(node_id) for node_id in component]
-            for component in self._obj.find_components()
-        ]
 
     def show_path(self, path):
         if path:
@@ -324,7 +370,7 @@ cdef class Grid(_AbsGraph):
            row = []
            for x in range(self.width):
                k = (x, y)
-               if self.has_obstacle(*k):
+               if self.has_obstacle(k):
                    c = "#"
                elif k == start:
                    c = "s"
@@ -343,7 +389,7 @@ cdef class Grid(_AbsGraph):
         self.show_path(None)
 
 
-cdef class Grid3D(_AbsGraph):
+cdef class Grid3D(_AbsGrid):
     cdef CGrid3D* _obj
     cdef readonly int width, height, depth
 
@@ -406,33 +452,26 @@ cdef class Grid3D(_AbsGraph):
     def passable_borders(self, bool _b):
         self._obj.passable_borders = _b
 
-    def assert_in(self, int x, int y, int z):
-        if not 0 <= x < self.width or not 0 <= y < self.height or not 0 <= z < self.depth:
-            raise ValueError(f"Point({x}, {y}, {z}) is out of the {self}")
+    def assert_in(self, point):
+        if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height or not 0 <= point[2] < self.depth:
+            raise ValueError(f"Point {point} is out of the {self}")
 
-    def has_obstacle(self, int x, int y, int z):
-        return self._obj.has_obstacle(self.get_node_id(x, y, z))
-
-    def add_obstacle(self, int x, int y, int z):
-        self._obj.add_obstacle(self.get_node_id(x, y, z))
-
-    def remove_obstacle(self, int x, int y, int z):
-        self._obj.remove_obstacle(self.get_node_id(x, y, z))
-
-    def get_node_id(self, int x, int y, int z):
-        self.assert_in(x, y, z)
-        return x + y * self.width + z * self.width * self.height
+    def get_node_id(self, point):
+        self.assert_in(point)
+        return point[0] + point[1] * self.width + point[2] * self.width * self.height
 
     def get_coordinates(self, int node_id):
         xy = node_id % (self.width * self.height)
         return xy % self.width, xy // self.width, node_id // (self.width * self.height)
 
-    def get_neighbours(self, int x, int y, int z):
-        node_id = self.get_node_id(x, y, z)
-        neighbours = []
-        for n, cost in self._obj.get_neighbours(node_id):
-            neighbours.append((self.get_coordinates(n), cost))
-        return neighbours
+    def has_obstacle(self, point):
+        return self._obj.has_obstacle(self.get_node_id(point))
+
+    def add_obstacle(self, point):
+        self._obj.add_obstacle(self.get_node_id(point))
+
+    def remove_obstacle(self, point):
+        self._obj.remove_obstacle(self.get_node_id(point))
 
     @property
     def obstacle_map(self):
@@ -460,7 +499,7 @@ cdef class Grid3D(_AbsGraph):
         for z in range(self.depth):
             matrix.append([])
             for y in range(self.height):
-                row = [weights[self.get_node_id(x, y, z)] for x in range(self.width)]
+                row = [weights[self.get_node_id((x, y, z))] for x in range(self.width)]
                 matrix[-1].append(row)
         return matrix
 
@@ -469,47 +508,44 @@ cdef class Grid3D(_AbsGraph):
         self._check_weights(matrix)
         self._obj.set_weights(sum(sum(matrix, []), []))
 
-    def calculate_cost(self, path):
-        cdef vector[int] nodes
-        nodes = [self.get_node_id(*x) for x in path]
-        return self._obj.calculate_cost(nodes)
 
-    def find_components(self):
-        return [
-            [self.get_coordinates(node_id) for node_id in component]
-            for component in self._obj.find_components()
-        ]
+def _pathfinding(func):
 
+    def wrap(finder, start, end, **kwargs):
+        g = finder.graph
+
+        if isinstance(g, Graph):
+            g.assert_in(start)
+            g.assert_in(end)
+            path = func(finder, start, end, **kwargs)
+
+        elif isinstance(g, (Grid, Grid3D)):
+            start = g.get_node_id(start)
+            end = g.get_node_id(end)
+            path = func(finder, start, end, **kwargs)
+            path = [g.get_coordinates(node) for node in path]
+
+        else:
+            raise NotImplementedError
+
+        return path
+
+    return wrap
 
 
 cdef class _AbsPathFinder():
     cdef CAbsPathFinder* _baseobj
     cdef public _AbsGraph graph
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
+    def __cinit__(self):
+        pass
 
     def __repr__(self):
         return f"{self.__class__.__name__}(graph={self.graph})"
 
+    @_pathfinding
     def find_path(self, start, end):
-        g = self.graph
-        
-        if isinstance(g, Graph):
-            g.assert_in(start)
-            g.assert_in(end)
-            path = self._baseobj.find_path(start, end)
-
-        elif isinstance(g, (Grid, Grid3D)):
-            start = g.get_node_id(*start)
-            end = g.get_node_id(*end)
-            path = self._baseobj.find_path(start, end)
-            path = [g.get_coordinates(node) for node in path]
-
-        else:
-            raise NotImplementedError
-        
-        return path
+        return self._baseobj.find_path(start, end)
 
 
 cdef class DFS(_AbsPathFinder):
@@ -606,3 +642,25 @@ cdef class BiAStar(_AbsPathFinder):
 
     def __dealloc__(self):
         del self._obj
+
+
+cdef class SpaceTimeAStar(_AbsPathFinder):
+    cdef CSpaceTimeAStar* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        if isinstance(graph, Graph) and not graph.has_coordinates():
+            raise ValueError(
+                "A* cannot work with a graph without coordinates. "
+                "You can add coordinates using graph.add_coordinates(), "
+                "or choose some non-heuristic algorithm."
+            )
+        self.graph = graph
+        self._obj = new CSpaceTimeAStar(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+    @_pathfinding
+    def find_path(self, start, end, max_steps=-1):
+        return self._obj.find_path(start, end, max_steps)

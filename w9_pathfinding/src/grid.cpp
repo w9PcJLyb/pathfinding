@@ -47,7 +47,7 @@ void Grid::set_weights(vector<double> &weights) {
         min_weight_ = -1;
         for (double w : weights) {
             if (w < 0 && w != -1) {
-                throw std::invalid_argument("Weight must be positive or equal to -1");
+                throw std::invalid_argument("Weight must be either non-negative or equal to -1");
             }
             if (w != -1) {
                 if (min_weight_ == -1 || min_weight_ > w)
@@ -226,6 +226,7 @@ AbsGraph* Grid::reverse() const {
     reversed_grid->passable_left_right_border = passable_left_right_border;
     reversed_grid->passable_up_down_border = passable_up_down_border;
     reversed_grid->diagonal_movement_cost_multiplier = diagonal_movement_cost_multiplier;
+    reversed_grid->set_pause_action_cost(get_pause_action_cost());
     reversed_grid->reversed_ = !reversed_;
     return reversed_grid;
 }

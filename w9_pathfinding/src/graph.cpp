@@ -100,6 +100,7 @@ Graph* Graph::create_reversed_graph() const {
             reversed_graph->add_edge(e.node_id, i, e.cost);
         }
     }
+    reversed_graph->set_pause_action_cost(get_pause_action_cost());
     return reversed_graph;
 }
 

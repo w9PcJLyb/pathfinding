@@ -9,10 +9,11 @@ from w9_pathfinding import (
     BiDijkstra,
     AStar,
     BiAStar,
+    SpaceTimeAStar,
     DiagonalMovement,
 )
 
-SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar]
+SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar, SpaceTimeAStar]
 ALL_ALGORITHMS = [DFS, BFS, BiBFS] + SHORTEST_PATH_ALGORITHMS
 
 
@@ -318,3 +319,68 @@ class TestShortestPath(unittest.TestCase):
                 path = a(grid).find_path(start, end)
                 self.assertListEqual(path, answer)
                 self.assertEqual(grid.calculate_cost(path), answer_cost)
+
+
+class TestSpaceTimeAStar(unittest.TestCase):
+    """
+    pytest tests/test_grid_pathfinding.py::TestSpaceTimeAStar
+    """
+
+    def test_3x4_with_two_agents(self):
+        """
+        + -  -  -  - +
+        | s        # |
+        |    #     # |
+        |       e2 e1|
+        + -  -  -  - +
+        """
+        weights = [[1, 2, 0.9, -1], [1, -1, 0.9, -1], [1, 1, 1, 1]]
+        grid = Grid(weights=weights, diagonal_movement=DiagonalMovement.never)
+
+        a = SpaceTimeAStar(grid)
+
+        path1 = a.find_path((0, 0), (3, 2), max_steps=10)
+        self.assertListEqual(path1, [(0, 0), (0, 1), (0, 2), (1, 2), (2, 2), (3, 2)])
+
+        grid.add_dynamic_obstacles(path1)
+
+        grid.pause_action_cost = 5
+        path2 = a.find_path((0, 0), (2, 2))
+        self.assertListEqual(
+            path2, [(0, 0), (1, 0), (2, 0), (2, 1), (2, 0), (2, 1), (2, 2)]
+        )
+
+        grid.pause_action_cost = 0.1
+        path2 = a.find_path((0, 0), (2, 2))
+        self.assertListEqual(path2, [(0, 0), (0, 0), (0, 1), (0, 2), (1, 2), (2, 2)])
+
+    def test_max_steps(self):
+        """
+        + - - - - - - +
+        | s x         |
+        | # x     #   |
+        | x x   #     |
+        | x # #     # |
+        | x x x   # # |
+        |     #     e |
+        + - - - - - - +
+        """
+        weights = [
+            [1, 1, 1, 1, 1, 1],
+            [-1, 1, 1, 1, -1, 1],
+            [1, 1, 1, -1, 1, 1],
+            [1, -1, -1, 1, 1, -1],
+            [1, 1, 1, 1, -1, -1],
+            [1, 1, -1, 1, 1, 1],
+        ]
+        start, end = (0, 0), (5, 5)
+
+        grid = Grid(weights=weights, diagonal_movement=DiagonalMovement.never)
+
+        a = SpaceTimeAStar(grid)
+        path = a.find_path(start, end, max_steps=8)
+        self.assertEqual(len(path), 9)
+        self.assertListEqual(
+            path,
+            [(0, 0), (1, 0), (1, 1), (1, 2), (0, 2), (0, 3), (0, 4), (1, 4), (2, 4)],
+        )

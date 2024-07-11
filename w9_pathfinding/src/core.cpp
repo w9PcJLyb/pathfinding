@@ -5,6 +5,9 @@ double AbsGraph::calculate_cost(vector<int> &path) const {
     if (path.size() <= 1)
         return 0;
 
+    bool pause_action_allowed = is_pause_action_allowed();
+    double pause_action_cost = get_pause_action_cost();
+
     double total_cost = 0;
 
     int node_id = path[0];
@@ -12,12 +15,20 @@ double AbsGraph::calculate_cost(vector<int> &path) const {
         int next_node_id = path[i];
 
         double step_cost = -1;
+
         for (auto &[n, cost] : get_neighbours(node_id)) {
             if (n == next_node_id) {
                 if (step_cost == -1 || cost < step_cost) {
                     step_cost = cost;
                 }
             }
+        }
+
+        if (pause_action_allowed && next_node_id == node_id) {
+            if (step_cost == -1)
+                step_cost = get_pause_action_cost();
+            else if (pause_action_cost < step_cost)
+                step_cost = pause_action_cost;
         }
 
         if (step_cost == -1) {
@@ -152,4 +163,39 @@ vector<vector<int>> AbsGraph::find_scc() const {
     }
 
     return scc;
+}
+
+void AbsGraph::set_pause_action_cost(double cost) {
+    if (cost < 0 && cost != -1)
+        throw std::invalid_argument("Pause action cost must be either non-negative or equal to -1");
+    pause_action_cost_ = cost;
+}
+
+double AbsGraph::get_pause_action_cost() const {
+    return pause_action_cost_;
+}
+
+bool AbsGraph::is_pause_action_allowed() const {
+    return pause_action_cost_ >= 0;
+}
+
+void AbsGraph::set_dynamic_obstacles(vector<unordered_set<int>> dynamic_obstacles) {
+    dynamic_obstacles_ = dynamic_obstacles;
+}
+
+void AbsGraph::add_dynamic_obstacles(vector<int> path) {
+    size_t s = dynamic_obstacles_.size();
+    for (size_t t = 0; t < path.size(); t++) {
+        if (t < s)
+            dynamic_obstacles_[t].insert(path[t]);
+        else
+            dynamic_obstacles_.push_back({path[t]});
+    }
+}
+
+bool AbsGraph::has_dynamic_obstacle(int time, int node_id) const {
+    if (time >= (int)dynamic_obstacles_.size()) {
+        return false;
+    }
+    return dynamic_obstacles_[time].count(node_id);
 }

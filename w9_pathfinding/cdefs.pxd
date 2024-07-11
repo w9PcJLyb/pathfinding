@@ -1,6 +1,7 @@
 from libcpp cimport bool
 from libcpp.pair cimport pair
 from libcpp.vector cimport vector
+from libcpp.unordered_set cimport unordered_set
 
 
 cdef extern from "src/core.cpp":
@@ -17,6 +18,12 @@ cdef extern from "src/include/core.h":
         vector[pair[int, double]] get_neighbours(int)
         vector[vector[int]] find_components()
         vector[vector[int]] find_scc()
+        void set_pause_action_cost(double)
+        double get_pause_action_cost()
+        bool is_pause_action_allowed()
+        void set_dynamic_obstacles(vector[unordered_set[int]])
+        void add_dynamic_obstacles(vector[int] path)
+        bool has_dynamic_obstacle(int time, int node_id)
 
     cdef cppclass AbsPathFinder:
         AbsPathFinder() except +
@@ -158,3 +165,14 @@ cdef extern from "src/include/bi_a_star.h":
     cdef cppclass BiAStar(AbsPathFinder):
         BiAStar(AbsGraph*) except +
         vector[int] find_path(int, int)
+
+
+cdef extern from "src/space_time_a_star.cpp":
+    pass
+
+
+cdef extern from "src/include/space_time_a_star.h":
+
+    cdef cppclass SpaceTimeAStar(AbsPathFinder):
+        SpaceTimeAStar(AbsGraph*) except +
+        vector[int] find_path(int, int, int)

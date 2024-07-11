@@ -46,6 +46,14 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(graph.calculate_cost([1, 2]), 3)
         self.assertEqual(graph.calculate_cost([0, 1, 2]), 2 + 3)
 
+    def test_calc_cost_with_pause_action(self):
+        graph = Graph(5)
+        graph.pause_action_cost = 5
+        self.assertEqual(graph.calculate_cost([0, 0]), 5)
+
+        graph.add_edges([[0, 0, 2]])
+        self.assertEqual(graph.calculate_cost([0, 0]), 2)
+
     def test_find_components(self):
         graph = Graph(5, directed=False)
 

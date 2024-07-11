@@ -9,5 +9,6 @@ from .cpf import (
     BiDijkstra,
     AStar,
     BiAStar,
+    SpaceTimeAStar,
 )
 from .diagonal_movement import DiagonalMovement

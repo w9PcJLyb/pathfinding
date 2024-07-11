@@ -169,7 +169,7 @@ class GridGrnerator(_Generator):
         while True:
             x = random.randint(0, grid.width - 1)
             y = random.randint(0, grid.height - 1)
-            if not grid.has_obstacle(x, y):
+            if not grid.has_obstacle((x, y)):
                 return x, y
 
     def generate(self, num_queries=1):
@@ -243,5 +243,5 @@ class Grid3DGrnerator(GridGrnerator):
             x = random.randint(0, grid.width - 1)
             y = random.randint(0, grid.height - 1)
             z = random.randint(0, grid.depth - 1)
-            if not grid.has_obstacle(x, y, z):
+            if not grid.has_obstacle((x, y, z)):
                 return x, y, z

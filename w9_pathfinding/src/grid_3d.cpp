@@ -31,7 +31,7 @@ void Grid3D::set_weights(vector<double> &weights) {
         min_weight_ = -1;
         for (double w : weights) {
             if (w < 0 && w != -1) {
-                throw std::invalid_argument("Weight must be positive or equal to -1");
+                throw std::invalid_argument("Weight must be either non-negative or equal to -1");
             }
             if (w != -1) {
                 if (min_weight_ == -1 || min_weight_ > w)
@@ -150,6 +150,7 @@ double Grid3D::estimate_distance(int v1, int v2) const {
 AbsGraph* Grid3D::reverse() const {
     Grid3D* reversed_grid(new Grid3D(width, height, depth, weights_));
     reversed_grid->passable_borders = passable_borders;
+    reversed_grid->set_pause_action_cost(get_pause_action_cost());
     reversed_grid->reversed_ = !reversed_;
     return reversed_grid;
 }
