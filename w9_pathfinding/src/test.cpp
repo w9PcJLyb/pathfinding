@@ -8,7 +8,7 @@
 #include "include/bi_dijkstra.h"
 #include "include/a_star.h"
 #include "include/bi_a_star.h"
-#include "include/space_time_a_star.h"
+#include "include/hc_a_star.h"
 
 
 void print_path(vector<int> nodes) {
@@ -108,7 +108,7 @@ void test_grid() {
     BiDijkstra bidijkstra(&grid);
     AStar astar(&grid);
     BiAStar biastar(&grid);
-    SpaceTimeAStar stastar(&grid);
+    HCAStar stastar(&grid);
 
     vector<pair<std::string, AbsPathFinder*>> finders = {
         {"DFS", &dfs},

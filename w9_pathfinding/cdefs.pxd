@@ -167,12 +167,13 @@ cdef extern from "src/include/bi_a_star.h":
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/space_time_a_star.cpp":
+cdef extern from "src/hc_a_star.cpp":
     pass
 
 
-cdef extern from "src/include/space_time_a_star.h":
+cdef extern from "src/include/hc_a_star.h":
 
-    cdef cppclass SpaceTimeAStar(AbsPathFinder):
-        SpaceTimeAStar(AbsGraph*) except +
+    cdef cppclass HCAStar(AbsPathFinder):
+        HCAStar(AbsGraph*) except +
         vector[int] find_path(int, int, int)
+        vector[vector[int]] mapf(vector[int], vector[int], int, bool)

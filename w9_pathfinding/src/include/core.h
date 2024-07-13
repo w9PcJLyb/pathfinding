@@ -41,12 +41,22 @@ class AbsGraph {
         // nodes in space-time reserved by other agents
         vector<unordered_set<int>> dynamic_obstacles_;
 
+        // static obstacles from specific times, e.g. agents that have reached their destinations
+        vector<unordered_set<int>> semi_dynamic_obstacles_;
+
     public:
         void set_pause_action_cost(double cost);
         double get_pause_action_cost() const;
         bool is_pause_action_allowed() const;
+
         void set_dynamic_obstacles(vector<unordered_set<int>> dynamic_obstacles);
         void add_dynamic_obstacles(vector<int> path);
+        vector<unordered_set<int>> get_dynamic_obstacles() const;
+
+        void set_semi_dynamic_obstacles(vector<unordered_set<int>> semi_dynamic_obstacles);
+        void add_semi_dynamic_obstacles(int time, int node_id);
+        vector<unordered_set<int>> get_semi_dynamic_obstacles() const;
+
         bool has_dynamic_obstacle(int time, int node_id) const;
 };
 

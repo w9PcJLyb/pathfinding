@@ -11,8 +11,13 @@ double AbsGraph::calculate_cost(vector<int> &path) const {
     double total_cost = 0;
 
     int node_id = path[0];
+    if (has_dynamic_obstacle(0, node_id))
+        return -1;
+
     for (size_t i = 1; i < path.size(); i++) {
         int next_node_id = path[i];
+        if (has_dynamic_obstacle(i, next_node_id))
+           return -1;
 
         double step_cost = -1;
 
@@ -183,6 +188,10 @@ void AbsGraph::set_dynamic_obstacles(vector<unordered_set<int>> dynamic_obstacle
     dynamic_obstacles_ = dynamic_obstacles;
 }
 
+vector<unordered_set<int>> AbsGraph::get_dynamic_obstacles() const {
+    return dynamic_obstacles_;
+}
+
 void AbsGraph::add_dynamic_obstacles(vector<int> path) {
     size_t s = dynamic_obstacles_.size();
     for (size_t t = 0; t < path.size(); t++) {
@@ -193,9 +202,47 @@ void AbsGraph::add_dynamic_obstacles(vector<int> path) {
     }
 }
 
-bool AbsGraph::has_dynamic_obstacle(int time, int node_id) const {
-    if (time >= (int)dynamic_obstacles_.size()) {
-        return false;
+void AbsGraph::set_semi_dynamic_obstacles(vector<unordered_set<int>> semi_dynamic_obstacles) {
+    semi_dynamic_obstacles_ = semi_dynamic_obstacles;
+}
+
+void AbsGraph::add_semi_dynamic_obstacles(int time, int node_id) {
+    int s = semi_dynamic_obstacles_.size();
+
+    if (s == 0) {
+        semi_dynamic_obstacles_.resize(time + 1);
+        semi_dynamic_obstacles_[time].insert(node_id);
     }
-    return dynamic_obstacles_[time].count(node_id);
+    else if (time < s) {
+        for (int t = time; t < s; t++) {
+            semi_dynamic_obstacles_[t].insert(node_id);
+        }
+    }
+    else {
+        auto obstacles = semi_dynamic_obstacles_.back();
+        for (int t = s; t <= time; t++) {
+            semi_dynamic_obstacles_.push_back(obstacles);
+        }
+        semi_dynamic_obstacles_[time].insert(node_id);
+    }
+}
+
+vector<unordered_set<int>> AbsGraph::get_semi_dynamic_obstacles() const {
+    return semi_dynamic_obstacles_;
+}
+
+bool AbsGraph::has_dynamic_obstacle(int time, int node_id) const {
+    if (time < (int)dynamic_obstacles_.size()) {
+        if (dynamic_obstacles_[time].count(node_id))
+            return true;
+    }
+    if (time < (int)semi_dynamic_obstacles_.size()) {
+        if (semi_dynamic_obstacles_[time].count(node_id))
+            return true;
+    }
+    else if (!semi_dynamic_obstacles_.empty()) {
+        if (semi_dynamic_obstacles_.back().count(node_id))
+            return true;
+    }
+    return false;
 }

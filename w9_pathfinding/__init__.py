@@ -10,5 +10,6 @@ from .cpf import (
     AStar,
     BiAStar,
     SpaceTimeAStar,
+    HCAStar,
 )
 from .diagonal_movement import DiagonalMovement

@@ -15,7 +15,7 @@ from w9_pathfinding.cdefs cimport (
     BiDijkstra as CBiDijkstra,
     AStar as CAStar,
     BiAStar as CBiAStar,
-    SpaceTimeAStar as CSpaceTimeAStar,
+    HCAStar as CHCAStar,
 )
 
 
@@ -511,18 +511,18 @@ cdef class Grid3D(_AbsGrid):
 
 def _pathfinding(func):
 
-    def wrap(finder, start, end, **kwargs):
+    def wrap(finder, start, goal, **kwargs):
         g = finder.graph
 
         if isinstance(g, Graph):
             g.assert_in(start)
-            g.assert_in(end)
-            path = func(finder, start, end, **kwargs)
+            g.assert_in(goal)
+            path = func(finder, start, goal, **kwargs)
 
         elif isinstance(g, (Grid, Grid3D)):
             start = g.get_node_id(start)
-            end = g.get_node_id(end)
-            path = func(finder, start, end, **kwargs)
+            goal = g.get_node_id(goal)
+            path = func(finder, start, goal, **kwargs)
             path = [g.get_coordinates(node) for node in path]
 
         else:
@@ -544,8 +544,8 @@ cdef class _AbsPathFinder():
         return f"{self.__class__.__name__}(graph={self.graph})"
 
     @_pathfinding
-    def find_path(self, start, end):
-        return self._baseobj.find_path(start, end)
+    def find_path(self, start, goal):
+        return self._baseobj.find_path(start, goal)
 
 
 cdef class DFS(_AbsPathFinder):
@@ -645,7 +645,7 @@ cdef class BiAStar(_AbsPathFinder):
 
 
 cdef class SpaceTimeAStar(_AbsPathFinder):
-    cdef CSpaceTimeAStar* _obj
+    cdef CHCAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
         if isinstance(graph, Graph) and not graph.has_coordinates():
@@ -655,12 +655,62 @@ cdef class SpaceTimeAStar(_AbsPathFinder):
                 "or choose some non-heuristic algorithm."
             )
         self.graph = graph
-        self._obj = new CSpaceTimeAStar(graph._baseobj)
+        self._obj = new CHCAStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
         del self._obj
 
     @_pathfinding
-    def find_path(self, start, end, max_steps=-1):
-        return self._obj.find_path(start, end, max_steps)
+    def find_path(self, start, end, search_depth=100):
+        return self._obj.find_path(start, end, search_depth)
+
+
+def _mapf(func):
+
+    def wrap(finder, starts, goals, **kwargs):
+        assert len(starts) == len(goals)
+
+        g = finder.graph
+
+        if isinstance(g, Graph):
+            for i in range(len(starts)):
+                g.assert_in(starts[i])
+                g.assert_in(goals[i])
+            path = func(finder, starts, goals, **kwargs)
+
+        elif isinstance(g, (Grid, Grid3D)):
+            starts = [g.get_node_id(x) for x in starts]
+            goals = [g.get_node_id(x) for x in goals]
+            paths = []
+            for path in func(finder, starts, goals, **kwargs):
+                paths.append([g.get_coordinates(node) for node in path])
+
+        else:
+            raise NotImplementedError
+
+        return paths
+
+    return wrap
+
+
+cdef class HCAStar:
+    cdef CHCAStar* _obj
+    cdef public _AbsGraph graph
+
+    def __cinit__(self, _AbsGraph graph):
+        if isinstance(graph, Graph) and not graph.has_coordinates():
+            raise ValueError(
+                "A* cannot work with a graph without coordinates. "
+                "You can add coordinates using graph.add_coordinates(), "
+                "or choose some non-heuristic algorithm."
+            )
+        self.graph = graph
+        self._obj = new CHCAStar(graph._baseobj)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(graph={self.graph})"
+
+    @_mapf
+    def mapf(self, starts, goals, search_depth=100, despawn_at_destination=False):
+        return self._obj.mapf(starts, goals, search_depth, despawn_at_destination)
