@@ -1,6 +1,8 @@
 #pragma once
 
 #include "grid.h"
+#include "reservation_table.h"
+#include "unordered_map"
 
 
 class ResumableAStar {
@@ -62,10 +64,29 @@ class HCAStar : public AbsPathFinder {
 
         vector<int> find_path(int start, int end);
         vector<int> find_path(int start, int end, int search_depth);
-        vector<vector<int>> mapf(vector<int> starts, vector<int> goals, int search_depth, bool despawn_at_destination);
+        vector<int> find_path(int start, int end, int search_depth, ReservationTable *rt);
+        vector<vector<int>> mapf(
+            vector<int> starts,
+            vector<int> goals,
+            int search_depth,
+            bool despawn_at_destination
+        );
+        vector<vector<int>> mapf(
+            vector<int> starts,
+            vector<int> goals,
+            int search_depth,
+            bool despawn_at_destination,
+            ReservationTable *rt
+        );
 
-    private:
+    protected:
         AbsGraph* reversed_graph_;
         vector<int> reconstruct_path(int start, Node* node);
-        vector<int> find_path_(int start, int end, int search_depth, ResumableAStar &rra);
+        vector<int> find_path_(
+            int start,
+            int end,
+            int search_depth,
+            ResumableAStar &rra,
+            ReservationTable &rt
+        );
 };

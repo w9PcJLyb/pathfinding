@@ -88,28 +88,33 @@ vector<int> HCAStar::reconstruct_path(int start, Node* node) {
 }
 
 vector<int> HCAStar::find_path(int start, int end) {
-    return find_path(start, end, 100);
+    return find_path(start, end, 100, nullptr);
 }
 
 vector<int> HCAStar::find_path(int start, int end, int search_depth) {
+    return find_path(start, end, search_depth, nullptr);
+}
+
+vector<int> HCAStar::find_path(int start, int end, int search_depth, ReservationTable *rt) {
     ResumableAStar rra(reversed_graph_, end, start);
-    return find_path_(start, end, search_depth, rra);
-}
 
-int get_min_search_depth(AbsGraph* graph, int node_id) {
-    int min_search_depth = -1;
-
-    const auto &dynamic_obstacles = graph->get_dynamic_obstacles();
-    for (size_t t = 0; t < dynamic_obstacles.size(); t++) {
-        if (dynamic_obstacles[t].count(node_id)) {
-            min_search_depth = t;
-        }
+    if (rt == nullptr) {
+        ReservationTable rt_(graph->size());
+        return find_path_(start, end, search_depth, rra, rt_);
     }
-
-    return min_search_depth;
+    else {
+        assert(rt->graph_size == graph->size());
+        return find_path_(start, end, search_depth, rra, *rt);
+    }
 }
 
-vector<int> HCAStar::find_path_(int start, int end, int search_depth, ResumableAStar &rra) {
+vector<int> HCAStar::find_path_(
+    int start,
+    int end,
+    int search_depth,
+    ResumableAStar &rra,
+    ReservationTable &rt
+) {
     double f0 = rra.distance(start);
     if (f0 == -1)
         // unreachable
@@ -119,7 +124,7 @@ vector<int> HCAStar::find_path_(int start, int end, int search_depth, ResumableA
     double pause_action_cost = graph->get_pause_action_cost();
     bool pause_action_allowed = graph->is_pause_action_allowed();
 
-    int min_search_depth = get_min_search_depth(graph, end);
+    int min_search_depth = rt.last_time_reserved(end);
 
     Queue openset;
 
@@ -132,7 +137,7 @@ vector<int> HCAStar::find_path_(int start, int end, int search_depth, ResumableA
     auto process_node = [&] (int node_id, double cost, Node* current) {
         int time = current->time + 1;
 
-        if (graph->has_dynamic_obstacle(time, node_id)) {
+        if (rt.reserved(time, node_id)) {
             return;
         }
 
@@ -158,11 +163,13 @@ vector<int> HCAStar::find_path_(int start, int end, int search_depth, ResumableA
         auto [f, current] = openset.top();
         openset.pop();
 
-        if (current->time >= min_search_depth && current->node_id == end) {
-            auto path = reconstruct_path(start, current);
-            for (auto it : nodes)
-                delete it.second;
-            return path;
+        if (current->node_id == end) {
+            if (current->time >= min_search_depth || current->time == -1) {
+                auto path = reconstruct_path(start, current);
+                for (auto it : nodes)
+                    delete it.second;
+                return path;
+            }
         }
 
         int h = current->node_id + current->time * graph_size;
@@ -191,25 +198,38 @@ vector<int> HCAStar::find_path_(int start, int end, int search_depth, ResumableA
     return {};
 }
 
-vector<vector<int>> HCAStar::mapf(vector<int> starts, vector<int> goals, int search_depth, bool despawn_at_destination) {
+vector<vector<int>> HCAStar::mapf(
+    vector<int> starts,
+    vector<int> goals,
+    int search_depth,
+    bool despawn_at_destination
+) {
+    ReservationTable *rt = new ReservationTable(graph->size());
+    auto paths = mapf(starts, goals, search_depth, despawn_at_destination, rt);
+    delete rt;
+    return paths;
+}
+
+vector<vector<int>> HCAStar::mapf(
+    vector<int> starts,
+    vector<int> goals,
+    int search_depth,
+    bool despawn_at_destination,
+    ReservationTable *rt
+) {
     assert(starts.size() == goals.size());
+    assert(rt->graph_size == graph->size());
 
     if (starts.size() == 0)
         return {};
 
-    auto init_dynamic_obstacles = graph->get_dynamic_obstacles();
-
     vector<vector<int>> paths;
     for (size_t i = 0; i < starts.size(); i++) {
         ResumableAStar rra(reversed_graph_, goals[i], starts[i]);
-        vector<int> path = find_path_(starts[i], goals[i], search_depth, rra);
+        vector<int> path = find_path_(starts[i], goals[i], search_depth, rra, *rt);
         paths.push_back(path);
-        graph->add_dynamic_obstacles(path);
-        if (!despawn_at_destination && !path.empty())
-            graph->add_semi_dynamic_obstacles(path.size(), path.back());
+        rt->add_path(i, 0, path, !despawn_at_destination);
     }
-
-    graph->set_dynamic_obstacles(init_dynamic_obstacles);
 
     if (!despawn_at_destination) {
         // all paths must have the same size
@@ -219,15 +239,11 @@ vector<vector<int>> HCAStar::mapf(vector<int> starts, vector<int> goals, int sea
         }
 
         for (size_t i = 0; i < paths.size(); i++) {
-            if (paths[i].size() == max_size) {
-                continue;
-            }
-
             if (paths[i].empty()) {
                 vector<int> path(max_size, starts[i]);
                 paths[i] = path;
             }
-            else {
+            else if (paths[i].size() < max_size) {
                 vector<int> path(max_size - paths[i].size(), paths[i].back());
                 paths[i].insert(paths[i].end(), path.begin(), path.end());
             }

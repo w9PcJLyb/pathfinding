@@ -9,7 +9,7 @@ from .cpf import (
     BiDijkstra,
     AStar,
     BiAStar,
-    SpaceTimeAStar,
+    ReservationTable,
     HCAStar,
 )
 from .diagonal_movement import DiagonalMovement

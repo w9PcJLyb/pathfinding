@@ -15,6 +15,7 @@ from w9_pathfinding.cdefs cimport (
     BiDijkstra as CBiDijkstra,
     AStar as CAStar,
     BiAStar as CBiAStar,
+    ReservationTable as CReservationTable,
     HCAStar as CHCAStar,
 )
 
@@ -25,21 +26,15 @@ cdef class _AbsGraph:
     def __cinit__(self):
         pass
 
+    def size(self):
+        return self._baseobj.size()
+
     def calculate_cost(self, vector[int] path):
         return self._baseobj.calculate_cost(path)
 
     def get_neighbours(self, int node_id):
         # return [[neighbour_id, cost], ...]
         return self._baseobj.get_neighbours(node_id)
-
-    def set_dynamic_obstacles(self, dynamic_obstacles):
-        self._baseobj.set_dynamic_obstacles(dynamic_obstacles)
-
-    def add_dynamic_obstacles(self, vector[int] path):
-        self._baseobj.add_dynamic_obstacles(path)
-
-    def has_dynamic_obstacle(self, int time, int node_id):
-        return self._baseobj.has_dynamic_obstacle(time, node_id)
 
     @property
     def pause_action_cost(self):
@@ -644,26 +639,46 @@ cdef class BiAStar(_AbsPathFinder):
         del self._obj
 
 
-cdef class SpaceTimeAStar(_AbsPathFinder):
-    cdef CHCAStar* _obj
+cdef class ReservationTable:
+    cdef CReservationTable* _obj
+    cdef public _AbsGraph graph
 
     def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
-            raise ValueError(
-                "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.add_coordinates(), "
-                "or choose some non-heuristic algorithm."
-            )
         self.graph = graph
-        self._obj = new CHCAStar(graph._baseobj)
-        self._baseobj = self._obj
+        self._obj = new CReservationTable(graph.size())
 
     def __dealloc__(self):
         del self._obj
 
-    @_pathfinding
-    def find_path(self, start, end, search_depth=100):
-        return self._obj.find_path(start, end, search_depth)
+    def __repr__(self):
+        return f"ReservationTable(graph={self.graph})"
+
+    def _to_node_id(self, node):
+        if isinstance(self.graph, Graph):
+            return node
+        elif isinstance(self.graph, (Grid, Grid3D)):
+            return self.graph.get_node_id(node)
+        else:
+            raise NotImplementedError()
+
+    def _convert_path(self, path):
+        return [self._to_node_id(node) for node in path]
+
+    def reserved(self, int time, node):
+        cdef int node_id = self._to_node_id(node)
+        return self._obj.reserved(time, node_id)
+
+    def reserved_by(self, int time, node):
+        cdef int node_id = self._to_node_id(node)
+        return self._obj.reserved_by(time, node_id)
+
+    def add_path(self, path, int agent_id=0, int start_time=0, bool reserve_destination=True):
+        cdef vector[int] node_ids = self._convert_path(path)
+        self._obj.add_path(agent_id, start_time, node_ids, reserve_destination)
+
+    def remove_path(self, path, int start_time=0):
+        cdef vector[int] node_ids = self._convert_path(path)
+        self._obj.remove_path(start_time, node_ids)
 
 
 def _mapf(func):
@@ -711,6 +726,33 @@ cdef class HCAStar:
     def __repr__(self):
         return f"{self.__class__.__name__}(graph={self.graph})"
 
+    @_pathfinding
+    def find_path(
+        self,
+        int start,
+        int goal,
+        int search_depth=100,
+        ReservationTable reservation_table=None,
+    ):
+        if reservation_table is None:
+            return self._obj.find_path(start, goal, search_depth)
+
+        return self._obj.find_path(start, goal, search_depth, reservation_table._obj)
+
     @_mapf
-    def mapf(self, starts, goals, search_depth=100, despawn_at_destination=False):
-        return self._obj.mapf(starts, goals, search_depth, despawn_at_destination)
+    def mapf(
+        self,
+        vector[int] starts,
+        vector[int] goals,
+        int search_depth=100,
+        bool despawn_at_destination=False,
+        ReservationTable reservation_table=None,
+    ):
+        if reservation_table is None:
+            return self._obj.mapf(
+                starts, goals, search_depth, despawn_at_destination
+            )
+
+        return self._obj.mapf(
+            starts, goals, search_depth, despawn_at_destination, reservation_table._obj
+        )

@@ -8,10 +8,9 @@ from w9_pathfinding import (
     BiDijkstra,
     AStar,
     BiAStar,
-    SpaceTimeAStar,
 )
 
-SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar, SpaceTimeAStar]
+SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar]
 ALL_ALGORITHMS = [DFS, BFS, BiBFS] + SHORTEST_PATH_ALGORITHMS
 
 

@@ -1,11 +1,11 @@
 import unittest
 from collections import defaultdict
-from w9_pathfinding import Grid, DiagonalMovement, SpaceTimeAStar, HCAStar
+from w9_pathfinding import Grid, DiagonalMovement, HCAStar, ReservationTable
 
 
-class TestSpaceTimeAStar(unittest.TestCase):
+class TestFindPath(unittest.TestCase):
     """
-    pytest tests/test_mapf.py::TestSpaceTimeAStar
+    pytest tests/test_mapf.py::TestFindPath
     """
 
     def test_3x4_with_two_agents(self):
@@ -19,21 +19,22 @@ class TestSpaceTimeAStar(unittest.TestCase):
         weights = [[1, 2, 0.9, -1], [1, -1, 0.9, -1], [1, 1, 1, 1]]
         grid = Grid(weights=weights, diagonal_movement=DiagonalMovement.never)
 
-        a = SpaceTimeAStar(grid)
+        a = HCAStar(grid)
 
         path1 = a.find_path((0, 0), (3, 2))
         self.assertListEqual(path1, [(0, 0), (0, 1), (0, 2), (1, 2), (2, 2), (3, 2)])
 
-        grid.add_dynamic_obstacles(path1)
+        rt = ReservationTable(grid)
+        rt.add_path(path1)
 
         grid.pause_action_cost = 5
-        path2 = a.find_path((0, 0), (2, 2))
+        path2 = a.find_path((0, 0), (2, 2), reservation_table=rt)
         self.assertListEqual(
             path2, [(0, 0), (1, 0), (2, 0), (2, 1), (2, 0), (2, 1), (2, 2)]
         )
 
         grid.pause_action_cost = 0.1
-        path2 = a.find_path((0, 0), (2, 2))
+        path2 = a.find_path((0, 0), (2, 2), reservation_table=rt)
         self.assertListEqual(path2, [(0, 0), (0, 0), (0, 1), (0, 2), (1, 2), (2, 2)])
 
     def test_max_steps(self):
@@ -59,7 +60,7 @@ class TestSpaceTimeAStar(unittest.TestCase):
 
         grid = Grid(weights=weights, diagonal_movement=DiagonalMovement.never)
 
-        a = SpaceTimeAStar(grid)
+        a = HCAStar(grid)
         path = a.find_path(start, end, search_depth=8)
         self.assertEqual(len(path), 9)
         self.assertListEqual(

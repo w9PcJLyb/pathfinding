@@ -33,7 +33,6 @@ ALGORITHMS = [
     {"name": "BiDijkstra", "class": pf.BiDijkstra, "unw": 1, "w": 1},
     {"name": "A*", "class": pf.AStar, "unw": 1, "w": 1},
     {"name": "Bi A*", "class": pf.BiAStar, "unw": 1, "w": 1},
-    {"name": "Space-Time A*", "class": pf.SpaceTimeAStar, "unw": 1, "w": 1},
 ]
 
 

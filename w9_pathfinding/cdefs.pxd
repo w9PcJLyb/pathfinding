@@ -1,7 +1,6 @@
 from libcpp cimport bool
 from libcpp.pair cimport pair
 from libcpp.vector cimport vector
-from libcpp.unordered_set cimport unordered_set
 
 
 cdef extern from "src/core.cpp":
@@ -21,13 +20,24 @@ cdef extern from "src/include/core.h":
         void set_pause_action_cost(double)
         double get_pause_action_cost()
         bool is_pause_action_allowed()
-        void set_dynamic_obstacles(vector[unordered_set[int]])
-        void add_dynamic_obstacles(vector[int] path)
-        bool has_dynamic_obstacle(int time, int node_id)
 
     cdef cppclass AbsPathFinder:
         AbsPathFinder() except +
         vector[int] find_path(int, int)
+
+
+cdef extern from "src/reservation_table.cpp":
+    pass
+
+
+cdef extern from "src/include/reservation_table.h":
+    cdef cppclass ReservationTable:
+        ReservationTable(int) except +
+        bool reserved(int, int)
+        int reserved_by(int, int)
+        void add_path(int, int, vector[int], bool reserve_destination)
+        void remove_path(int, vector[int])
+        int last_time_reserved(int)
 
 
 cdef extern from "src/graph.cpp":
@@ -176,4 +186,6 @@ cdef extern from "src/include/hc_a_star.h":
     cdef cppclass HCAStar(AbsPathFinder):
         HCAStar(AbsGraph*) except +
         vector[int] find_path(int, int, int)
+        vector[int] find_path(int, int, int, ReservationTable*)
         vector[vector[int]] mapf(vector[int], vector[int], int, bool)
+        vector[vector[int]] mapf(vector[int], vector[int], int, bool, ReservationTable*)
