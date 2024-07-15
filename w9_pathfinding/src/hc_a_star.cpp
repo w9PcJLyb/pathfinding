@@ -91,14 +91,10 @@ vector<int> HCAStar::find_path(int start, int end) {
     return find_path(start, end, 100, nullptr);
 }
 
-vector<int> HCAStar::find_path(int start, int end, int search_depth) {
-    return find_path(start, end, search_depth, nullptr);
-}
-
-vector<int> HCAStar::find_path(int start, int end, int search_depth, ReservationTable *rt) {
+vector<int> HCAStar::find_path(int start, int end, int search_depth, const ReservationTable *rt) {
     ResumableAStar rra(reversed_graph_, end, start);
 
-    if (rt == nullptr) {
+    if (!rt) {
         ReservationTable rt_(graph->size());
         return find_path_(start, end, search_depth, rra, rt_);
     }
@@ -113,7 +109,7 @@ vector<int> HCAStar::find_path_(
     int end,
     int search_depth,
     ResumableAStar &rra,
-    ReservationTable &rt
+    const ReservationTable &rt
 ) {
     double f0 = rra.distance(start);
     if (f0 == -1)
@@ -202,33 +198,26 @@ vector<vector<int>> HCAStar::mapf(
     vector<int> starts,
     vector<int> goals,
     int search_depth,
-    bool despawn_at_destination
-) {
-    ReservationTable *rt = new ReservationTable(graph->size());
-    auto paths = mapf(starts, goals, search_depth, despawn_at_destination, rt);
-    delete rt;
-    return paths;
-}
-
-vector<vector<int>> HCAStar::mapf(
-    vector<int> starts,
-    vector<int> goals,
-    int search_depth,
     bool despawn_at_destination,
-    ReservationTable *rt
+    const ReservationTable *rt
 ) {
     assert(starts.size() == goals.size());
-    assert(rt->graph_size == graph->size());
 
     if (starts.size() == 0)
         return {};
 
+    ReservationTable reservation_table(graph->size());
+    if (rt) {
+        cout << graph->size() << " vs " << rt->graph_size << endl;
+        reservation_table = *rt;
+    }
+
     vector<vector<int>> paths;
     for (size_t i = 0; i < starts.size(); i++) {
         ResumableAStar rra(reversed_graph_, goals[i], starts[i]);
-        vector<int> path = find_path_(starts[i], goals[i], search_depth, rra, *rt);
+        vector<int> path = find_path_(starts[i], goals[i], search_depth, rra, reservation_table);
         paths.push_back(path);
-        rt->add_path(i, 0, path, !despawn_at_destination);
+        reservation_table.add_path(i, 0, path, !despawn_at_destination);
     }
 
     if (!despawn_at_destination) {

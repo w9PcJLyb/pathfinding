@@ -63,20 +63,13 @@ class HCAStar : public AbsPathFinder {
         ~HCAStar();
 
         vector<int> find_path(int start, int end);
-        vector<int> find_path(int start, int end, int search_depth);
-        vector<int> find_path(int start, int end, int search_depth, ReservationTable *rt);
-        vector<vector<int>> mapf(
-            vector<int> starts,
-            vector<int> goals,
-            int search_depth,
-            bool despawn_at_destination
-        );
+        vector<int> find_path(int start, int end, int search_depth, const ReservationTable *rt);
         vector<vector<int>> mapf(
             vector<int> starts,
             vector<int> goals,
             int search_depth,
             bool despawn_at_destination,
-            ReservationTable *rt
+            const ReservationTable *rt
         );
 
     protected:
@@ -87,6 +80,6 @@ class HCAStar : public AbsPathFinder {
             int end,
             int search_depth,
             ResumableAStar &rra,
-            ReservationTable &rt
+            const ReservationTable &rt
         );
 };

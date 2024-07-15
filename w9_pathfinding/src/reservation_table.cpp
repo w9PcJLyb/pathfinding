@@ -3,6 +3,16 @@
 ReservationTable::ReservationTable(int graph_size) : graph_size(graph_size) {
 }
 
+ReservationTable& ReservationTable::operator=(const ReservationTable& rt) {
+    if (graph_size != rt.graph_size) {
+        throw std::invalid_argument("graph_size should be the same");
+    }
+    dynamic_ = rt.dynamic_;
+    semi_static_ = rt.semi_static_;
+    max_time_ = rt.max_time_;
+    return *this;
+}
+
 bool ReservationTable::reserved(int time, int node_id) const {
     if (dynamic_.count(st(time, node_id)))
         return true;

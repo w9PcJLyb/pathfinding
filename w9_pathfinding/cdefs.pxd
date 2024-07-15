@@ -185,7 +185,5 @@ cdef extern from "src/include/hc_a_star.h":
 
     cdef cppclass HCAStar(AbsPathFinder):
         HCAStar(AbsGraph*) except +
-        vector[int] find_path(int, int, int)
         vector[int] find_path(int, int, int, ReservationTable*)
-        vector[vector[int]] mapf(vector[int], vector[int], int, bool)
         vector[vector[int]] mapf(vector[int], vector[int], int, bool, ReservationTable*)

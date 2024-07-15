@@ -672,7 +672,7 @@ cdef class ReservationTable:
         cdef int node_id = self._to_node_id(node)
         return self._obj.reserved_by(time, node_id)
 
-    def add_path(self, path, int agent_id=0, int start_time=0, bool reserve_destination=True):
+    def add_path(self, path, int agent_id=0, int start_time=0, bool reserve_destination=False):
         cdef vector[int] node_ids = self._convert_path(path)
         self._obj.add_path(agent_id, start_time, node_ids, reserve_destination)
 
@@ -734,10 +734,14 @@ cdef class HCAStar:
         int search_depth=100,
         ReservationTable reservation_table=None,
     ):
+        cdef CReservationTable* crt
         if reservation_table is None:
-            return self._obj.find_path(start, goal, search_depth)
+            crt = NULL
+        else:
+            assert(reservation_table.graph == self.graph)
+            crt = reservation_table._obj
 
-        return self._obj.find_path(start, goal, search_depth, reservation_table._obj)
+        return self._obj.find_path(start, goal, search_depth, crt)
 
     @_mapf
     def mapf(
@@ -748,11 +752,13 @@ cdef class HCAStar:
         bool despawn_at_destination=False,
         ReservationTable reservation_table=None,
     ):
+        cdef CReservationTable* crt
         if reservation_table is None:
-            return self._obj.mapf(
-                starts, goals, search_depth, despawn_at_destination
-            )
+            crt = NULL
+        else:
+            assert(reservation_table.graph == self.graph)
+            crt = reservation_table._obj
 
         return self._obj.mapf(
-            starts, goals, search_depth, despawn_at_destination, reservation_table._obj
+            starts, goals, search_depth, despawn_at_destination, crt
         )
