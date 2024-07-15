@@ -16,7 +16,9 @@ from w9_pathfinding.cdefs cimport (
     AStar as CAStar,
     BiAStar as CBiAStar,
     ReservationTable as CReservationTable,
+    AbsMAPF as CAbsMAPF,
     HCAStar as CHCAStar,
+    WHCAStar as CWHCAStar,
 )
 
 
@@ -709,9 +711,28 @@ def _mapf(func):
     return wrap
 
 
-cdef class HCAStar:
-    cdef CHCAStar* _obj
+cdef class _AbsMAPF():
+    cdef CAbsMAPF* _baseobj
     cdef public _AbsGraph graph
+
+    def __cinit__(self):
+        pass
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(graph={self.graph})"
+
+    cdef CReservationTable* _to_crt(self, ReservationTable reservation_table):
+        cdef CReservationTable* crt
+        if reservation_table is None:
+            crt = NULL
+        else:
+            assert(reservation_table.graph == self.graph)
+            crt = reservation_table._obj
+        return crt
+
+
+cdef class HCAStar(_AbsMAPF):
+    cdef CHCAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
         if isinstance(graph, Graph) and not graph.has_coordinates():
@@ -722,9 +743,10 @@ cdef class HCAStar:
             )
         self.graph = graph
         self._obj = new CHCAStar(graph._baseobj)
+        self._baseobj = self._obj
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}(graph={self.graph})"
+    def __dealloc__(self):
+        del self._obj
 
     @_pathfinding
     def find_path(
@@ -734,14 +756,7 @@ cdef class HCAStar:
         int search_depth=100,
         ReservationTable reservation_table=None,
     ):
-        cdef CReservationTable* crt
-        if reservation_table is None:
-            crt = NULL
-        else:
-            assert(reservation_table.graph == self.graph)
-            crt = reservation_table._obj
-
-        return self._obj.find_path(start, goal, search_depth, crt)
+        return self._obj.find_path(start, goal, search_depth, self._to_crt(reservation_table))
 
     @_mapf
     def mapf(
@@ -752,13 +767,48 @@ cdef class HCAStar:
         bool despawn_at_destination=False,
         ReservationTable reservation_table=None,
     ):
-        cdef CReservationTable* crt
-        if reservation_table is None:
-            crt = NULL
-        else:
-            assert(reservation_table.graph == self.graph)
-            crt = reservation_table._obj
-
         return self._obj.mapf(
-            starts, goals, search_depth, despawn_at_destination, crt
+            starts, goals, search_depth, despawn_at_destination, self._to_crt(reservation_table)
+        )
+
+
+cdef class WHCAStar(_AbsMAPF):
+    cdef CWHCAStar* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        if isinstance(graph, Graph) and not graph.has_coordinates():
+            raise ValueError(
+                "A* cannot work with a graph without coordinates. "
+                "You can add coordinates using graph.add_coordinates(), "
+                "or choose some non-heuristic algorithm."
+            )
+        self.graph = graph
+        self._obj = new CWHCAStar(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+    @_pathfinding
+    def find_path(
+        self,
+        int start,
+        int goal,
+        int search_depth=100,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.find_path(start, goal, search_depth, self._to_crt(reservation_table))
+
+    @_mapf
+    def mapf(
+        self,
+        vector[int] starts,
+        vector[int] goals,
+        int search_depth=100,
+        int window_size=16,
+        bool despawn_at_destination=False,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.mapf(
+            starts, goals, search_depth, window_size, despawn_at_destination, self._to_crt(reservation_table)
         )

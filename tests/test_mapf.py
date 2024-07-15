@@ -1,6 +1,8 @@
 import unittest
 from collections import defaultdict
-from w9_pathfinding import Grid, DiagonalMovement, HCAStar, ReservationTable
+from w9_pathfinding import Grid, DiagonalMovement, HCAStar, WHCAStar, ReservationTable
+
+MAPF_ALGORITHMS = [HCAStar, WHCAStar]
 
 
 class TestFindPath(unittest.TestCase):
@@ -110,12 +112,15 @@ class TestMAPF(unittest.TestCase):
         grid = Grid([[1, 1, 1], [-1, 1, -1], [1, 1, 1]])
         starts = [(0, 0), (1, 0)]
         goals = [(0, 2), (1, 2)]
-        paths = HCAStar(grid).mapf(starts, goals, despawn_at_destination=False)
 
-        self.assertTrue(check_paths(paths))
-        for path, goal in zip(paths, goals):
-            self.assertEqual(len(paths[0]), len(path))
-            self.assertEqual(path[-1], goal)
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a.__name__):
+                paths = WHCAStar(grid).mapf(starts, goals, despawn_at_destination=False)
+
+                self.assertTrue(check_paths(paths))
+                for path, goal in zip(paths, goals):
+                    self.assertEqual(len(paths[0]), len(path))
+                    self.assertEqual(path[-1], goal)
 
     def test_3x3_with_three_agents(self):
         """
@@ -128,11 +133,14 @@ class TestMAPF(unittest.TestCase):
         grid = Grid([[1, 1, 1], [-1, 1, -1], [1, 1, 1]])
         starts = [(0, 0), (1, 0), (2, 0)]
         goals = [(0, 2), (1, 2), (2, 2)]
-        paths = HCAStar(grid).mapf(starts, goals, despawn_at_destination=True)
 
-        self.assertTrue(check_paths(paths))
-        for path, goal in zip(paths, goals):
-            self.assertEqual(path[-1], goal)
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a.__name__):
+                paths = WHCAStar(grid).mapf(starts, goals, despawn_at_destination=True)
+
+                self.assertTrue(check_paths(paths))
+                for path, goal in zip(paths, goals):
+                    self.assertEqual(path[-1], goal)
 
     def test_3x7(self):
         """
@@ -159,9 +167,12 @@ class TestMAPF(unittest.TestCase):
         )
         starts = [(1, 0), (1, 6)]
         goals = [(1, 5), (1, 1)]
-        paths = HCAStar(grid).mapf(starts, goals, despawn_at_destination=False)
 
-        self.assertTrue(check_paths(paths))
-        for path, goal in zip(paths, goals):
-            self.assertEqual(len(paths[0]), len(path))
-            self.assertEqual(path[-1], goal)
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a.__name__):
+                paths = WHCAStar(grid).mapf(starts, goals, despawn_at_destination=False)
+
+                self.assertTrue(check_paths(paths))
+                for path, goal in zip(paths, goals):
+                    self.assertEqual(len(paths[0]), len(path))
+                    self.assertEqual(path[-1], goal)

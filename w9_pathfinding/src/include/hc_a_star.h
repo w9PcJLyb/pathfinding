@@ -39,7 +39,7 @@ class ResumableAStar {
 };
 
 
-class HCAStar : public AbsPathFinder {
+class HCAStar : public AbsMAPF {
     // Hierarchical Cooperative A*
     // Silver, D. 2005. Cooperative pathfinding. In AIIDE, 117–122.
 
@@ -64,6 +64,7 @@ class HCAStar : public AbsPathFinder {
 
         vector<int> find_path(int start, int end);
         vector<int> find_path(int start, int end, int search_depth, const ReservationTable *rt);
+        vector<vector<int>> mapf(vector<int> starts, vector<int> goals);
         vector<vector<int>> mapf(
             vector<int> starts,
             vector<int> goals,
@@ -76,8 +77,9 @@ class HCAStar : public AbsPathFinder {
         AbsGraph* reversed_graph_;
         vector<int> reconstruct_path(int start, Node* node);
         vector<int> find_path_(
+            int start_time,
             int start,
-            int end,
+            int goal,
             int search_depth,
             ResumableAStar &rra,
             const ReservationTable &rt

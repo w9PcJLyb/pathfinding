@@ -11,5 +11,6 @@ from .cpf import (
     BiAStar,
     ReservationTable,
     HCAStar,
+    WHCAStar,
 )
 from .diagonal_movement import DiagonalMovement

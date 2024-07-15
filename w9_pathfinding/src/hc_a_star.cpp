@@ -96,17 +96,18 @@ vector<int> HCAStar::find_path(int start, int end, int search_depth, const Reser
 
     if (!rt) {
         ReservationTable rt_(graph->size());
-        return find_path_(start, end, search_depth, rra, rt_);
+        return find_path_(0, start, end, search_depth, rra, rt_);
     }
     else {
-        assert(rt->graph_size == graph->size());
-        return find_path_(start, end, search_depth, rra, *rt);
+        assert(rt->graph_size == int(graph->size()));
+        return find_path_(0, start, end, search_depth, rra, *rt);
     }
 }
 
 vector<int> HCAStar::find_path_(
+    int start_time,
     int start,
-    int end,
+    int goal,
     int search_depth,
     ResumableAStar &rra,
     const ReservationTable &rt
@@ -120,11 +121,11 @@ vector<int> HCAStar::find_path_(
     double pause_action_cost = graph->get_pause_action_cost();
     bool pause_action_allowed = graph->is_pause_action_allowed();
 
-    int min_search_depth = rt.last_time_reserved(end);
+    int min_search_depth = rt.last_time_reserved(goal);
 
     Queue openset;
 
-    Node* n0 = new Node(nullptr, start, 0, 0, f0);
+    Node* n0 = new Node(nullptr, start, start_time, 0, f0);
 
     openset.push({0, n0});
     std::unordered_map<int, Node*> nodes;
@@ -159,7 +160,7 @@ vector<int> HCAStar::find_path_(
         auto [f, current] = openset.top();
         openset.pop();
 
-        if (current->node_id == end) {
+        if (current->node_id == goal) {
             if (current->time >= min_search_depth || current->time == -1) {
                 auto path = reconstruct_path(start, current);
                 for (auto it : nodes)
@@ -175,8 +176,8 @@ vector<int> HCAStar::find_path_(
 
         if (current->time >= search_depth) {
             // terminal node
-            process_node(end, rra.distance(current->node_id), current);
-            nodes[end + (current->time + 1) * graph_size]->time = -1;
+            process_node(goal, rra.distance(current->node_id), current);
+            nodes[goal + (current->time + 1) * graph_size]->time = -1;
         }
         else {
             if (pause_action_allowed)
@@ -194,6 +195,10 @@ vector<int> HCAStar::find_path_(
     return {};
 }
 
+vector<vector<int>> HCAStar::mapf(vector<int> starts, vector<int> goals) {
+    return mapf(starts, goals, 100, 16, nullptr);
+}
+
 vector<vector<int>> HCAStar::mapf(
     vector<int> starts,
     vector<int> goals,
@@ -207,15 +212,13 @@ vector<vector<int>> HCAStar::mapf(
         return {};
 
     ReservationTable reservation_table(graph->size());
-    if (rt) {
-        cout << graph->size() << " vs " << rt->graph_size << endl;
+    if (rt)
         reservation_table = *rt;
-    }
 
     vector<vector<int>> paths;
     for (size_t i = 0; i < starts.size(); i++) {
         ResumableAStar rra(reversed_graph_, goals[i], starts[i]);
-        vector<int> path = find_path_(starts[i], goals[i], search_depth, rra, reservation_table);
+        vector<int> path = find_path_(0, starts[i], goals[i], search_depth, rra, reservation_table);
         paths.push_back(path);
         reservation_table.add_path(i, 0, path, !despawn_at_destination);
     }

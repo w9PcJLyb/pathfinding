@@ -25,6 +25,11 @@ cdef extern from "src/include/core.h":
         AbsPathFinder() except +
         vector[int] find_path(int, int)
 
+    cdef cppclass AbsMAPF:
+        AbsMAPF() except +
+        vector[int] find_path(int, int)
+        vector[vector[int]] mapf(vector[int], vector[int])
+
 
 cdef extern from "src/reservation_table.cpp":
     pass
@@ -183,7 +188,19 @@ cdef extern from "src/hc_a_star.cpp":
 
 cdef extern from "src/include/hc_a_star.h":
 
-    cdef cppclass HCAStar(AbsPathFinder):
+    cdef cppclass HCAStar(AbsMAPF):
         HCAStar(AbsGraph*) except +
         vector[int] find_path(int, int, int, ReservationTable*)
         vector[vector[int]] mapf(vector[int], vector[int], int, bool, ReservationTable*)
+
+
+cdef extern from "src/whc_a_star.cpp":
+    pass
+
+
+cdef extern from "src/include/whc_a_star.h":
+
+    cdef cppclass WHCAStar(AbsMAPF):
+        WHCAStar(AbsGraph*) except +
+        vector[int] find_path(int, int, int, ReservationTable*)
+        vector[vector[int]] mapf(vector[int], vector[int], int, int, bool, ReservationTable*)
