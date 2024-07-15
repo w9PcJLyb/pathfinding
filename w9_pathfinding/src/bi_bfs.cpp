@@ -71,7 +71,7 @@ bool BiBFS::step(std::queue<int> &queue, vector<Node> &nodes, AbsGraph* g) {
     queue.pop();
     int d = nodes[node_id].distance + 1;
 
-    for (auto& [n, cost] : g->get_neighbours(node_id)) {
+    for (auto& [n, cost] : g->get_neighbors(node_id)) {
         Node &nb = nodes[n];
         if (nb.distance < 0) {
             nb.distance = d;

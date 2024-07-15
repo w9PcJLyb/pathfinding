@@ -43,7 +43,7 @@ class Grid : public AbsGraph {
         void remove_obstacle(int node);
         void clear_weights();
         bool is_inside(const Point &p) const;
-        vector<pair<int, double>> get_neighbours(int node) const; 
+        vector<pair<int, double>> get_neighbors(int node) const;
         int get_node_id(const Point &p) const;
         Point get_coordinates(int node) const;
         vector<Point> get_coordinates(vector<int> &p) const;

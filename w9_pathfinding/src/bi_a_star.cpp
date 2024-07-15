@@ -85,7 +85,7 @@ bool BiAStar::step(int side, Queue &queue, AbsGraph* g) {
     nodes_[side][node_id].visited = true;
 
     double d = nodes_[side][node_id].distance;
-    for (auto& [n, cost] : g->get_neighbours(node_id)) {
+    for (auto& [n, cost] : g->get_neighbors(node_id)) {
         Node &nb = nodes_[side][n];
         if (nb.visited)
             continue;

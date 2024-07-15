@@ -43,7 +43,7 @@ class Grid3D : public AbsGraph {
         void remove_obstacle(int node);
         void clear_weights();
         bool is_inside(const Point &p) const;
-        vector<pair<int, double>> get_neighbours(int node) const; 
+        vector<pair<int, double>> get_neighbors(int node) const;
         double estimate_distance(int v1, int v2) const;
         AbsGraph* reverse() const;
         vector<vector<int>> find_components() const override;

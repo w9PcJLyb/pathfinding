@@ -75,9 +75,9 @@ def compare_results(results):
     return True
 
 
-def run_graph(algrithms, graph, start, end):
+def run_graph(algorithms, graph, start, end):
     results = []
-    for a in algrithms:
+    for a in algorithms:
         path, time = find_path(a["finder"], start, end)
         a["total_time"] += time
 
@@ -110,7 +110,7 @@ def run_graph(algrithms, graph, start, end):
 
 def stress_test(weighted, with_coordinates=False):
 
-    algrithms = copy(ALGORITHMS)
+    algorithms = copy(ALGORITHMS)
 
     if not weighted:
         print(f"\nStress test with unweighted graph...")
@@ -126,9 +126,9 @@ def stress_test(weighted, with_coordinates=False):
         shortest_path_flag = "w"
 
     if not with_coordinates:
-        algrithms = [a for a in algrithms if not a["h"]]
+        algorithms = [a for a in algorithms if not a["h"]]
 
-    for a in algrithms:
+    for a in algorithms:
         a["shortest_path"] = a[shortest_path_flag]
         a["total_time"] = 0
         a["total_cost"] = 0
@@ -138,17 +138,17 @@ def stress_test(weighted, with_coordinates=False):
 
         graph, queries = generator.generate(num_queries=NUM_QUERIES_PER_GRAPH)
 
-        for a in algrithms:
+        for a in algorithms:
             a["finder"] = a["class"](graph)
 
         for start, end in queries:
-            r = run_graph(algrithms, graph, start, end)
+            r = run_graph(algorithms, graph, start, end)
             if not r:
                 return
 
     print("\nOverall results:")
     count = NUM_GRAPHS * NUM_QUERIES_PER_GRAPH
-    for a in algrithms:
+    for a in algorithms:
         mean_time = a["total_time"] / count
         mean_cost = a["total_cost"] / count
         print(f" - {a['name']}:")

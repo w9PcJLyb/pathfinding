@@ -14,7 +14,7 @@ cdef extern from "src/include/core.h":
         size_t size()
         double calculate_cost(vector[int])
         void reverse_inplace()
-        vector[pair[int, double]] get_neighbours(int)
+        vector[pair[int, double]] get_neighbors(int)
         vector[vector[int]] find_components()
         vector[vector[int]] find_scc()
         void set_pause_action_cost(double)

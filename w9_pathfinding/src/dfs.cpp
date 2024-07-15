@@ -32,7 +32,7 @@ vector<int> DFS::find_path(int start, int end) {
     while (!stack.empty()) {
         int x = stack.back();
         stack.pop_back();
-        for (auto& [n, cost] : graph->get_neighbours(x)) {
+        for (auto& [n, cost] : graph->get_neighbors(x)) {
             if (came_from_[n] < 0) {
                 came_from_[n] = x;
                 if (n == end)

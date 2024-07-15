@@ -46,7 +46,7 @@ vector<int> AStar::find_path(int start, int end) {
         }
 
         double distance = nodes_[x].distance;
-        for (auto& [n, cost] : graph->get_neighbours(x)) {
+        for (auto& [n, cost] : graph->get_neighbors(x)) {
             Node &node = nodes_[n];
             double new_distance = distance + cost;
             if (node.distance < 0) {

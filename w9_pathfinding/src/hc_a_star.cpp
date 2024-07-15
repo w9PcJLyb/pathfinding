@@ -40,7 +40,7 @@ void ResumableAStar::search(int node_id) {
 
         current.closed = true;
 
-        for (auto& [n, cost] : graph->get_neighbours(current_id)) {
+        for (auto& [n, cost] : graph->get_neighbors(current_id)) {
             Node &node = nodes_[n];
             double new_distance = current.distance + cost;
             if (node.distance < 0) {
@@ -183,7 +183,7 @@ vector<int> HCAStar::find_path_(
             if (pause_action_allowed)
                 process_node(current->node_id, pause_action_cost, current);
 
-            for (auto &[node_id, cost] : graph->get_neighbours(current->node_id)) {
+            for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {
                 process_node(node_id, cost, current);
             }
         }

@@ -93,7 +93,7 @@ void Grid3D::warp_point(Point &p) const {
         p.z -= depth;
 }
 
-vector<pair<int, double>> Grid3D::get_neighbours(int node) const {
+vector<pair<int, double>> Grid3D::get_neighbors(int node) const {
     vector<pair<int, double>> nb;
 
     double node_weight = weights_.at(node);

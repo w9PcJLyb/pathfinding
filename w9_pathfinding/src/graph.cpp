@@ -69,7 +69,7 @@ vector<vector<double>> Graph::get_coordinates() const {
     return coordinates_;
 }
 
-vector<pair<int, double>> Graph::get_neighbours(int node) const {
+vector<pair<int, double>> Graph::get_neighbors(int node) const {
     vector<pair<int, double>> nb;
     for (const Edge &e : edges_[node]) {
         nb.push_back({e.node_id, e.cost});

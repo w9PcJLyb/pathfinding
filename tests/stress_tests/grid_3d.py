@@ -2,12 +2,12 @@ import time
 from copy import copy
 
 import w9_pathfinding as pf
-from tests.stress_tests.generator import Grid3DGrnerator
+from tests.stress_tests.generator import Grid3DGenerator
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
 
-UNWEIGHTED_GRID_GENERATOR = Grid3DGrnerator(
+UNWEIGHTED_GRID_GENERATOR = Grid3DGenerator(
     width=20,
     height=20,
     depth=20,
@@ -15,7 +15,7 @@ UNWEIGHTED_GRID_GENERATOR = Grid3DGrnerator(
     weighted=False,
 )
 
-WEIGHTED_GRID_GENERATOR = Grid3DGrnerator(
+WEIGHTED_GRID_GENERATOR = Grid3DGenerator(
     width=20,
     height=20,
     depth=20,
@@ -64,9 +64,9 @@ def compare_results(results):
     return True
 
 
-def run_grid(algrithms, graph, start, end):
+def run_grid(algorithms, graph, start, end):
     results = []
-    for a in algrithms:
+    for a in algorithms:
         path, time = find_path(a["finder"], start, end)
         a["total_time"] += time
 
@@ -99,7 +99,7 @@ def run_grid(algrithms, graph, start, end):
 
 def stress_test(weighted):
 
-    algrithms = copy(ALGORITHMS)
+    algorithms = copy(ALGORITHMS)
 
     if not weighted:
         print(f"\nStress test with unweighted grid...")
@@ -110,7 +110,7 @@ def stress_test(weighted):
         generator = WEIGHTED_GRID_GENERATOR
         shortest_path_flag = "w"
 
-    for a in algrithms:
+    for a in algorithms:
         a["shortest_path"] = a[shortest_path_flag]
         a["total_time"] = 0
         a["total_cost"] = 0
@@ -120,17 +120,17 @@ def stress_test(weighted):
 
         graph, queries = generator.generate(num_queries=NUM_QUERIES_PER_GRAPH)
 
-        for a in algrithms:
+        for a in algorithms:
             a["finder"] = a["class"](graph)
 
         for start, end in queries:
-            r = run_grid(algrithms, graph, start, end)
+            r = run_grid(algorithms, graph, start, end)
             if not r:
                 return
 
     print("\nOverall results:")
     count = NUM_GRAPHS * NUM_QUERIES_PER_GRAPH
-    for a in algrithms:
+    for a in algorithms:
         mean_time = a["total_time"] / count
         mean_cost = a["total_cost"] / count
         print(f" - {a['name']}:")

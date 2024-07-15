@@ -34,9 +34,9 @@ cdef class _AbsGraph:
     def calculate_cost(self, vector[int] path):
         return self._baseobj.calculate_cost(path)
 
-    def get_neighbours(self, int node_id):
+    def get_neighbors(self, int node_id):
         # return [[neighbour_id, cost], ...]
-        return self._baseobj.get_neighbours(node_id)
+        return self._baseobj.get_neighbors(node_id)
 
     @property
     def pause_action_cost(self):
@@ -175,10 +175,10 @@ cdef class _AbsGrid(_AbsGraph):
     def get_coordinates(self, int node_id):
         raise NotImplementedError()
 
-    def get_neighbours(self, point):
+    def get_neighbors(self, point):
         node_id = self.get_node_id(point)
         neighbours = []
-        for n, cost in self._baseobj.get_neighbours(node_id):
+        for n, cost in self._baseobj.get_neighbors(node_id):
             neighbours.append((self.get_coordinates(n), cost))
         return neighbours
 

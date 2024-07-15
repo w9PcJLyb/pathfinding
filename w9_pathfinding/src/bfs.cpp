@@ -33,7 +33,7 @@ vector<int> BFS::find_path(int start, int end) {
     while (!queue.empty()) {
         int x = queue.front();
         queue.pop();
-        for (auto& [n, cost] : graph->get_neighbours(x)) {
+        for (auto& [n, cost] : graph->get_neighbors(x)) {
             if (came_from_[n] < 0) {
                 came_from_[n] = x;
                 if (n == end)

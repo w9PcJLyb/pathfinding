@@ -16,7 +16,7 @@ double AbsGraph::calculate_cost(vector<int> &path) const {
         int next_node_id = path[i];
 
         double step_cost = -1;
-        for (auto &[n, cost] : get_neighbours(node_id)) {
+        for (auto &[n, cost] : get_neighbors(node_id)) {
             if (n == next_node_id) {
                 if (step_cost == -1 || cost < step_cost) {
                     step_cost = cost;
@@ -51,7 +51,7 @@ vector<int> AbsGraph::find_component_(vector<bool> &visited, int start) const {
     while (!stack.empty()) {
         int x = stack.back();
         stack.pop_back();
-        for (auto& [n, cost] : get_neighbours(x)) {
+        for (auto& [n, cost] : get_neighbors(x)) {
             if (!visited[n]) {
                 visited[n] = true;
                 component.push_back(n);
@@ -94,7 +94,7 @@ vector<vector<int>> AbsGraph::find_components() const {
 
 void dfs_with_order_(const AbsGraph *graph, vector<bool> &visited, vector<int> &order, int start) {
     visited[start] = true;
-    for (auto& [n, cost] : graph->get_neighbours(start)) {
+    for (auto& [n, cost] : graph->get_neighbors(start)) {
         if (!visited[n])
             dfs_with_order_(graph, visited, order, n);
     }

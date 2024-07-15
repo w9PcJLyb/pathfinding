@@ -108,7 +108,7 @@ class GraphWithCoordinatesGenerator(GraphGenerator):
         graph.add_edges(edges)
 
 
-class GridGrnerator(_Generator):
+class GridGenerator(_Generator):
     def __init__(
         self,
         width=10,
@@ -184,7 +184,7 @@ class GridGrnerator(_Generator):
         return grid, queries
 
 
-class Grid3DGrnerator(GridGrnerator):
+class Grid3DGenerator(GridGenerator):
     def __init__(
         self,
         width=10,

@@ -84,14 +84,14 @@ void test_grid() {
     cout << "Obstacle map:" << endl;
     grid.show_obstacle_map();
 
-    cout << "neighbours (1, 1) :: ";
-    for (auto &[n, cost]: grid.get_neighbours(grid.get_node_id({1, 1}))) {
+    cout << "neighbors (1, 1) :: ";
+    for (auto &[n, cost]: grid.get_neighbors(grid.get_node_id({1, 1}))) {
         cout << grid.get_coordinates(n) << " ";
     }
     cout << endl;
 
-    cout << "neighbours (1, 0) :: ";
-    for (auto &[n, cost]: grid.get_neighbours(grid.get_node_id({1, 0}))) {
+    cout << "neighbors (1, 0) :: ";
+    for (auto &[n, cost]: grid.get_neighbors(grid.get_node_id({1, 0}))) {
         cout << grid.get_coordinates(n) << " ";
     }
     cout << endl;

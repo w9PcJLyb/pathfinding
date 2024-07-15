@@ -41,7 +41,7 @@ vector<int> Dijkstra::find_path(int start, int end) {
             return reconstruct_path(start, end);
         }
 
-        for (auto& [n, cost] : graph->get_neighbours(top.second)) {
+        for (auto& [n, cost] : graph->get_neighbors(top.second)) {
             double total_cost = distance + cost;
             Node &node = nodes_[n];
             if (node.distance < 0 || node.distance > total_cost) {

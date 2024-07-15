@@ -21,7 +21,7 @@ class AbsGraph {
         AbsGraph() {};
         virtual ~AbsGraph() {};
         virtual size_t size() const = 0;
-        virtual vector<pair<int, double>> get_neighbours(int node) const = 0;
+        virtual vector<pair<int, double>> get_neighbors(int node) const = 0;
         virtual AbsGraph* reverse() const = 0;
         virtual double estimate_distance(int v1, int v2) const = 0;
         virtual bool is_directed_graph() const = 0;
@@ -51,7 +51,7 @@ class AbsPathFinder {
 };
 
 
-class AbsMAPF {
+class AbsMAPF : public AbsPathFinder {
     public:
         AbsMAPF() {};
         virtual ~AbsMAPF() {};

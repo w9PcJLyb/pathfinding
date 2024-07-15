@@ -120,7 +120,7 @@ vector<Grid::Point> Grid::get_coordinates(vector<int> &nodes) const {
 }
 
 
-vector<pair<int, double>> Grid::get_neighbours(int node) const {
+vector<pair<int, double>> Grid::get_neighbors(int node) const {
     vector<pair<int, double>> nb;
     nb.reserve(diagonal_movement_ == 0 ? 4 : 8);
     

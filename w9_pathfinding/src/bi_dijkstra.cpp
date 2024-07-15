@@ -80,7 +80,7 @@ bool BiDijkstra::step(Queue &queue, vector<Node> &nodes, AbsGraph* g) {
 
     closedset_[node_id] = 1;
 
-    for (auto& [n, cost] : g->get_neighbours(node_id)) {
+    for (auto& [n, cost] : g->get_neighbors(node_id)) {
         Node &nb = nodes[n];
         double new_cost = top.first + cost;
         if (nb.distance < 0 || nb.distance - new_cost > epsilon) {
