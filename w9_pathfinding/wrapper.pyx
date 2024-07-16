@@ -182,18 +182,6 @@ cdef class _AbsGrid(_AbsGraph):
             neighbours.append((self.get_coordinates(n), cost))
         return neighbours
 
-    def set_dynamic_obstacles(self, dynamic_obstacles):
-        for i in range(len(dynamic_obstacles)):
-            dynamic_obstacles[i] = {self.get_node_id(point) for point in dynamic_obstacles[i]}
-        return super().set_dynamic_obstacles(dynamic_obstacles)
-
-    def add_dynamic_obstacles(self, path):
-        path = [self.get_node_id(point) for point in path]
-        return super().add_dynamic_obstacles(path)
-
-    def has_dynamic_obstacle(self, int time, point):
-        return super().has_dynamic_obstacle(time, self.get_node_id(point))
-
     def calculate_cost(self, path):
         cdef vector[int] nodes
         nodes = [self.get_node_id(x) for x in path]

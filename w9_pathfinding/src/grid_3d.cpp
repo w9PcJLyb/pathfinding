@@ -4,63 +4,17 @@
 Grid3D::Grid3D(int width, int height, int depth) : width(width), height(height), depth(depth) {
     passable_borders = false;
 
-    weights_.resize(size(), 1);
+    weights_.resize(width * height * depth, 1);
     min_weight_ = 1;
     reversed_ = false;
 }
 
-Grid3D::Grid3D(int width, int height, int depth, vector<double> weights) : width(width), height(height), depth(depth) {
-    passable_borders = false;
+Grid3D::Grid3D(int width, int height, int depth, vector<double> weights) : Grid3D(width, height, depth) {
     set_weights(weights);
-    reversed_ = false;
-}
-
-size_t Grid3D::size() const {
-    return width * height * depth;
 }
 
 bool Grid3D::is_inside(const Point &p) const {
     return (p.x >= 0 && p.x < width && p.y >= 0 && p.y < height && p.z >= 0 && p.z < depth);
-}
-
-void Grid3D::set_weights(vector<double> &weights) {
-    if (weights.size() != size())
-        throw std::invalid_argument("Wrong shape");
-
-    if (!weights.empty()) {
-        min_weight_ = -1;
-        for (double w : weights) {
-            if (w < 0 && w != -1) {
-                throw std::invalid_argument("Weight must be either non-negative or equal to -1");
-            }
-            if (w != -1) {
-                if (min_weight_ == -1 || min_weight_ > w)
-                    min_weight_ = w;
-            }
-        }
-    }
-
-    weights_ = weights;
-}
-
-vector<double> Grid3D::get_weights() const {
-    return weights_;
-}
-
-bool Grid3D::has_obstacle(int node) const {
-    return weights_.at(node) == -1;
-}
-
-void Grid3D::add_obstacle(int node) {
-    weights_.at(node) = -1;
-}
-
-void Grid3D::remove_obstacle(int node) {
-    weights_.at(node) = 1;
-}
-
-void Grid3D::clear_weights() {
-    std::fill(weights_.begin(), weights_.end(), 1);
 }
 
 int Grid3D::get_node_id(const Point &p) const {
@@ -153,15 +107,4 @@ AbsGraph* Grid3D::reverse() const {
     reversed_grid->set_pause_action_cost(get_pause_action_cost());
     reversed_grid->reversed_ = !reversed_;
     return reversed_grid;
-}
-
-vector<vector<int>> Grid3D::find_components() const {
-    vector<vector<int>> components = AbsGraph::find_components();
-    vector<vector<int>> components_without_walls;
-    for (vector<int> x : components) {
-        if (x.size() == 1 && has_obstacle(x[0]))
-            continue;
-        components_without_walls.push_back(x);
-    }
-    return components_without_walls;
 }

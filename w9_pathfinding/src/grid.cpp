@@ -7,22 +7,13 @@ Grid::Grid(int width, int height) : width(width), height(height) {
     passable_up_down_border = false;
     diagonal_movement_cost_multiplier = 1.0;
 
-    weights_.resize(size(), 1);
+    weights_.resize(width * height, 1);
     min_weight_ = 1;
     reversed_ = false;
 }
 
-Grid::Grid(int width, int height, vector<double> weights) : width(width), height(height) {
-    diagonal_movement_ = 0;
-    passable_left_right_border = false;
-    passable_up_down_border = false;
-    diagonal_movement_cost_multiplier = 1.0;
+Grid::Grid(int width, int height, vector<double> weights) : Grid(width, height) {
     set_weights(weights);
-    reversed_ = false;
-}
-
-size_t Grid::size() const {
-    return width * height;
 }
 
 void Grid::set_diagonal_movement(int diagonal_movement) {
@@ -39,30 +30,6 @@ bool Grid::is_inside(const Point &p) const {
     return (p.x >= 0 && p.x < width && p.y >= 0 && p.y < height);
 }
 
-void Grid::set_weights(vector<double> &weights) {
-    if (weights.size() != size())
-        throw std::invalid_argument("Wrong shape");
-
-    if (!weights.empty()) {
-        min_weight_ = -1;
-        for (double w : weights) {
-            if (w < 0 && w != -1) {
-                throw std::invalid_argument("Weight must be either non-negative or equal to -1");
-            }
-            if (w != -1) {
-                if (min_weight_ == -1 || min_weight_ > w)
-                    min_weight_ = w;
-            }
-        }
-    }
-
-    weights_ = weights;
-}
-
-vector<double> Grid::get_weights() const {
-    return weights_;
-}
-
 void Grid::show_obstacle_map() const {
     for (int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
@@ -70,22 +37,6 @@ void Grid::show_obstacle_map() const {
         }
         cout << endl;
     }
-}
-
-bool Grid::has_obstacle(int node) const {
-    return weights_.at(node) == -1;
-}
-
-void Grid::add_obstacle(int node) {
-    weights_.at(node) = -1;
-}
-
-void Grid::remove_obstacle(int node) {
-    weights_.at(node) = 1;
-}
-
-void Grid::clear_weights() {
-    std::fill(weights_.begin(), weights_.end(), 1);
 }
 
 void Grid::warp_point(Point &p) const {
@@ -110,15 +61,6 @@ int Grid::get_node_id(const Point &p) const {
 Grid::Point Grid::get_coordinates(int node) const {
     return {node % width, node / width};
 }
-
-vector<Grid::Point> Grid::get_coordinates(vector<int> &nodes) const {
-    vector<Point> v;
-    for (int node : nodes) {
-        v.push_back(get_coordinates(node));
-    }
-    return v;
-}
-
 
 vector<pair<int, double>> Grid::get_neighbors(int node) const {
     vector<pair<int, double>> nb;
@@ -229,15 +171,4 @@ AbsGraph* Grid::reverse() const {
     reversed_grid->set_pause_action_cost(get_pause_action_cost());
     reversed_grid->reversed_ = !reversed_;
     return reversed_grid;
-}
-
-vector<vector<int>> Grid::find_components() const {
-    vector<vector<int>> components = AbsGraph::find_components();
-    vector<vector<int>> components_without_walls;
-    for (vector<int> x : components) {
-        if (x.size() == 1 && has_obstacle(x[0]))
-            continue;
-        components_without_walls.push_back(x);
-    }
-    return components_without_walls;
 }

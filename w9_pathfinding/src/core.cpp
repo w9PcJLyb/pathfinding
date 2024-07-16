@@ -178,3 +178,62 @@ double AbsGraph::get_pause_action_cost() const {
 bool AbsGraph::is_pause_action_allowed() const {
     return pause_action_cost_ >= 0;
 }
+
+size_t AbsGrid::size() const {
+    return weights_.size();
+}
+
+bool AbsGrid::is_directed_graph() const {
+    return false;
+}
+
+void AbsGrid::set_weights(vector<double> &weights) {
+    if (weights.size() != size())
+        throw std::invalid_argument("Wrong shape");
+
+    if (!weights.empty()) {
+        min_weight_ = -1;
+        for (double w : weights) {
+            if (w < 0 && w != -1) {
+                throw std::invalid_argument("Weight must be either non-negative or equal to -1");
+            }
+            if (w != -1) {
+                if (min_weight_ == -1 || min_weight_ > w)
+                    min_weight_ = w;
+            }
+        }
+    }
+
+    weights_ = weights;
+}
+
+vector<double> AbsGrid::get_weights() const {
+    return weights_;
+}
+
+bool AbsGrid::has_obstacle(int node) const {
+    return weights_.at(node) == -1;
+}
+
+void AbsGrid::add_obstacle(int node) {
+    weights_.at(node) = -1;
+}
+
+void AbsGrid::remove_obstacle(int node) {
+    weights_.at(node) = 1;
+}
+
+void AbsGrid::clear_weights() {
+    std::fill(weights_.begin(), weights_.end(), 1);
+}
+
+vector<vector<int>> AbsGrid::find_components() const {
+    vector<vector<int>> components = AbsGraph::find_components();
+    vector<vector<int>> components_without_walls;
+    for (vector<int> &x : components) {
+        if (x.size() == 1 && has_obstacle(x[0]))
+            continue;
+        components_without_walls.push_back(x);
+    }
+    return components_without_walls;
+}

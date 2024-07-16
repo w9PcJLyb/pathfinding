@@ -3,7 +3,7 @@
 #include "core.h"
 
 
-class Grid3D : public AbsGraph {
+class Grid3D : public AbsGrid {
 
     public:
 
@@ -32,30 +32,17 @@ class Grid3D : public AbsGraph {
         const int width, height, depth;
         bool passable_borders;
 
-        size_t size() const;
-        bool is_directed_graph() const {return false;};
         int get_node_id(const Point &p) const;
         Point get_coordinates(int node) const;
-        void set_weights(vector<double> &weights);
-        vector<double> get_weights() const;
-        bool has_obstacle(int node) const;
-        void add_obstacle(int node);
-        void remove_obstacle(int node);
-        void clear_weights();
         bool is_inside(const Point &p) const;
         vector<pair<int, double>> get_neighbors(int node) const;
         double estimate_distance(int v1, int v2) const;
         AbsGraph* reverse() const;
-        vector<vector<int>> find_components() const override;
 
     private:
         vector<Point> directions_ = {
             {0, 0, -1}, {0, 0, 1}, {0, -1, 0}, {0, 1, 0}, {-1, 0, 0}, {1, 0, 0}
         };
-
-        vector<double> weights_;
-        double min_weight_;
-        bool reversed_;
 
         void warp_point(Point &p) const;
 };

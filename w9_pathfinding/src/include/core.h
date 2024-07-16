@@ -43,6 +43,32 @@ class AbsGraph {
 };
 
 
+class AbsGrid : public AbsGraph {
+
+    public:
+        size_t size() const;
+        bool is_directed_graph() const;
+        void set_weights(vector<double> &weights);
+        vector<double> get_weights() const;
+        bool has_obstacle(int node) const;
+        void add_obstacle(int node);
+        void remove_obstacle(int node);
+        void clear_weights();
+        vector<vector<int>> find_components() const override;
+
+    protected:
+        // if weight == -1 - there is an impassable obstacle, the node is unreachable
+        // if weight >= 0 - weight is the cost of entering this node
+        vector<double> weights_;
+
+        // the minimum value in weights, used in the heuristic function (estimate_distance)
+        double min_weight_;
+
+        // is a reversed graph, used in bidirectional algorithms
+        bool reversed_;
+};
+
+
 class AbsPathFinder {
     public:
         AbsPathFinder() {};
