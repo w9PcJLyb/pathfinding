@@ -19,6 +19,7 @@ There are several types of graphs available:
  - Graph - Directed or undirected graph
  - Grid - Two-dimensional grid
  - Grid3D - Three-dimensional grid
+ - HexGrid - Hexagonal grid
 
 # Installation
 

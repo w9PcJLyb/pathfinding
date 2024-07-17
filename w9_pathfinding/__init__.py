@@ -2,6 +2,7 @@ from .cpf import (
     Graph,
     Grid,
     Grid3D,
+    HexGrid,
     BFS,
     BiBFS,
     DFS,

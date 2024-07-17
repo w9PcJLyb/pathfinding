@@ -2,19 +2,19 @@ from copy import copy
 
 import w9_pathfinding as pf
 from tests.stress_tests.utils import run_graph
-from tests.stress_tests.generator import GridGenerator
+from tests.stress_tests.generator import HexGridGenerator
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
 
-UNWEIGHTED_GRID_GENERATOR = GridGenerator(
+UNWEIGHTED_GRID_GENERATOR = HexGridGenerator(
     width=64,
     height=64,
     obstacle_percentage=0.2,
     weighted=False,
 )
 
-WEIGHTED_GRID_GENERATOR = GridGenerator(
+WEIGHTED_GRID_GENERATOR = HexGridGenerator(
     width=64,
     height=64,
     obstacle_percentage=0.2,
@@ -38,7 +38,6 @@ ALGORITHMS = [
 
 def show_grid_info(grid, start, end):
     print("weights =", sum(grid.weights, []))
-    print("diagonal_movement =", grid.diagonal_movement)
     print("passable_left_right_border =", grid.passable_left_right_border)
     print("passable_up_down_border =", grid.passable_up_down_border)
     print(f"start, end = {start}, {end}")

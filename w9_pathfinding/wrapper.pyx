@@ -8,6 +8,7 @@ from w9_pathfinding.cdefs cimport (
     Graph as CGraph,
     Grid as CGrid,
     Grid3D as CGrid3D,
+    HexGrid as CHexGrid,
     DFS as CDFS,
     BFS as CBFS,
     BiBFS as CBiBFS,
@@ -494,6 +495,138 @@ cdef class Grid3D(_AbsGrid):
         self._obj.set_weights(sum(sum(matrix, []), []))
 
 
+cdef class HexGrid(_AbsGrid):
+    # Hexagonal Grid with pointy top orientation and “odd-r” layout
+
+    cdef CHexGrid* _obj
+    cdef readonly int width, height
+
+    def __cinit__(
+        self,
+        weights=None,
+        *,
+        width=None,
+        height=None,
+        bool passable_left_right_border=False,
+        bool passable_up_down_border=False,
+    ):
+
+        if weights is None:
+            if not isinstance(width, int) or not isinstance(height, int):
+                raise ValueError("Either weights or height and width must be provided.")
+        else:
+            height, width = len(weights), len(weights[0])
+
+        if width <= 0:
+            raise ValueError("Width must be greater than zero.")
+
+        if height <= 0:
+            raise ValueError("Height must be greater than zero.")
+
+        if passable_up_down_border and height % 2 == 1:
+            raise ValueError(
+                "It is possible to pass the border from top to bottom, only if the height is even"
+            )
+
+        self.width = width
+        self.height = height
+
+        if weights is None:
+            self._obj = new CHexGrid(width, height)
+        else:
+            self._check_weights(weights)
+            self._obj = new CHexGrid(width, height, sum(weights, []))
+
+        self._baseobj = self._obj
+
+        if passable_left_right_border:
+            self.passable_left_right_border = passable_left_right_border
+
+        if passable_up_down_border:
+            self.passable_up_down_border = passable_up_down_border
+
+    def __dealloc__(self):
+        del self._obj
+
+    def __repr__(self):
+        return f"HexGrid({self.width}x{self.height})"
+
+    def assert_in(self, point):
+        if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height:
+            raise ValueError(f"Point {point} is out of the {self}")
+
+    def get_node_id(self, point):
+        self.assert_in(point)
+        return point[0] + point[1] * self.width
+
+    def get_coordinates(self, int node_id):
+        return node_id % self.width, node_id // self.width
+
+    def has_obstacle(self, point):
+        self.assert_in(point)
+        return self._obj.has_obstacle(self.get_node_id(point))
+
+    def add_obstacle(self, point):
+        self.assert_in(point)
+        self._obj.add_obstacle(self.get_node_id(point))
+
+    def remove_obstacle(self, point):
+        self.assert_in(point)
+        self._obj.remove_obstacle(self.get_node_id(point))
+
+    @property
+    def passable_left_right_border(self):
+        return self._obj.passable_left_right_border
+
+    @passable_left_right_border.setter
+    def passable_left_right_border(self, bool _b):
+        self._obj.passable_left_right_border = _b
+
+    @property
+    def passable_up_down_border(self):
+        return self._obj.passable_up_down_border
+
+    @passable_up_down_border.setter
+    def passable_up_down_border(self, bool _b):
+        if _b and self.height % 2 == 1:
+            raise ValueError(
+                "It is possible to pass the border from top to bottom, only if the height is even"
+            )
+        self._obj.passable_up_down_border = _b
+
+    @property
+    def obstacle_map(self):
+        weights = self._obj.get_weights()
+        map = []
+        for y in range(self.height):
+            row = [int(weights[self.get_node_id((x, y))] == -1) for x in range(self.width)]
+            map.append(row)
+        return map
+
+    def _check_weights(self, weights):
+        height, width = len(weights), len(weights[0])
+        if height != self.height or width != self.width:
+            raise ValueError(f"weights.shape must be {self.width}x{self.height}")
+        for row in weights:
+            for w in row:
+                if w < 0 and w != -1:
+                    raise ValueError("Weight must be either non-negative or equal to -1")
+
+    @property
+    def weights(self):
+        weights = self._obj.get_weights()
+        matrix = []
+        for y in range(self.height):
+            row = [weights[self.get_node_id((x, y))] for x in range(self.width)]
+            matrix.append(row)
+        return matrix
+
+    @weights.setter
+    def weights(self, matrix):
+        self._check_weights(matrix)
+        self._obj.set_weights(sum(matrix, []))
+
+
 def _pathfinding(func):
 
     def wrap(finder, start, goal, **kwargs):
@@ -504,7 +637,7 @@ def _pathfinding(func):
             g.assert_in(goal)
             path = func(finder, start, goal, **kwargs)
 
-        elif isinstance(g, (Grid, Grid3D)):
+        elif isinstance(g, (Grid, Grid3D, HexGrid)):
             start = g.get_node_id(start)
             goal = g.get_node_id(goal)
             path = func(finder, start, goal, **kwargs)
@@ -684,7 +817,7 @@ def _mapf(func):
                 g.assert_in(goals[i])
             path = func(finder, starts, goals, **kwargs)
 
-        elif isinstance(g, (Grid, Grid3D)):
+        elif isinstance(g, (Grid, Grid3D, HexGrid)):
             starts = [g.get_node_id(x) for x in starts]
             goals = [g.get_node_id(x) for x in goals]
             paths = []

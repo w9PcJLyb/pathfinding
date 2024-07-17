@@ -21,6 +21,14 @@ cdef extern from "src/include/core.h":
         double get_pause_action_cost()
         bool is_pause_action_allowed()
 
+    cdef cppclass AbsGrid(AbsGraph):
+        bool has_obstacle(int)
+        void add_obstacle(int)
+        void remove_obstacle(int)
+        void clear_weights()
+        void set_weights(vector[double]&)
+        vector[double] get_weights()
+
     cdef cppclass AbsPathFinder:
         AbsPathFinder() except +
         vector[int] find_path(int, int)
@@ -70,7 +78,7 @@ cdef extern from "src/grid.cpp":
 
 cdef extern from "src/include/grid.h":
 
-    cdef cppclass Grid(AbsGraph):
+    cdef cppclass Grid(AbsGrid):
         bool passable_left_right_border, passable_up_down_border
         double diagonal_movement_cost_multiplier
 
@@ -78,12 +86,6 @@ cdef extern from "src/include/grid.h":
         Grid(int, int, vector[double]) except +
         unsigned int get_diagonal_movement()
         void set_diagonal_movement(int)
-        bool has_obstacle(int)
-        void add_obstacle(int)
-        void remove_obstacle(int)
-        void clear_weights()
-        void set_weights(vector[double]&)
-        vector[double] get_weights()
 
 
 cdef extern from "src/grid_3d.cpp":
@@ -92,17 +94,24 @@ cdef extern from "src/grid_3d.cpp":
 
 cdef extern from "src/include/grid_3d.h":
 
-    cdef cppclass Grid3D(AbsGraph):
+    cdef cppclass Grid3D(AbsGrid):
         bool passable_borders
 
         Grid3D(int, int, int) except +
         Grid3D(int, int, int, vector[double]) except +
-        bool has_obstacle(int)
-        void add_obstacle(int)
-        void remove_obstacle(int)
-        void clear_weights()
-        void set_weights(vector[double]&)
-        vector[double] get_weights()
+
+
+cdef extern from "src/hex_grid.cpp":
+    pass
+
+
+cdef extern from "src/include/hex_grid.h":
+
+    cdef cppclass HexGrid(AbsGrid):
+        bool passable_left_right_border, passable_up_down_border
+
+        HexGrid(int, int) except +
+        HexGrid(int, int, vector[double]) except +
 
 
 cdef extern from "src/dfs.cpp":

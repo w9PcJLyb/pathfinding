@@ -1,5 +1,5 @@
 import random
-from w9_pathfinding import Grid, Graph, Grid3D
+from w9_pathfinding import Grid, Graph, Grid3D, HexGrid
 
 
 class _Generator:
@@ -245,3 +245,39 @@ class Grid3DGenerator(GridGenerator):
             z = random.randint(0, grid.depth - 1)
             if not grid.has_obstacle((x, y, z)):
                 return x, y, z
+
+
+class HexGridGenerator(GridGenerator):
+    def _generate_grid(self):
+
+        if self.height % 2 == 0:
+            passable_up_down_border = random.randint(0, 1)
+        else:
+            passable_up_down_border = False
+
+        grid = HexGrid(
+            self._generate_obstacle_map(),
+            passable_up_down_border=passable_up_down_border,
+            passable_left_right_border=random.randint(0, 1),
+        )
+
+        self._add_widths(grid)
+        return grid
+
+    def _add_widths(self, grid):
+        if not self.weighted:
+            return
+
+        obstacle_map = grid.obstacle_map
+
+        weights = []
+        for y in range(grid.height):
+            row = []
+            for x in range(grid.width):
+                if obstacle_map[y][x]:
+                    row.append(-1)
+                else:
+                    row.append(random.uniform(self.min_weight, self.max_weight))
+            weights.append(row)
+
+        grid.weights = weights
