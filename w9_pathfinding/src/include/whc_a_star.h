@@ -49,6 +49,7 @@ class WHCAStar : public HCAStar {
 
         WHCAStar(AbsGraph* graph);
 
+        vector<vector<int>> mapf(vector<int> starts, vector<int> goals);
         vector<vector<int>> mapf(
             vector<int> starts,
             vector<int> goals,

@@ -135,7 +135,7 @@ vector<int> HCAStar::find_path_(
         int time = current->time + 1;
 
         if (rt.reserved(time, node_id)) {
-            return;
+            return false;
         }
 
         double distance = current->distance + cost;
@@ -154,6 +154,7 @@ vector<int> HCAStar::find_path_(
             n->parent = current;
             openset.push({n->f, n});
         }
+        return true;
     };
 
     while (!openset.empty()) {
@@ -176,8 +177,9 @@ vector<int> HCAStar::find_path_(
 
         if (current->time >= search_depth) {
             // terminal node
-            process_node(goal, rra.distance(current->node_id), current);
-            nodes[goal + (current->time + 1) * graph_size]->time = -1;
+            if (process_node(goal, rra.distance(current->node_id), current)) {
+                nodes[goal + (current->time + 1) * graph_size]->time = -1;
+            }
         }
         else {
             if (pause_action_allowed)
@@ -196,7 +198,7 @@ vector<int> HCAStar::find_path_(
 }
 
 vector<vector<int>> HCAStar::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 100, 16, nullptr);
+    return mapf(starts, goals, 100, false, nullptr);
 }
 
 vector<vector<int>> HCAStar::mapf(

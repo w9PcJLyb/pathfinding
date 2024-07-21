@@ -4,6 +4,10 @@
 WHCAStar::WHCAStar(AbsGraph *graph) : HCAStar(graph) {
 }
 
+vector<vector<int>> WHCAStar::mapf(vector<int> starts, vector<int> goals) {
+    return mapf(starts, goals, 100, 16, false, nullptr);
+}
+
 vector<vector<int>> WHCAStar::mapf(
     vector<int> starts,
     vector<int> goals,
