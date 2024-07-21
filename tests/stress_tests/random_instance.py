@@ -3,7 +3,7 @@ from w9_pathfinding import Grid, Graph, Grid3D, HexGrid
 
 
 class _Generator:
-    def generate(self, num_queries=1):
+    def instance(self):
         raise NotImplementedError()
 
 
@@ -43,16 +43,8 @@ class GraphGenerator(_Generator):
                 edges.append([end, start, cost])
         graph.add_edges(edges)
 
-    def generate(self, num_queries=1):
-        graph = self._generate_graph()
-
-        queries = []
-        for _ in range(num_queries):
-            start = random.randint(0, graph.num_vertices - 1)
-            end = random.randint(0, graph.num_vertices - 1)
-            queries.append((start, end))
-
-        return graph, queries
+    def instance(self):
+        return self._generate_graph()
 
 
 class GraphWithCoordinatesGenerator(GraphGenerator):
@@ -165,23 +157,8 @@ class GridGenerator(_Generator):
 
         grid.weights = weights
 
-    def _find_free_point(self, grid):
-        while True:
-            x = random.randint(0, grid.width - 1)
-            y = random.randint(0, grid.height - 1)
-            if not grid.has_obstacle((x, y)):
-                return x, y
-
-    def generate(self, num_queries=1):
-        grid = self._generate_grid()
-
-        queries = []
-        for _ in range(num_queries):
-            start = self._find_free_point(grid)
-            end = self._find_free_point(grid)
-            queries.append((start, end))
-
-        return grid, queries
+    def instance(self):
+        return self._generate_grid()
 
 
 class Grid3DGenerator(GridGenerator):
@@ -281,3 +258,53 @@ class HexGridGenerator(GridGenerator):
             weights.append(row)
 
         grid.weights = weights
+
+
+def random_queries(graph, num_queries, connected=False, unique=False):
+    is_grid = isinstance(graph, (Grid, Grid3D, HexGrid))
+
+    free_nodes = []
+    for node_id in range(graph.size()):
+        if is_grid and graph.has_obstacle(graph.get_coordinates(node_id)):
+            continue
+        free_nodes.append(node_id)
+
+    if unique and len(free_nodes) < num_queries:
+        raise ValueError(f"Can't generate {num_queries} unique queries")
+
+    start_pool = list(free_nodes)
+    goal_pool = list(free_nodes)
+
+    components = []
+    if connected:
+        components = graph.find_components()
+        if is_grid:
+            components = [[graph.get_node_id(x) for x in c] for c in components]
+        components = [set(c) for c in components]
+
+    queries = []
+    while len(queries) < num_queries:
+        start = random.choice(start_pool)
+        goal = random.choice(goal_pool)
+
+        if connected:
+            is_connected = False
+            for c in components:
+                if start in c:
+                    if goal in c:
+                        is_connected = True
+                    break
+
+            if not is_connected:
+                continue
+
+        if unique:
+            start_pool = [x for x in start_pool if x != start]
+            goal_pool = [x for x in goal_pool if x != goal]
+
+        if is_grid:
+            start, goal = graph.get_coordinates(start), graph.get_coordinates(goal)
+
+        queries.append((start, goal))
+
+    return queries

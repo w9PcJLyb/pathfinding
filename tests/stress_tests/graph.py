@@ -2,7 +2,11 @@ from copy import copy
 
 import w9_pathfinding as pf
 from tests.stress_tests.utils import run_graph
-from tests.stress_tests.generator import GraphGenerator, GraphWithCoordinatesGenerator
+from tests.stress_tests.random_instance import (
+    GraphGenerator,
+    GraphWithCoordinatesGenerator,
+    random_queries,
+)
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
@@ -82,7 +86,8 @@ def stress_test(weighted, with_coordinates=False):
     for i in range(NUM_GRAPHS):
         print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
 
-        graph, queries = generator.generate(num_queries=NUM_QUERIES_PER_GRAPH)
+        graph = generator.instance()
+        queries = random_queries(graph, num_queries=NUM_QUERIES_PER_GRAPH)
 
         for a in algorithms:
             a["finder"] = a["class"](graph)
