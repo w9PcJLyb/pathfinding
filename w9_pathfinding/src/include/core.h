@@ -23,11 +23,25 @@ class AbsGraph {
         virtual size_t size() const = 0;
         virtual vector<pair<int, double>> get_neighbors(int node) const = 0;
         virtual AbsGraph* reverse() const = 0;
+
+        // returns a lower bound of the distance between two vertices
+        // used by A* algorithm
         virtual double estimate_distance(int v1, int v2) const = 0;
+
         virtual bool is_directed_graph() const = 0;
+
+        // returns a cost of moving along the path
+        // returns -1 if the path is not possible
         double calculate_cost(vector<int> &path) const;
+
+        // returns connected components in an undirected graph
         virtual vector<vector<int>> find_components() const;
+
+        // returns Strongly Connected Components (SCC) in a directed graph
         virtual vector<vector<int>> find_scc() const;
+
+        // returns true if there is a path of length 1 from vertex v1 to vertex v2
+        virtual bool adjacent(int v1, int v2) const;
 
     private:
         vector<int> find_component_(vector<bool> &visited, int start) const;

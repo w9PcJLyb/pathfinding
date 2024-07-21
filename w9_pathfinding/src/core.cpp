@@ -165,6 +165,15 @@ vector<vector<int>> AbsGraph::find_scc() const {
     return scc;
 }
 
+bool AbsGraph::adjacent(int v1, int v2) const {
+    for (auto &[node_id, cost] : get_neighbors(v1)) {
+        if (node_id == v2) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void AbsGraph::set_pause_action_cost(double cost) {
     if (cost < 0 && cost != -1)
         throw std::invalid_argument("Pause action cost must be either non-negative or equal to -1");

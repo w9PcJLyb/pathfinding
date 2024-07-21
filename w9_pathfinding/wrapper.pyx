@@ -39,6 +39,9 @@ cdef class _AbsGraph:
         # return [[neighbour_id, cost], ...]
         return self._baseobj.get_neighbors(node_id)
 
+    def adjacent(self, int v1, int v2):
+        return self._baseobj.adjacent(v1, v2)
+
     @property
     def pause_action_cost(self):
         return self._baseobj.get_pause_action_cost()
@@ -193,6 +196,9 @@ cdef class _AbsGrid(_AbsGraph):
             [self.get_coordinates(node_id) for node_id in component]
             for component in self._baseobj.find_components()
         ]
+
+    def adjacent(self, p1, p2):
+        return self._baseobj.adjacent(self.get_node_id(p1), self.get_node_id(p2))
 
 
 cdef class Grid(_AbsGrid):

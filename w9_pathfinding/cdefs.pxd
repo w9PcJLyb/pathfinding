@@ -17,6 +17,7 @@ cdef extern from "src/include/core.h":
         vector[pair[int, double]] get_neighbors(int)
         vector[vector[int]] find_components()
         vector[vector[int]] find_scc()
+        bool adjacent(int, int)
         void set_pause_action_cost(double)
         double get_pause_action_cost()
         bool is_pause_action_allowed()

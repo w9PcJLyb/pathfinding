@@ -122,3 +122,12 @@ void Graph::reverse_inplace() {
 
     add_edges(new_starts, new_ends, new_costs);
 }
+
+bool Graph::adjacent(int v1, int v2) const {
+    for (const Edge &e : edges_[v1]) {
+        if (e.node_id == v2) {
+            return true;
+        }
+    }
+    return false;
+}

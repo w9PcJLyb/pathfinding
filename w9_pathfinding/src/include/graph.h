@@ -30,6 +30,7 @@ class Graph : public AbsGraph {
         AbsGraph* reverse() const;
         Graph* create_reversed_graph() const;
         void reverse_inplace();
+        bool adjacent(int v1, int v2) const;
 
     private:
         int num_vertices_;
