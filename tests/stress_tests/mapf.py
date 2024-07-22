@@ -71,23 +71,33 @@ def check_paths(paths):
     return True
 
 
-def is_solved(paths, goals):
+def is_solved(paths, goals, despawn_at_destination):
     if len(paths) != len(goals):
         return False
 
+    if not goals:
+        return True
+
+    path_length = len(paths[0])
+
     for path, goal in zip(paths, goals):
+        if not despawn_at_destination and len(path) != path_length:
+            return False
+
         if not path or path[-1] != goal:
             return False
 
     return True
 
 
-def run_graph(algorithms, graph, starts, goals, **kwargs):
+def run_graph(algorithms, graph, starts, goals, despawn_at_destination=False):
     for a in algorithms:
-        paths, time = find_path(a["finder"], starts, goals, **kwargs)
+        paths, time = find_path(
+            a["finder"], starts, goals, despawn_at_destination=despawn_at_destination
+        )
         a["total_time"] += time
 
-        solved = is_solved(paths, goals)
+        solved = is_solved(paths, goals, despawn_at_destination)
         a["num_solved"] += solved
 
         if not check_paths(paths):

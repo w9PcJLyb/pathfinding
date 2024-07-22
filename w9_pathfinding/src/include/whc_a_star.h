@@ -16,10 +16,6 @@ class WHCAStar : public HCAStar {
 
         Agent(int start, int goal, ResumableAStar &rra) : start(start), goal(goal), rra(rra) {
             full_path.push_back(start);
-            if (distance() == -1) {
-                // can't reach the goal
-                goal = start;
-            }
         }
 
         bool is_moving(size_t time) {
