@@ -35,9 +35,7 @@ class WHCAStar : public HCAStar {
         }
 
         void add_path(vector<int> &path) {
-            if (path.size() < 2)
-                return;
-            full_path.insert(full_path.end(), path.begin() + 1, path.end());
+            full_path.insert(full_path.end(), path.begin(), path.end());
         }
 
         double distance() {

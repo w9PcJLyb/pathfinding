@@ -118,6 +118,7 @@ vector<int> HCAStar::find_path_(
         return {};
 
     int graph_size = graph->size();
+    int terminal_time = start_time + search_depth;
     double pause_action_cost = graph->get_pause_action_cost();
     bool pause_action_allowed = graph->is_pause_action_allowed();
 
@@ -175,7 +176,7 @@ vector<int> HCAStar::find_path_(
             continue;
         }
 
-        if (current->time >= search_depth) {
+        if (current->time >= terminal_time) {
             // terminal node
             if (process_node(goal, rra.distance(current->node_id), current)) {
                 nodes[goal + (current->time + 1) * graph_size]->time = -1;
@@ -234,8 +235,7 @@ vector<vector<int>> HCAStar::mapf(
 
         for (size_t i = 0; i < paths.size(); i++) {
             if (paths[i].empty()) {
-                vector<int> path(max_size, starts[i]);
-                paths[i] = path;
+                continue;
             }
             else if (paths[i].size() < max_size) {
                 vector<int> path(max_size - paths[i].size(), paths[i].back());

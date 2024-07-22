@@ -31,6 +31,7 @@ vector<vector<int>> WHCAStar::mapf(
         int goal = goals[agent_id];
         ResumableAStar rra(reversed_graph_, goal, start);
         agents.push_back({start, goal, rra});
+        reservation_table.add_reservation(agent_id, 0, start);
     }
 
     int time = 0;
@@ -65,16 +66,24 @@ vector<vector<int>> WHCAStar::mapf(
                 agent.rra,
                 reservation_table
             );
-            if (path.size() == 1)
-                agent.full_path.push_back(path[0]);
-            else
-                agent.add_path(path);
-
-            if (despawn_at_destination && agent.position() == agent.goal) {
+            if (path.empty()) {
                 agent.active = false;
+                continue;
             }
 
-            reservation_table.add_path(agent_id, time, path, false);
+            if (path.size() == 1) {
+                // pause action
+                agent.add_path(path);
+                reservation_table.add_path(agent_id, time + 1, path, false);
+            }
+            else {
+                agent.full_path.pop_back();
+                agent.add_path(path);
+                reservation_table.add_path(agent_id, time, path, false);
+            }
+
+            if (despawn_at_destination && agent.position() == agent.goal)
+                agent.active = false;
         }
 
         time++;

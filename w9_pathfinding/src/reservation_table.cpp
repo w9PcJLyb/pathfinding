@@ -13,6 +13,10 @@ ReservationTable& ReservationTable::operator=(const ReservationTable& rt) {
     return *this;
 }
 
+void ReservationTable::add_reservation(int agent_id, int time, int node_id) {
+    dynamic_[st(time, node_id)] = agent_id;
+}
+
 bool ReservationTable::reserved(int time, int node_id) const {
     if (dynamic_.count(st(time, node_id)))
         return true;

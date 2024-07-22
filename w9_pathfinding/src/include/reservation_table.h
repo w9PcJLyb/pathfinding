@@ -17,6 +17,7 @@ class ReservationTable {
 
         ReservationTable& operator=(const ReservationTable& rt);
 
+        void add_reservation(int agent_id, int time, int node_id);
         bool reserved(int time, int node_id) const;
         int reserved_by(int time, int node_id) const;
         void add_path(int agent_id, int start_time, vector<int> &path, bool reserve_destination);

@@ -1,4 +1,5 @@
 import time
+import argparse
 from copy import copy
 from collections import defaultdict
 
@@ -7,22 +8,22 @@ from tests.stress_tests.utils import run_graph
 from tests.stress_tests.random_instance import GridGenerator, random_queries
 
 NUM_GRAPHS = 100
-NUM_AGENTS = 10
+NUM_AGENTS = 15
 
 UNWEIGHTED_GRID_GENERATOR = GridGenerator(
-    width=15,
-    height=15,
+    width=10,
+    height=10,
     obstacle_percentage=0.4,
     weighted=False,
 )
 
 WEIGHTED_GRID_GENERATOR = GridGenerator(
-    width=15,
-    height=15,
+    width=10,
+    height=10,
     obstacle_percentage=0.4,
     weighted=True,
-    min_weight=0.5,
-    max_weight=1.5,
+    min_weight=1,
+    max_weight=5,
 )
 
 ALGORITHMS = [
@@ -32,16 +33,16 @@ ALGORITHMS = [
 
 
 def show_graph_info(grid, starts, goals):
-    print("weights =", sum(grid.weights, []))
+    print("weights =", grid.weights)
     print("diagonal_movement =", grid.diagonal_movement)
     print("passable_left_right_border =", grid.passable_left_right_border)
     print("passable_up_down_border =", grid.passable_up_down_border)
     print(f"starts, goals = {starts}, {goals}")
 
 
-def find_path(finder, starts, goals):
+def find_path(finder, starts, goals, **kwargs):
     t = time.time()
-    paths = finder.mapf(starts, goals)
+    paths = finder.mapf(starts, goals, **kwargs)
     return paths, time.time() - t
 
 
@@ -81,10 +82,13 @@ def is_solved(paths, goals):
     return True
 
 
-def run_graph(algorithms, graph, starts, goals):
+def run_graph(algorithms, graph, starts, goals, **kwargs):
     for a in algorithms:
-        paths, time = find_path(a["finder"], starts, goals)
+        paths, time = find_path(a["finder"], starts, goals, **kwargs)
         a["total_time"] += time
+
+        solved = is_solved(paths, goals)
+        a["num_solved"] += solved
 
         if not check_paths(paths):
             show_graph_info(graph, starts, goals)
@@ -100,15 +104,27 @@ def run_graph(algorithms, graph, starts, goals):
                 return False
             total_cost += path_cost
 
-        a["total_cost"] += total_cost
-
-        if is_solved(paths, goals):
-            a["num_solved"] += 1
+        if solved:
+            a["total_cost"] += total_cost
 
     return True
 
 
-def stress_test(weighted):
+def create_graph_with_queries(generator):
+    while True:
+        graph = generator.instance()
+        try:
+            queries = random_queries(
+                graph, num_queries=NUM_AGENTS, unique=True, connected=True
+            )
+        except ValueError:
+            continue
+
+        starts, goals = zip(*queries)
+        return graph, starts, goals
+
+
+def stress_test(weighted=False, despawn_at_destination=False):
 
     algorithms = copy(ALGORITHMS)
 
@@ -127,31 +143,42 @@ def stress_test(weighted):
     for i in range(NUM_GRAPHS):
         print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
 
-        graph = generator.instance()
-        queries = random_queries(
-            graph, num_queries=NUM_AGENTS, unique=True, connected=True
-        )
-        starts, goals = zip(*queries)
-
+        graph, starts, goals = create_graph_with_queries(generator)
         for a in algorithms:
             a["finder"] = a["class"](graph)
 
-        r = run_graph(algorithms, graph, starts, goals)
+        r = run_graph(
+            algorithms,
+            graph,
+            starts,
+            goals,
+            despawn_at_destination=despawn_at_destination,
+        )
         if not r:
             return
 
     print("\nOverall results:")
-    count = NUM_GRAPHS
     for a in algorithms:
-        mean_time = a["total_time"] / count
-        mean_cost = a["total_cost"] / count
+        mean_time = a["total_time"] / NUM_GRAPHS
+        mean_cost = a["total_cost"] / a["num_solved"] if a["num_solved"] > 0 else 0
+        solved = a["num_solved"] / NUM_GRAPHS * 100
         print(f" - {a['name']}:")
         print(
             f"     mean time = {1000 * mean_time:.3f}ms, mean cost = {mean_cost:.2f}, "
-            f"num solved = {a['num_solved']}"
+            f"solved {solved:.1f}%"
         )
 
 
 if __name__ == "__main__":
-    stress_test(weighted=False)
-    stress_test(weighted=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--despawn",
+        "-d",
+        action=argparse.BooleanOptionalAction,
+        help="despawn an agent at destination",
+    )
+    flags = parser.parse_args()
+    print(flags)
+
+    stress_test(weighted=False, despawn_at_destination=flags.despawn)
+    stress_test(weighted=True, despawn_at_destination=flags.despawn)
