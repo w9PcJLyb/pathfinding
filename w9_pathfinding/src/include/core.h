@@ -79,7 +79,7 @@ class AbsGrid : public AbsGraph {
         double min_weight_;
 
         // is a reversed graph, used in bidirectional algorithms
-        bool reversed_;
+        bool reversed_ = false;
 };
 
 

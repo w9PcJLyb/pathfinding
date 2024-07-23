@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 from w9_pathfinding import HexGrid
 
 
@@ -64,3 +65,11 @@ class TestHexGrid(unittest.TestCase):
         self.assertEqual(
             neighbors(0, 0), {(0, 1), (1, 0), (3, 0), (3, 1), (0, 3), (3, 3)}
         )
+
+    def test_init_with_numpy_weights(self):
+        weights = np.random.random((4, 3))
+        grid = HexGrid(weights)
+
+        self.assertEqual(grid.width, weights.shape[1])
+        self.assertEqual(grid.height, weights.shape[0])
+        self.assertTrue(np.all(weights == grid.weights))

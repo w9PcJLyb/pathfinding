@@ -49,9 +49,11 @@ class HexGrid : public AbsGrid {
 
         HexGrid(int width, int height);
         HexGrid(int width, int height, vector<double> weights);
+        HexGrid(vector<vector<double>> &weights);
         const int width, height;
-        bool passable_left_right_border, passable_up_down_border;
+        bool passable_left_right_border = false, passable_up_down_border = false;
 
+        size_t size() const;
         bool is_inside(const Point &p) const;
         vector<pair<int, double>> get_neighbors(int node) const;
         int get_node_id(const Point &p) const;
@@ -60,8 +62,8 @@ class HexGrid : public AbsGrid {
         AbsGraph* reverse() const;
 
     private:
-        vector<Point> even_directions_ = {{-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {-1, 1}, {0, 1}};
-        vector<Point> odd_directions_ = {{-1, 0}, {1, 0}, {0, -1}, {1, -1}, {0, 1}, {1, 1}};
+        const vector<Point> even_directions_ = {{-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {-1, 1}, {0, 1}};
+        const vector<Point> odd_directions_ = {{-1, 0}, {1, 0}, {0, -1}, {1, -1}, {0, 1}, {1, 1}};
 
         void warp_point(Point &p) const;
 };

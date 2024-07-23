@@ -2,16 +2,25 @@
 
 
 HexGrid::HexGrid(int width, int height) : width(width), height(height) {
-    passable_left_right_border = false;
-    passable_up_down_border = false;
-
-    weights_.resize(width * height, 1);
     min_weight_ = 1;
-    reversed_ = false;
+    weights_.resize(size(), min_weight_);
 }
 
-HexGrid::HexGrid(int width, int height, vector<double> weights) : HexGrid(width, height) {
+HexGrid::HexGrid(int width, int height, vector<double> weights) : width(width), height(height) {
     set_weights(weights);
+}
+
+HexGrid::HexGrid(vector<vector<double>> &weights) : width(weights[0].size()), height(weights.size()) {
+    vector<double> flat_weights;
+    flat_weights.reserve(size());
+    for (auto &row : weights) {
+        flat_weights.insert(flat_weights.end(), row.begin(), row.end());
+    }
+    set_weights(flat_weights);
+}
+
+size_t HexGrid::size() const {
+    return width * height;
 }
 
 bool HexGrid::is_inside(const Point &p) const {

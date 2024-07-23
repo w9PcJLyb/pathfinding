@@ -2,15 +2,27 @@
 
 
 Grid3D::Grid3D(int width, int height, int depth) : width(width), height(height), depth(depth) {
-    passable_borders = false;
-
-    weights_.resize(width * height * depth, 1);
     min_weight_ = 1;
-    reversed_ = false;
+    weights_.resize(size(), min_weight_);
 }
 
-Grid3D::Grid3D(int width, int height, int depth, vector<double> weights) : Grid3D(width, height, depth) {
+Grid3D::Grid3D(int width, int height, int depth, vector<double> weights) : width(width), height(height), depth(depth) {
     set_weights(weights);
+}
+
+Grid3D::Grid3D(vector<vector<vector<double>>> &weights) : width(weights[0][0].size()), height(weights[0].size()), depth(weights.size()) {
+    vector<double> flat_weights;
+    flat_weights.reserve(size());
+    for (auto &cut : weights) {
+        for (auto &row : cut) {
+            flat_weights.insert(flat_weights.end(), row.begin(), row.end());
+        }
+    }
+    set_weights(flat_weights);
+}
+
+size_t Grid3D::size() const {
+    return width * height * depth;
 }
 
 bool Grid3D::is_inside(const Point &p) const {

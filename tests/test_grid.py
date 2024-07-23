@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 from w9_pathfinding import Grid, DiagonalMovement
 
 
@@ -88,3 +89,11 @@ class TestGrid(unittest.TestCase):
 
         grid.diagonal_movement = DiagonalMovement.always
         self.assertEqual(diagonal_neighbors(1, 1), {(0, 0), (2, 0), (0, 2), (2, 2)})
+
+    def test_init_with_numpy_weights(self):
+        weights = np.random.random((4, 3))
+        grid = Grid(weights)
+
+        self.assertEqual(grid.width, weights.shape[1])
+        self.assertEqual(grid.height, weights.shape[0])
+        self.assertTrue(np.all(weights == grid.weights))

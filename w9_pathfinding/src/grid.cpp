@@ -2,18 +2,25 @@
 
 
 Grid::Grid(int width, int height) : width(width), height(height) {
-    diagonal_movement_ = 0;
-    passable_left_right_border = false;
-    passable_up_down_border = false;
-    diagonal_movement_cost_multiplier = 1.0;
-
-    weights_.resize(width * height, 1);
     min_weight_ = 1;
-    reversed_ = false;
+    weights_.resize(size(), min_weight_);
 }
 
-Grid::Grid(int width, int height, vector<double> weights) : Grid(width, height) {
+Grid::Grid(int width, int height, vector<double> weights) : width(width), height(height) {
     set_weights(weights);
+}
+
+Grid::Grid(vector<vector<double>> &weights) : width(weights[0].size()), height(weights.size()) {
+    vector<double> flat_weights;
+    flat_weights.reserve(size());
+    for (auto &row : weights) {
+        flat_weights.insert(flat_weights.end(), row.begin(), row.end());
+    }
+    set_weights(flat_weights);
+}
+
+size_t Grid::size() const {
+    return width * height;
 }
 
 void Grid::set_diagonal_movement(int diagonal_movement) {

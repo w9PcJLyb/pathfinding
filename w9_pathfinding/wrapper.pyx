@@ -236,7 +236,7 @@ cdef class Grid(_AbsGrid):
             self._obj = new CGrid(width, height)
         else:
             self._check_weights(weights)
-            self._obj = new CGrid(width, height, sum(weights, []))
+            self._obj = new CGrid(weights)
 
         self._baseobj = self._obj
 
@@ -419,7 +419,7 @@ cdef class Grid3D(_AbsGrid):
             self._obj = new CGrid3D(width, height, depth)
         else:
             self._check_weights(weights)
-            self._obj = new CGrid3D(width, height, depth, sum(sum(weights, []), []))
+            self._obj = new CGrid3D(weights)
 
         self._baseobj = self._obj
 
@@ -541,7 +541,7 @@ cdef class HexGrid(_AbsGrid):
             self._obj = new CHexGrid(width, height)
         else:
             self._check_weights(weights)
-            self._obj = new CHexGrid(width, height, sum(weights, []))
+            self._obj = new CHexGrid(weights)
 
         self._baseobj = self._obj
 

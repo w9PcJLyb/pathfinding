@@ -27,11 +27,13 @@ class Grid : public AbsGrid {
 
         Grid(int width, int height);
         Grid(int width, int height, vector<double> weights);
+        Grid(vector<vector<double>> &weights);
         Grid(const Grid& grid);
         const int width, height;
-        double diagonal_movement_cost_multiplier;
-        bool passable_left_right_border, passable_up_down_border;
+        double diagonal_movement_cost_multiplier = 1;
+        bool passable_left_right_border = false, passable_up_down_border = false;
 
+        size_t size() const;
         void set_diagonal_movement(int);
         int get_diagonal_movement() const;
         void show_obstacle_map() const;
@@ -47,9 +49,9 @@ class Grid : public AbsGrid {
         // 1 - allow only when no obstacle
         // 2 - allow if at most one obstacle
         // 3 - always allow
-        int diagonal_movement_;
+        int diagonal_movement_ = 0;
 
-        vector<Point> directions_ = {
+        const vector<Point> directions_ = {
             // orthogonal movements: top, bottom, left, right
             {0, -1}, {0, 1}, {-1, 0}, {1, 0},
             // diagonal movements

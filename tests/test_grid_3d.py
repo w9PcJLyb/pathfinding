@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 from w9_pathfinding import Grid3D
 
 
@@ -67,3 +68,12 @@ class TestGrid3D(unittest.TestCase):
             neighbors(0, 0, 0),
             {(1, 0, 0), (0, 1, 0), (0, 0, 1), (2, 0, 0), (0, 2, 0), (0, 0, 2)},
         )
+
+    def test_init_with_numpy_weights(self):
+        weights = np.random.random((4, 3, 2))
+        grid = Grid3D(weights)
+
+        self.assertEqual(grid.width, weights.shape[2])
+        self.assertEqual(grid.height, weights.shape[1])
+        self.assertEqual(grid.depth, weights.shape[0])
+        self.assertTrue(np.all(weights == grid.weights))

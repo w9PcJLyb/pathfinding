@@ -28,10 +28,12 @@ class Grid3D : public AbsGrid {
 
         Grid3D(int width, int height, int depth);
         Grid3D(int width, int height, int depth, vector<double> weights);
+        Grid3D(vector<vector<vector<double>>> &weights);
 
         const int width, height, depth;
-        bool passable_borders;
+        bool passable_borders = false;
 
+        size_t size() const;
         int get_node_id(const Point &p) const;
         Point get_coordinates(int node) const;
         bool is_inside(const Point &p) const;
@@ -40,7 +42,7 @@ class Grid3D : public AbsGrid {
         AbsGraph* reverse() const;
 
     private:
-        vector<Point> directions_ = {
+        const vector<Point> directions_ = {
             {0, 0, -1}, {0, 0, 1}, {0, -1, 0}, {0, 1, 0}, {-1, 0, 0}, {1, 0, 0}
         };
 

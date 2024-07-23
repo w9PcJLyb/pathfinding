@@ -84,7 +84,7 @@ cdef extern from "src/include/grid.h":
         double diagonal_movement_cost_multiplier
 
         Grid(int, int) except +
-        Grid(int, int, vector[double]) except +
+        Grid(vector[vector[double]]) except +
         unsigned int get_diagonal_movement()
         void set_diagonal_movement(int)
 
@@ -99,7 +99,7 @@ cdef extern from "src/include/grid_3d.h":
         bool passable_borders
 
         Grid3D(int, int, int) except +
-        Grid3D(int, int, int, vector[double]) except +
+        Grid3D(vector[vector[vector[double]]]) except +
 
 
 cdef extern from "src/hex_grid.cpp":
@@ -112,7 +112,7 @@ cdef extern from "src/include/hex_grid.h":
         bool passable_left_right_border, passable_up_down_border
 
         HexGrid(int, int) except +
-        HexGrid(int, int, vector[double]) except +
+        HexGrid(vector[vector[double]]) except +
 
 
 cdef extern from "src/dfs.cpp":

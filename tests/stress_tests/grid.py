@@ -37,7 +37,7 @@ ALGORITHMS = [
 
 
 def show_grid_info(grid, start, end):
-    print("weights =", sum(grid.weights, []))
+    print("weights =", grid.weights, [])
     print("diagonal_movement =", grid.diagonal_movement)
     print("passable_left_right_border =", grid.passable_left_right_border)
     print("passable_up_down_border =", grid.passable_up_down_border)
