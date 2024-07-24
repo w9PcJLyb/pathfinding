@@ -23,17 +23,11 @@ def find_path(finder, start, end):
 
 
 def show_graph_info(graph, start, end):
-    print(f"graph = {graph}")
+    print(f"{graph.__class__.__name__}(**{graph.to_dict()})")
     print(f"start, end = {start}, {end}")
 
 
-def run_graph(
-    algorithms,
-    graph,
-    start,
-    end,
-    show_graph_info=show_graph_info,
-):
+def run_graph(algorithms, graph, start, end):
     results = []
     for a in algorithms:
         path, time = find_path(a["finder"], start, end)

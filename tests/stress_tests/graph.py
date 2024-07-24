@@ -49,15 +49,6 @@ ALGORITHMS = [
 ]
 
 
-def show_graph_info(graph, start, end):
-    print("num_vertices =", graph.num_vertices)
-    print("edges: [")
-    for x in sorted(graph.edges):
-        print(f"    {x},")
-    print("]")
-    print(f"start, end = {start}, {end}")
-
-
 def stress_test(weighted, with_coordinates=False):
 
     algorithms = copy(ALGORITHMS)
@@ -93,7 +84,7 @@ def stress_test(weighted, with_coordinates=False):
             a["finder"] = a["class"](graph)
 
         for start, end in queries:
-            r = run_graph(algorithms, graph, start, end, show_graph_info)
+            r = run_graph(algorithms, graph, start, end)
             if not r:
                 return
 

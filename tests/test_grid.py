@@ -97,3 +97,12 @@ class TestGrid(unittest.TestCase):
         self.assertEqual(grid.width, weights.shape[1])
         self.assertEqual(grid.height, weights.shape[0])
         self.assertTrue(np.all(weights == grid.weights))
+
+    def test_to_dict(self):
+        weights = [[1, 1, 1], [1, 1, -1], [1, -1, 1]]
+        grid = Grid(weights, passable_left_right_border=True)
+
+        new_grid = Grid(**grid.to_dict())
+        self.assertEqual(new_grid.weights, weights)
+        self.assertEqual(new_grid.passable_left_right_border, True)
+        self.assertEqual(new_grid.passable_up_down_border, False)

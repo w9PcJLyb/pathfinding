@@ -36,13 +36,6 @@ ALGORITHMS = [
 ]
 
 
-def show_grid_info(grid, start, end):
-    print("weights =", grid.weights, [])
-    print("passable_left_right_border =", grid.passable_left_right_border)
-    print("passable_up_down_border =", grid.passable_up_down_border)
-    print(f"start, end = {start}, {end}")
-
-
 def stress_test(weighted):
 
     algorithms = copy(ALGORITHMS)
@@ -71,7 +64,7 @@ def stress_test(weighted):
             a["finder"] = a["class"](graph)
 
         for start, end in queries:
-            r = run_graph(algorithms, graph, start, end, show_grid_info)
+            r = run_graph(algorithms, graph, start, end)
             if not r:
                 return
 

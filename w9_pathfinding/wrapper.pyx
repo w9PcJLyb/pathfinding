@@ -70,6 +70,9 @@ cdef class _AbsGraph:
     def edge_collision(self, bool b):
         self._baseobj.set_edge_collision(b)
 
+    def to_dict(self):
+        return {"edge_collision": self.edge_collision, "pause_action_cost": self.pause_action_cost}
+
 
 cdef class Graph(_AbsGraph):
     cdef CGraph* _obj
@@ -194,6 +197,15 @@ cdef class Graph(_AbsGraph):
         if b and not self.directed:
             raise ValueError("An undirected graph does not support edge collisions")
         self._baseobj.set_edge_collision(b)
+
+    def to_dict(self):
+        return {
+            "num_vertices": self.num_vertices,
+            "directed": self.directed,
+            "coordinates": self.coordinates,
+            "edges": self.edges,
+            **super().to_dict(),
+        }
 
 
 cdef class _AbsGrid(_AbsGraph):
@@ -410,6 +422,18 @@ cdef class Grid(_AbsGrid):
     def show(self):
         self.show_path(None)
 
+    def to_dict(self):
+        return {
+            "width": self.width,
+            "height": self.height,
+            "weights": self.weights,
+            "diagonal_movement": self.diagonal_movement,
+            "passable_left_right_border": self.passable_left_right_border,
+            "passable_up_down_border": self.passable_up_down_border,
+            "diagonal_movement_cost_multiplier": self.diagonal_movement_cost_multiplier,
+            **super().to_dict(),
+        }
+
 
 cdef class Grid3D(_AbsGrid):
     cdef CGrid3D* _obj
@@ -532,6 +556,16 @@ cdef class Grid3D(_AbsGrid):
     def weights(self, matrix):
         self._check_weights(matrix)
         self._obj.set_weights(sum(sum(matrix, []), []))
+
+    def to_dict(self):
+        return {
+            "width": self.width,
+            "height": self.height,
+            "depth": self.depth,
+            "weights": self.weights,
+            "passable_borders": self.passable_borders,
+            **super().to_dict(),
+        }
 
 
 cdef class HexGrid(_AbsGrid):
@@ -667,6 +701,16 @@ cdef class HexGrid(_AbsGrid):
     def weights(self, matrix):
         self._check_weights(matrix)
         self._obj.set_weights(sum(matrix, []))
+
+    def to_dict(self):
+        return {
+            "width": self.width,
+            "height": self.height,
+            "weights": self.weights,
+            "passable_left_right_border": self.passable_left_right_border,
+            "passable_up_down_border": self.passable_up_down_border,
+            **super().to_dict(),
+        }
 
 
 def _pathfinding(func):

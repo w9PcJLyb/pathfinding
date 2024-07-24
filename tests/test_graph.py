@@ -114,3 +114,10 @@ class TestGraph(unittest.TestCase):
             ]
             graph.add_edges(edges)
             self.assertListEqual(sorted_scc(graph), [[0], [1], [2], [3], [4]])
+
+    def test_to_dict(self):
+        graph = Graph(5, edges=[[0, 1, 10], [1, 2, 20]])
+
+        new_graph = Graph(**graph.to_dict())
+        self.assertEqual(new_graph.num_vertices, 5)
+        self.assertEqual(new_graph.num_edges, 2)

@@ -32,11 +32,8 @@ ALGORITHMS = [
 ]
 
 
-def show_graph_info(grid, starts, goals):
-    print("weights =", grid.weights)
-    print("diagonal_movement =", grid.diagonal_movement)
-    print("passable_left_right_border =", grid.passable_left_right_border)
-    print("passable_up_down_border =", grid.passable_up_down_border)
+def show_graph_info(graph, starts, goals):
+    print(f"{graph.__class__.__name__}(**{graph.to_dict()})")
     print(f"starts, goals = {starts}, {goals}")
 
 
