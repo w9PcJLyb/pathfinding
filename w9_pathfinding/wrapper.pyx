@@ -793,17 +793,24 @@ cdef class ReservationTable:
     def _convert_path(self, path):
         return [self._to_node_id(node) for node in path]
 
-    def reserved(self, int time, node):
+    def is_reserved(self, int time, node):
         cdef int node_id = self._to_node_id(node)
-        return self._obj.reserved(time, node_id)
+        return self._obj.is_reserved(time, node_id)
 
     def reserved_by(self, int time, node):
         cdef int node_id = self._to_node_id(node)
         return self._obj.reserved_by(time, node_id)
 
-    def add_path(self, path, int agent_id=0, int start_time=0, bool reserve_destination=False):
+    def add_path(
+        self,
+        path,
+        int agent_id=0,
+        int start_time=0,
+        bool reserve_destination=False,
+        bool add_edge_constraints=True,
+    ):
         cdef vector[int] node_ids = self._convert_path(path)
-        self._obj.add_path(agent_id, start_time, node_ids, reserve_destination)
+        self._obj.add_path(agent_id, start_time, node_ids, reserve_destination, add_edge_constraints)
 
     def remove_path(self, path, int start_time=0):
         cdef vector[int] node_ids = self._convert_path(path)
@@ -861,13 +868,7 @@ cdef class _AbsMAPF():
 cdef class HCAStar(_AbsMAPF):
     cdef CHCAStar* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
-            raise ValueError(
-                "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.add_coordinates(), "
-                "or choose some non-heuristic algorithm."
-            )
+    def __cinit__(self, _AbsGrid graph):
         self.graph = graph
         self._obj = new CHCAStar(graph._baseobj)
         self._baseobj = self._obj
@@ -892,23 +893,23 @@ cdef class HCAStar(_AbsMAPF):
         vector[int] goals,
         int search_depth=100,
         bool despawn_at_destination=False,
+        bool swapping_conflict=True,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
-            starts, goals, search_depth, despawn_at_destination, self._to_crt(reservation_table)
+            starts,
+            goals,
+            search_depth,
+            despawn_at_destination,
+            swapping_conflict,
+            self._to_crt(reservation_table),
         )
 
 
 cdef class WHCAStar(_AbsMAPF):
     cdef CWHCAStar* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
-            raise ValueError(
-                "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.add_coordinates(), "
-                "or choose some non-heuristic algorithm."
-            )
+    def __cinit__(self, _AbsGrid graph):
         self.graph = graph
         self._obj = new CWHCAStar(graph._baseobj)
         self._baseobj = self._obj
@@ -934,8 +935,15 @@ cdef class WHCAStar(_AbsMAPF):
         int search_depth=100,
         int window_size=16,
         bool despawn_at_destination=False,
+        bool swapping_conflict=True,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
-            starts, goals, search_depth, window_size, despawn_at_destination, self._to_crt(reservation_table)
+            starts,
+            goals,
+            search_depth,
+            window_size,
+            despawn_at_destination,
+            swapping_conflict,
+            self._to_crt(reservation_table),
         )

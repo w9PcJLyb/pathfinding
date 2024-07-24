@@ -135,7 +135,7 @@ vector<int> HCAStar::find_path_(
     auto process_node = [&] (int node_id, double cost, Node* current) {
         int time = current->time + 1;
 
-        if (rt.reserved(time, node_id)) {
+        if (rt.is_reserved(time, node_id)) {
             return false;
         }
 
@@ -186,8 +186,10 @@ vector<int> HCAStar::find_path_(
             if (pause_action_allowed)
                 process_node(current->node_id, pause_action_cost, current);
 
+            int reserved_edge = rt.get_reserved_edge(current->time, current->node_id);
             for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {
-                process_node(node_id, cost, current);
+                if (reserved_edge != node_id)
+                    process_node(node_id, cost, current);
             }
         }
     }
@@ -199,7 +201,7 @@ vector<int> HCAStar::find_path_(
 }
 
 vector<vector<int>> HCAStar::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 100, false, nullptr);
+    return mapf(starts, goals, 100, false, true, nullptr);
 }
 
 vector<vector<int>> HCAStar::mapf(
@@ -207,6 +209,7 @@ vector<vector<int>> HCAStar::mapf(
     vector<int> goals,
     int search_depth,
     bool despawn_at_destination,
+    bool swapping_conflict,
     const ReservationTable *rt
 ) {
     assert(starts.size() == goals.size());
@@ -223,7 +226,7 @@ vector<vector<int>> HCAStar::mapf(
         ResumableAStar rra(reversed_graph_, goals[i], starts[i]);
         vector<int> path = find_path_(0, starts[i], goals[i], search_depth, rra, reservation_table);
         paths.push_back(path);
-        reservation_table.add_path(i, 0, path, !despawn_at_destination);
+        reservation_table.add_path(i, 0, path, !despawn_at_destination, swapping_conflict);
     }
 
     if (!despawn_at_destination) {

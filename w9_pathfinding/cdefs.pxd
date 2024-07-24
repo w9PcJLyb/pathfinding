@@ -47,9 +47,9 @@ cdef extern from "src/reservation_table.cpp":
 cdef extern from "src/include/reservation_table.h":
     cdef cppclass ReservationTable:
         ReservationTable(int) except +
-        bool reserved(int, int)
+        bool is_reserved(int, int)
         int reserved_by(int, int)
-        void add_path(int, int, vector[int], bool reserve_destination)
+        void add_path(int, int, vector[int], bool, bool)
         void remove_path(int, vector[int])
         int last_time_reserved(int)
 
@@ -201,7 +201,7 @@ cdef extern from "src/include/hc_a_star.h":
     cdef cppclass HCAStar(AbsMAPF):
         HCAStar(AbsGraph*) except +
         vector[int] find_path(int, int, int, ReservationTable*)
-        vector[vector[int]] mapf(vector[int], vector[int], int, bool, ReservationTable*)
+        vector[vector[int]] mapf(vector[int], vector[int], int, bool, bool, ReservationTable*)
 
 
 cdef extern from "src/whc_a_star.cpp":
@@ -213,4 +213,4 @@ cdef extern from "src/include/whc_a_star.h":
     cdef cppclass WHCAStar(AbsMAPF):
         WHCAStar(AbsGraph*) except +
         vector[int] find_path(int, int, int, ReservationTable*)
-        vector[vector[int]] mapf(vector[int], vector[int], int, int, bool, ReservationTable*)
+        vector[vector[int]] mapf(vector[int], vector[int], int, int, bool, bool, ReservationTable*)

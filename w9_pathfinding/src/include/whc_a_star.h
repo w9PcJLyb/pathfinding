@@ -50,6 +50,7 @@ class WHCAStar : public HCAStar {
             int search_depth,
             int window_size,
             bool despawn_at_destination,
+            bool swapping_conflict,
             const ReservationTable *rt
         );
 };

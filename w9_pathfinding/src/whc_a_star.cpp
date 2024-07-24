@@ -5,7 +5,7 @@ WHCAStar::WHCAStar(AbsGraph *graph) : HCAStar(graph) {
 }
 
 vector<vector<int>> WHCAStar::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 100, 16, false, nullptr);
+    return mapf(starts, goals, 100, 16, false, true, nullptr);
 }
 
 vector<vector<int>> WHCAStar::mapf(
@@ -14,6 +14,7 @@ vector<vector<int>> WHCAStar::mapf(
     int search_depth,
     int window_size,
     bool despawn_at_destination,
+    bool swapping_conflict,
     const ReservationTable *rt
 ) {
     assert(starts.size() == goals.size());
@@ -31,7 +32,7 @@ vector<vector<int>> WHCAStar::mapf(
         int goal = goals[agent_id];
         ResumableAStar rra(reversed_graph_, goal, start);
         agents.push_back({start, goal, rra});
-        reservation_table.add_reservation(agent_id, 0, start);
+        reservation_table.add_vertex_constraint(agent_id, 0, start);
     }
 
     int time = 0;
@@ -74,12 +75,12 @@ vector<vector<int>> WHCAStar::mapf(
             if (path.size() == 1) {
                 // pause action
                 agent.add_path(path);
-                reservation_table.add_path(agent_id, time + 1, path, false);
+                reservation_table.add_path(agent_id, time + 1, path, false, swapping_conflict);
             }
             else {
                 agent.full_path.pop_back();
                 agent.add_path(path);
-                reservation_table.add_path(agent_id, time, path, false);
+                reservation_table.add_path(agent_id, time, path, false, swapping_conflict);
             }
 
             if (despawn_at_destination && agent.position() == agent.goal)

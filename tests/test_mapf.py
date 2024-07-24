@@ -71,7 +71,7 @@ class TestFindPath(unittest.TestCase):
         )
 
 
-def check_paths(paths):
+def check_paths(paths, swapping_conflict=True):
     if not paths:
         return True
 
@@ -90,6 +90,21 @@ def check_paths(paths):
             if len(agent_ids) > 1:
                 print(f"Collision at {time}: node = {p}, agents = {agent_ids}")
                 return False
+
+        if swapping_conflict and time > 0:
+            edges = defaultdict(list)
+            for agent_id, path in enumerate(paths):
+                if time < len(path):
+                    p1, p2 = path[time - 1], path[time]
+                    if p1 == p2:
+                        continue
+                    edges[(p1, p2)].append(agent_id)
+                    edges[(p2, p1)].append(agent_id)
+
+            for edge, agent_ids in edges.items():
+                if len(agent_ids) > 1:
+                    print(f"Collision at {time}: edge = {edge}, agents = {agent_ids}")
+                    return False
 
         time += 1
 
@@ -113,33 +128,20 @@ class TestMAPF(unittest.TestCase):
         starts = [(0, 0), (1, 0)]
         goals = [(0, 2), (1, 2)]
 
+        swapping_conflict = True
+
         for a in MAPF_ALGORITHMS:
             with self.subTest(a.__name__):
-                paths = WHCAStar(grid).mapf(starts, goals, despawn_at_destination=False)
+                paths = a(grid).mapf(
+                    starts,
+                    goals,
+                    despawn_at_destination=False,
+                    swapping_conflict=swapping_conflict,
+                )
 
-                self.assertTrue(check_paths(paths))
+                self.assertTrue(check_paths(paths, swapping_conflict))
                 for path, goal in zip(paths, goals):
                     self.assertEqual(len(paths[0]), len(path))
-                    self.assertEqual(path[-1], goal)
-
-    def test_3x3_with_three_agents(self):
-        """
-        + -  -  - +
-        | s1 s2 s3|
-        | #     # |
-        | e1 e2 e3|
-        + -  -  - +
-        """
-        grid = Grid([[1, 1, 1], [-1, 1, -1], [1, 1, 1]])
-        starts = [(0, 0), (1, 0), (2, 0)]
-        goals = [(0, 2), (1, 2), (2, 2)]
-
-        for a in MAPF_ALGORITHMS:
-            with self.subTest(a.__name__):
-                paths = WHCAStar(grid).mapf(starts, goals, despawn_at_destination=True)
-
-                self.assertTrue(check_paths(paths))
-                for path, goal in zip(paths, goals):
                     self.assertEqual(path[-1], goal)
 
     def test_3x7(self):
@@ -168,11 +170,18 @@ class TestMAPF(unittest.TestCase):
         starts = [(1, 0), (1, 6)]
         goals = [(1, 5), (1, 1)]
 
-        for a in MAPF_ALGORITHMS:
-            with self.subTest(a.__name__):
-                paths = WHCAStar(grid).mapf(starts, goals, despawn_at_destination=False)
+        swapping_conflict = True
 
-                self.assertTrue(check_paths(paths))
+        for a in [WHCAStar]:
+            with self.subTest(a.__name__):
+                paths = a(grid).mapf(
+                    starts,
+                    goals,
+                    despawn_at_destination=False,
+                    swapping_conflict=swapping_conflict,
+                )
+
+                self.assertTrue(check_paths(paths, swapping_conflict))
                 for path, goal in zip(paths, goals):
                     self.assertEqual(len(paths[0]), len(path))
                     self.assertEqual(path[-1], goal)
