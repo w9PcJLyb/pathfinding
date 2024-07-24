@@ -201,7 +201,7 @@ vector<int> HCAStar::find_path_(
 }
 
 vector<vector<int>> HCAStar::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 100, false, true, nullptr);
+    return mapf(starts, goals, 100, false, nullptr);
 }
 
 vector<vector<int>> HCAStar::mapf(
@@ -209,7 +209,6 @@ vector<vector<int>> HCAStar::mapf(
     vector<int> goals,
     int search_depth,
     bool despawn_at_destination,
-    bool swapping_conflict,
     const ReservationTable *rt
 ) {
     assert(starts.size() == goals.size());
@@ -221,12 +220,14 @@ vector<vector<int>> HCAStar::mapf(
     if (rt)
         reservation_table = *rt;
 
+    bool edge_collision = graph->edge_collision();
+
     vector<vector<int>> paths;
     for (size_t i = 0; i < starts.size(); i++) {
         ResumableAStar rra(reversed_graph_, goals[i], starts[i]);
         vector<int> path = find_path_(0, starts[i], goals[i], search_depth, rra, reservation_table);
         paths.push_back(path);
-        reservation_table.add_path(i, 0, path, !despawn_at_destination, swapping_conflict);
+        reservation_table.add_path(i, 0, path, !despawn_at_destination, edge_collision);
     }
 
     if (!despawn_at_destination) {

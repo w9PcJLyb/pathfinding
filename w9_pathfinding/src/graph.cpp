@@ -131,3 +131,10 @@ bool Graph::adjacent(int v1, int v2) const {
     }
     return false;
 }
+
+void Graph::set_edge_collision(bool b) {
+    if (b && !is_directed_graph()) {
+        throw std::invalid_argument("An undirected graph does not support edge collisions");
+    }
+    AbsGraph::set_edge_collision(b);
+}

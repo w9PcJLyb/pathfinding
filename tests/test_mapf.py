@@ -71,7 +71,7 @@ class TestFindPath(unittest.TestCase):
         )
 
 
-def check_paths(paths, swapping_conflict=True):
+def check_paths(graph, paths):
     if not paths:
         return True
 
@@ -91,7 +91,7 @@ def check_paths(paths, swapping_conflict=True):
                 print(f"Collision at {time}: node = {p}, agents = {agent_ids}")
                 return False
 
-        if swapping_conflict and time > 0:
+        if graph.edge_collision and time > 0:
             edges = defaultdict(list)
             for agent_id, path in enumerate(paths):
                 if time < len(path):
@@ -124,22 +124,15 @@ class TestMAPF(unittest.TestCase):
         | e1 e2   |
         + -  -  - +
         """
-        grid = Grid([[1, 1, 1], [-1, 1, -1], [1, 1, 1]])
+        grid = Grid([[1, 1, 1], [-1, 1, -1], [1, 1, 1]], edge_collision=True)
         starts = [(0, 0), (1, 0)]
         goals = [(0, 2), (1, 2)]
 
-        swapping_conflict = True
-
         for a in MAPF_ALGORITHMS:
             with self.subTest(a.__name__):
-                paths = a(grid).mapf(
-                    starts,
-                    goals,
-                    despawn_at_destination=False,
-                    swapping_conflict=swapping_conflict,
-                )
+                paths = a(grid).mapf(starts, goals, despawn_at_destination=False)
 
-                self.assertTrue(check_paths(paths, swapping_conflict))
+                self.assertTrue(check_paths(grid, paths))
                 for path, goal in zip(paths, goals):
                     self.assertEqual(len(paths[0]), len(path))
                     self.assertEqual(path[-1], goal)
@@ -152,7 +145,7 @@ class TestMAPF(unittest.TestCase):
         | #     # |
         |       # |
         | #     # |
-        | #  e2 # |
+        | #  e1 # |
         | #  s2 # |
         + -  -  - +
         """
@@ -165,23 +158,17 @@ class TestMAPF(unittest.TestCase):
                 [-1, 1, -1],
                 [-1, 1, -1],
                 [-1, 1, -1],
-            ]
+            ],
+            edge_collision=True,
         )
         starts = [(1, 0), (1, 6)]
         goals = [(1, 5), (1, 1)]
 
-        swapping_conflict = True
-
         for a in [WHCAStar]:
             with self.subTest(a.__name__):
-                paths = a(grid).mapf(
-                    starts,
-                    goals,
-                    despawn_at_destination=False,
-                    swapping_conflict=swapping_conflict,
-                )
+                paths = a(grid).mapf(starts, goals, despawn_at_destination=False)
 
-                self.assertTrue(check_paths(paths, swapping_conflict))
+                self.assertTrue(check_paths(grid, paths))
                 for path, goal in zip(paths, goals):
                     self.assertEqual(len(paths[0]), len(path))
                     self.assertEqual(path[-1], goal)

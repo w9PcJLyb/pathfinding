@@ -29,6 +29,13 @@ cdef class _AbsGraph:
     def __cinit__(self):
         pass
 
+    def _base_init(self, pause_action_cost=1, edge_collision=False):
+        if pause_action_cost != 1:
+            self.pause_action_cost = pause_action_cost
+
+        if edge_collision:
+            self.edge_collision = edge_collision
+
     def size(self):
         return self._baseobj.size()
 
@@ -55,6 +62,14 @@ cdef class _AbsGraph:
     def is_pause_action_allowed(self):
         return self._baseobj.is_pause_action_allowed()
 
+    @property
+    def edge_collision(self):
+        return self._baseobj.edge_collision()
+
+    @edge_collision.setter
+    def edge_collision(self, bool b):
+        self._baseobj.set_edge_collision(b)
+
 
 cdef class Graph(_AbsGraph):
     cdef CGraph* _obj
@@ -67,7 +82,8 @@ cdef class Graph(_AbsGraph):
         *,
         bool directed=True,
         coordinates=None,
-        edges=None
+        edges=None,
+        **kwargs,
     ):
         self._obj = new CGraph(num_vertices, directed)
         self._baseobj = self._obj
@@ -77,6 +93,7 @@ cdef class Graph(_AbsGraph):
             self.set_coordinates(coordinates)
         if edges:
             self.add_edges(edges)
+        self._base_init(**kwargs)
 
     def __dealloc__(self):
         del self._obj
@@ -168,6 +185,16 @@ cdef class Graph(_AbsGraph):
 
         return self._obj.find_scc()
 
+    @property
+    def edge_collision(self):
+        return self._baseobj.edge_collision()
+
+    @edge_collision.setter
+    def edge_collision(self, bool b):
+        if b and not self.directed:
+            raise ValueError("An undirected graph does not support edge collisions")
+        self._baseobj.set_edge_collision(b)
+
 
 cdef class _AbsGrid(_AbsGraph):
     def assert_in(self, point):
@@ -215,6 +242,7 @@ cdef class Grid(_AbsGrid):
         bool passable_left_right_border=False,
         bool passable_up_down_border=False,
         double diagonal_movement_cost_multiplier=1,
+        **kwargs,
     ):
 
         if weights is None:
@@ -251,6 +279,8 @@ cdef class Grid(_AbsGrid):
 
         if diagonal_movement_cost_multiplier != 1:
             self.diagonal_movement_cost_multiplier = diagonal_movement_cost_multiplier
+
+        self._base_init(**kwargs)
 
     def __dealloc__(self):
         del self._obj
@@ -393,6 +423,7 @@ cdef class Grid3D(_AbsGrid):
         height=None,
         depth=None,
         bool passable_borders=False,
+        **kwargs,
     ):
 
         if weights is None:
@@ -425,6 +456,8 @@ cdef class Grid3D(_AbsGrid):
 
         if passable_borders:
             self.passable_borders = passable_borders
+
+        self._base_init(**kwargs)
 
     def __dealloc__(self):
         del self._obj
@@ -515,6 +548,7 @@ cdef class HexGrid(_AbsGrid):
         height=None,
         bool passable_left_right_border=False,
         bool passable_up_down_border=False,
+        **kwargs,
     ):
 
         if weights is None:
@@ -550,6 +584,8 @@ cdef class HexGrid(_AbsGrid):
 
         if passable_up_down_border:
             self.passable_up_down_border = passable_up_down_border
+
+        self._base_init(**kwargs)
 
     def __dealloc__(self):
         del self._obj
@@ -807,10 +843,9 @@ cdef class ReservationTable:
         int agent_id=0,
         int start_time=0,
         bool reserve_destination=False,
-        bool add_edge_constraints=True,
     ):
         cdef vector[int] node_ids = self._convert_path(path)
-        self._obj.add_path(agent_id, start_time, node_ids, reserve_destination, add_edge_constraints)
+        self._obj.add_path(agent_id, start_time, node_ids, reserve_destination, self.graph.edge_collision)
 
     def remove_path(self, path, int start_time=0):
         cdef vector[int] node_ids = self._convert_path(path)
@@ -893,7 +928,6 @@ cdef class HCAStar(_AbsMAPF):
         vector[int] goals,
         int search_depth=100,
         bool despawn_at_destination=False,
-        bool swapping_conflict=True,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
@@ -901,7 +935,6 @@ cdef class HCAStar(_AbsMAPF):
             goals,
             search_depth,
             despawn_at_destination,
-            swapping_conflict,
             self._to_crt(reservation_table),
         )
 
@@ -935,7 +968,6 @@ cdef class WHCAStar(_AbsMAPF):
         int search_depth=100,
         int window_size=16,
         bool despawn_at_destination=False,
-        bool swapping_conflict=True,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
@@ -944,6 +976,5 @@ cdef class WHCAStar(_AbsMAPF):
             search_depth,
             window_size,
             despawn_at_destination,
-            swapping_conflict,
             self._to_crt(reservation_table),
         )

@@ -21,6 +21,8 @@ cdef extern from "src/include/core.h":
         void set_pause_action_cost(double)
         double get_pause_action_cost()
         bool is_pause_action_allowed()
+        void set_edge_collision(bool)
+        bool edge_collision()
 
     cdef cppclass AbsGrid(AbsGraph):
         bool has_obstacle(int)
@@ -201,7 +203,7 @@ cdef extern from "src/include/hc_a_star.h":
     cdef cppclass HCAStar(AbsMAPF):
         HCAStar(AbsGraph*) except +
         vector[int] find_path(int, int, int, ReservationTable*)
-        vector[vector[int]] mapf(vector[int], vector[int], int, bool, bool, ReservationTable*)
+        vector[vector[int]] mapf(vector[int], vector[int], int, bool, ReservationTable*)
 
 
 cdef extern from "src/whc_a_star.cpp":
@@ -213,4 +215,4 @@ cdef extern from "src/include/whc_a_star.h":
     cdef cppclass WHCAStar(AbsMAPF):
         WHCAStar(AbsGraph*) except +
         vector[int] find_path(int, int, int, ReservationTable*)
-        vector[vector[int]] mapf(vector[int], vector[int], int, int, bool, bool, ReservationTable*)
+        vector[vector[int]] mapf(vector[int], vector[int], int, int, bool, ReservationTable*)

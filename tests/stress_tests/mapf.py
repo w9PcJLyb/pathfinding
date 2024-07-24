@@ -46,7 +46,7 @@ def find_path(finder, starts, goals, **kwargs):
     return paths, time.time() - t
 
 
-def check_paths(paths, swapping_conflict=True):
+def check_paths(graph, paths):
     if not paths:
         return True
 
@@ -66,7 +66,7 @@ def check_paths(paths, swapping_conflict=True):
                 print(f"Collision at {time}: node = {p}, agents = {agent_ids}")
                 return False
 
-        if swapping_conflict and time > 0:
+        if graph.edge_collision and time > 0:
             edges = defaultdict(list)
             for agent_id, path in enumerate(paths):
                 if time < len(path):
@@ -105,28 +105,17 @@ def is_solved(paths, goals, despawn_at_destination):
     return True
 
 
-def run_graph(
-    algorithms,
-    graph,
-    starts,
-    goals,
-    despawn_at_destination=False,
-    swapping_conflict=True,
-):
+def run_graph(algorithms, graph, starts, goals, despawn_at_destination=False):
     for a in algorithms:
         paths, time = find_path(
-            a["finder"],
-            starts,
-            goals,
-            despawn_at_destination=despawn_at_destination,
-            swapping_conflict=swapping_conflict,
+            a["finder"], starts, goals, despawn_at_destination=despawn_at_destination
         )
         a["total_time"] += time
 
         solved = is_solved(paths, goals, despawn_at_destination)
         a["num_solved"] += solved
 
-        if not check_paths(paths, swapping_conflict):
+        if not check_paths(graph, paths):
             show_graph_info(graph, starts, goals)
             print(f"Error: algorithm {a['name']} returns paths with collisions")
             return False
@@ -160,7 +149,7 @@ def create_graph_with_queries(generator):
         return graph, starts, goals
 
 
-def stress_test(weighted=False, despawn_at_destination=False, swapping_conflict=True):
+def stress_test(weighted=False, despawn_at_destination=False, edge_collision=True):
 
     algorithms = copy(ALGORITHMS)
 
@@ -180,6 +169,7 @@ def stress_test(weighted=False, despawn_at_destination=False, swapping_conflict=
         print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
 
         graph, starts, goals = create_graph_with_queries(generator)
+        graph.edge_collision = edge_collision
         for a in algorithms:
             a["finder"] = a["class"](graph)
 
@@ -189,7 +179,6 @@ def stress_test(weighted=False, despawn_at_destination=False, swapping_conflict=
             starts,
             goals,
             despawn_at_destination=despawn_at_destination,
-            swapping_conflict=swapping_conflict,
         )
         if not r:
             return
@@ -223,11 +212,11 @@ if __name__ == "__main__":
         help="despawn an agent at destination",
     )
     parser.add_argument(
-        "--swapping_conflict",
-        "-s",
+        "--edge_collision",
+        "-e",
         default=False,
         action=argparse.BooleanOptionalAction,
-        help="enable swapping conflict",
+        help="enable edge collisions",
     )
     flags = parser.parse_args()
     print(flags)
@@ -235,5 +224,5 @@ if __name__ == "__main__":
     stress_test(
         weighted=flags.weighted,
         despawn_at_destination=flags.despawn,
-        swapping_conflict=flags.swapping_conflict,
+        edge_collision=flags.edge_collision,
     )

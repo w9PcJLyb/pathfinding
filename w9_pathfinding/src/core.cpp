@@ -188,6 +188,14 @@ bool AbsGraph::is_pause_action_allowed() const {
     return pause_action_cost_ >= 0;
 }
 
+void AbsGraph::set_edge_collision(bool b) {
+    edge_collision_ = b;
+}
+
+bool AbsGraph::edge_collision() const {
+    return edge_collision_;
+}
+
 size_t AbsGrid::size() const {
     return weights_.size();
 }
