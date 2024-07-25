@@ -1,1 +1,1 @@
-from .grid import render_grid
+from .grid import plot_grid, animate_grid
