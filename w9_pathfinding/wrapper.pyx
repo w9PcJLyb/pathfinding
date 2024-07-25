@@ -819,7 +819,7 @@ cdef class AStar(_AbsPathFinder):
         if isinstance(graph, Graph) and not graph.has_coordinates():
             raise ValueError(
                 "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.add_coordinates(), "
+                "You can add coordinates using graph.set_coordinates(), "
                 "or choose some non-heuristic algorithm."
             )
         self.graph = graph
@@ -837,7 +837,7 @@ cdef class BiAStar(_AbsPathFinder):
         if isinstance(graph, Graph) and not graph.has_coordinates():
             raise ValueError(
                 "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.add_coordinates(), "
+                "You can add coordinates using graph.set_coordinates(), "
                 "or choose some non-heuristic algorithm."
             )
         self.graph = graph

@@ -30,7 +30,7 @@ class GridVisualizer:
         self.min_weight = min(x for x in weight_list if x != -1)
 
     def _init_agents(self, agents):
-        agents = copy.copy(agents or [])
+        agents = copy.deepcopy(agents or [])
         num_colors = len(self.agents_colormap.colors)
         for i, a in enumerate(agents):
             a["id"] = i
