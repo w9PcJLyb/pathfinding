@@ -1,4 +1,4 @@
-from libcpp cimport bool
+from libcpp cimport bool, string
 from libcpp.pair cimport pair
 from libcpp.vector cimport vector
 
@@ -121,8 +121,8 @@ cdef extern from "src/include/hex_grid.h":
     cdef cppclass HexGrid(AbsGrid):
         bool passable_left_right_border, passable_up_down_border
 
-        HexGrid(int, int) except +
-        HexGrid(vector[vector[double]]) except +
+        HexGrid(int, int, int) except +
+        HexGrid(int, vector[vector[double]]) except +
 
 
 cdef extern from "src/dfs.cpp":

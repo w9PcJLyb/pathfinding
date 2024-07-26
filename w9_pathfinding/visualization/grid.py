@@ -315,37 +315,70 @@ class GridVisualizer:
 
 class HexVisualizer(GridVisualizer):
 
-    tan30 = math.sqrt(3) / 3
-    cos30 = math.sqrt(3) / 2
-    hex_vertices = [
-        (0.5, 0.5 * tan30),
-        (0.5, -0.5 * tan30),
-        (0, -0.5 / cos30),
-        (-0.5, -0.5 * tan30),
-        (-0.5, 0.5 * tan30),
-        (0, 0.5 / cos30),
-        (0.5, 0.5 * tan30),
+    a = math.pi / 6
+    pointy_top_hex = [
+        (0.5, 0.5 * math.tan(a)),
+        (0.5, -0.5 * math.tan(a)),
+        (0, -0.5 / math.cos(a)),
+        (-0.5, -0.5 * math.tan(a)),
+        (-0.5, 0.5 * math.tan(a)),
+        (0, 0.5 / math.cos(a)),
+        (0.5, 0.5 * math.tan(a)),
     ]
+
+    flat_top_hex = []
+    for x, y in pointy_top_hex:
+        flat_top_hex.append(
+            (x * math.cos(a) - y * math.sin(a), x * math.sin(a) + y * math.cos(a))
+        )
+
     hex_codes = (
-        [Path.MOVETO] + [Path.LINETO] * (len(hex_vertices) - 2) + [Path.CLOSEPOLY]
+        [Path.MOVETO] + [Path.LINETO] * (len(pointy_top_hex) - 2) + [Path.CLOSEPOLY]
     )
 
-    @staticmethod
-    def _hex_to_cartesian(hex_x, hex_y):
-        y = hex_y * math.sqrt(3) / 2
-        if hex_y % 2 == 0:
-            x = hex_x
+    def _hex_to_cartesian(self, hex_x, hex_y):
+        layout = self.grid.layout
+        if layout <= 1:
+            y = hex_y * math.sqrt(3) / 2
+            if hex_y % 2 == layout:
+                x = hex_x
+            else:
+                x = hex_x + 0.5
         else:
-            x = hex_x + 0.5
+            x = hex_x * math.sqrt(3) / 2
+            if hex_x % 2 == layout - 2:
+                y = hex_y
+            else:
+                y = hex_y + 0.5
         return x, y
 
     def _plot_range(self):
-        min_x, min_y = self._hex_to_cartesian(0, 0)
-        max_x, max_y = self._hex_to_cartesian(self.grid.width - 1, self.grid.height - 1)
-        if self.grid.height % 2 == 1:
-            max_x += 0.5
-        dy = 1 / math.sqrt(3)
-        return min_x - 0.5, min_y - dy, max_x + 0.5, max_y + dy
+        class Range:
+            min_x, min_y = self._hex_to_cartesian(0, 0)
+            max_x, max_y = min_x, min_y
+
+        r = Range()
+
+        def update(r, x, y):
+            x, y = self._hex_to_cartesian(x, y)
+            r.min_x = min(r.min_x, x)
+            r.min_y = min(r.min_y, y)
+            r.max_x = max(r.max_x, x)
+            r.max_y = max(r.max_y, y)
+
+        for x in range(self.grid.width):
+            update(r, x, 0)
+            update(r, x, self.grid.height - 1)
+
+        for y in range(self.grid.height):
+            update(r, 0, y)
+            update(r, self.grid.width - 1, y)
+
+        dx, dy = 0.5, 1 / math.sqrt(3)
+        if self.grid.layout > 1:
+            dx, dy = dy, dx
+
+        return r.min_x - dx, r.min_y - dy, r.max_x + dx, r.max_y + dy
 
     def _draw_node(self, ax, x, y, weight):
         colors = {}
@@ -365,7 +398,10 @@ class HexVisualizer(GridVisualizer):
 
         x, y = self._hex_to_cartesian(x, y)
 
-        hex_vertices = [(x + x_, y + y_) for x_, y_ in self.hex_vertices]
+        hex_vertices = (
+            self.pointy_top_hex if self.grid.layout <= 1 else self.flat_top_hex
+        )
+        hex_vertices = [(x + x_, y + y_) for x_, y_ in hex_vertices]
         path = Path(hex_vertices, self.hex_codes)
         patch = PathPatch(path, zorder=self.node_zorder, **colors)
         ax.add_patch(patch)

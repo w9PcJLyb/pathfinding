@@ -225,17 +225,31 @@ class Grid3DGenerator(GridGenerator):
 
 
 class HexGridGenerator(GridGenerator):
+    def __init__(self, *args, layout=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.layout = layout
+
     def _generate_grid(self):
 
-        if self.height % 2 == 0:
-            passable_up_down_border = random.randint(0, 1)
-        else:
-            passable_up_down_border = False
+        layout = self.layout
+        if layout is None:
+            layout = random.randint(0, 3)
+
+        passable_up_down_border = random.randint(0, 1)
+        passable_left_right_border = random.randint(0, 1)
+
+        if layout in [0, 1]:
+            if self.height % 2 == 1:
+                passable_up_down_border = False
+        elif layout in [2, 3]:
+            if self.width % 2 == 1:
+                passable_left_right_border = False
 
         grid = HexGrid(
             self._generate_obstacle_map(),
+            layout=layout,
             passable_up_down_border=passable_up_down_border,
-            passable_left_right_border=random.randint(0, 1),
+            passable_left_right_border=passable_left_right_border,
         )
 
         self._add_widths(grid)

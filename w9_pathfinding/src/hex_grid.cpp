@@ -1,16 +1,16 @@
 #include "include/hex_grid.h"
 
 
-HexGrid::HexGrid(int width, int height) : width(width), height(height) {
+HexGrid::HexGrid(int width, int height, int layout) : width(width), height(height), layout(layout) {
     min_weight_ = 1;
     weights_.resize(size(), min_weight_);
 }
 
-HexGrid::HexGrid(int width, int height, vector<double> weights) : width(width), height(height) {
+HexGrid::HexGrid(int width, int height, int layout, vector<double> weights) : width(width), height(height), layout(layout) {
     set_weights(weights);
 }
 
-HexGrid::HexGrid(vector<vector<double>> &weights) : width(weights[0].size()), height(weights.size()) {
+HexGrid::HexGrid(int layout, vector<vector<double>> &weights) : width(weights[0].size()), height(weights.size()), layout(layout) {
     vector<double> flat_weights;
     flat_weights.reserve(size());
     for (auto &row : weights) {
@@ -50,6 +50,15 @@ void HexGrid::warp_point(Point &p) const {
     }
 }
 
+HexGrid::points_ HexGrid::get_directions(const Point &p) const {
+    if (layout <= 1) {
+        return (p.y % 2 == layout) ? pointy_even_directions_ : pointy_odd_directions_;
+    }
+    else {
+        return (p.x % 2 == layout - 2) ? flat_even_directions_ : flat_odd_directions_;
+    }
+}
+
 vector<pair<int, double>> HexGrid::get_neighbors(int node) const {
     vector<pair<int, double>> nb;
     
@@ -61,9 +70,7 @@ vector<pair<int, double>> HexGrid::get_neighbors(int node) const {
 
     nb.reserve(6);
 
-    const vector<Point> &directions = (p0.y % 2 == 0) ? even_directions_ : odd_directions_;
-
-    for (const Point &d : directions) {
+    for (const Point &d : get_directions(p0)) {
         Point p = p0 + d;
         bool inside = is_inside(p);
         if (!inside) {
@@ -105,7 +112,7 @@ double HexGrid::estimate_distance(int v1, int v2) const {
 }
 
 AbsGraph* HexGrid::reverse() const {
-    HexGrid* reversed_grid(new HexGrid(width, height, weights_));
+    HexGrid* reversed_grid(new HexGrid(width, height, layout, weights_));
     reversed_grid->passable_left_right_border = passable_left_right_border;
     reversed_grid->passable_up_down_border = passable_up_down_border;
     reversed_grid->set_pause_action_cost(get_pause_action_cost());

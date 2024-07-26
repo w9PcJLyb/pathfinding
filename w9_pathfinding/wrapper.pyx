@@ -333,7 +333,8 @@ cdef class Grid(_AbsGrid):
         return self._obj.get_diagonal_movement()
 
     @diagonal_movement.setter
-    def diagonal_movement(self, unsigned int _x):
+    def diagonal_movement(self, int _x):
+        assert 0 <= _x < 4
         self._obj.set_diagonal_movement(_x)
 
     @property
@@ -574,10 +575,10 @@ cdef class Grid3D(_AbsGrid):
 
 
 cdef class HexGrid(_AbsGrid):
-    # Hexagonal Grid with pointy top orientation and “odd-r” layout
+    # Hexagonal Grid
 
     cdef CHexGrid* _obj
-    cdef readonly int width, height
+    cdef readonly int width, height, layout
 
     def __cinit__(
         self,
@@ -585,6 +586,7 @@ cdef class HexGrid(_AbsGrid):
         *,
         width=None,
         height=None,
+        int layout=0,
         bool passable_left_right_border=False,
         bool passable_up_down_border=False,
         **kwargs,
@@ -602,19 +604,30 @@ cdef class HexGrid(_AbsGrid):
         if height <= 0:
             raise ValueError("Height must be greater than zero.")
 
-        if passable_up_down_border and height % 2 == 1:
-            raise ValueError(
-                "It is possible to pass the border from top to bottom, only if the height is even"
-            )
+        if layout in [0, 1]:
+            if passable_up_down_border and height % 2 == 1:
+                raise ValueError(
+                    "With layout {layout} It's possible to pass the border "
+                    "from top to bottom, only if the height is even"
+                )
+        elif layout in [2, 3]:
+            if passable_left_right_border and width % 2 == 1:
+                raise ValueError(
+                    "With layout {layout} It's possible to pass the border "
+                    "from left to right, only if the width is even"
+                )
+        else:
+            raise ValueError("Unknown layout")
 
         self.width = width
         self.height = height
+        self.layout = layout
 
         if weights is None:
-            self._obj = new CHexGrid(width, height)
+            self._obj = new CHexGrid(width, height, layout)
         else:
             self._check_weights(weights)
-            self._obj = new CHexGrid(weights)
+            self._obj = new CHexGrid(layout, weights)
 
         self._baseobj = self._obj
 
@@ -712,6 +725,7 @@ cdef class HexGrid(_AbsGrid):
             "width": self.width,
             "height": self.height,
             "weights": self.weights,
+            "layout": self.layout,
             "passable_left_right_border": self.passable_left_right_border,
             "passable_up_down_border": self.passable_up_down_border,
             **super().to_dict(),

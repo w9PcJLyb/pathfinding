@@ -1,12 +1,35 @@
 import unittest
 import numpy as np
-from w9_pathfinding import HexGrid
+from w9_pathfinding import HexGrid, HexLayout
 
 
 class TestHexGrid(unittest.TestCase):
     """
     pytest tests/test_hex_grid.py::TestHexGrid
     """
+
+    def test_layout(self):
+
+        def neighbors(grid, x, y):
+            return {p[0] for p in grid.get_neighbors((x, y))}
+
+        grid = HexGrid(width=4, height=4, layout=HexLayout.odd_r)
+        self.assertEqual(neighbors(grid, 0, 0), {(1, 0), (0, 1)})
+        self.assertEqual(neighbors(grid, 1, 0), {(0, 0), (2, 0), (0, 1), (1, 1)})
+
+        grid = HexGrid(width=4, height=4, layout=HexLayout.even_r)
+        self.assertEqual(neighbors(grid, 0, 0), {(1, 0), (0, 1), (1, 1)})
+        self.assertEqual(neighbors(grid, 1, 0), {(0, 0), (2, 0), (1, 1), (2, 1)})
+
+        grid = HexGrid(width=4, height=4, layout=HexLayout.odd_q)
+        self.assertEqual(neighbors(grid, 0, 0), {(1, 0), (0, 1)})
+        self.assertEqual(
+            neighbors(grid, 1, 0), {(0, 0), (2, 0), (0, 1), (2, 1), (1, 1)}
+        )
+
+        grid = HexGrid(width=4, height=4, layout=HexLayout.even_q)
+        self.assertEqual(neighbors(grid, 0, 0), {(1, 0), (0, 1), (1, 1)})
+        self.assertEqual(neighbors(grid, 1, 0), {(0, 0), (2, 0), (1, 1)})
 
     def test_find_components(self):
         """
