@@ -200,6 +200,10 @@ size_t AbsGrid::size() const {
     return weights_.size();
 }
 
+bool AbsGrid::has_coordinates() const {
+    return true;
+}
+
 bool AbsGrid::is_directed_graph() const {
     return false;
 }

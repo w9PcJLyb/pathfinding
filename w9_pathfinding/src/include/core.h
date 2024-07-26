@@ -23,6 +23,7 @@ class AbsGraph {
         virtual size_t size() const = 0;
         virtual vector<pair<int, double>> get_neighbors(int node) const = 0;
         virtual AbsGraph* reverse() const = 0;
+        virtual bool has_coordinates() const = 0;
 
         // returns a lower bound of the distance between two vertices
         // used by A* algorithm
@@ -70,6 +71,7 @@ class AbsGrid : public AbsGraph {
 
     public:
         size_t size() const;
+        bool has_coordinates() const;
         bool is_directed_graph() const;
         void set_weights(vector<double> &weights);
         vector<double> get_weights() const;

@@ -3,67 +3,6 @@
 #include "include/hc_a_star.h"
 
 
-ResumableAStar::ResumableAStar(AbsGraph *graph, int start, int end) : graph(graph), start_(start), end_(end) {
-    nodes_.resize(graph->size());
-
-    openset_ = Queue();
-    openset_.push({0, start});
-    Node &n0 = nodes_[start]; 
-    n0.distance = 0;
-}
-
-void ResumableAStar::clear() {
-    openset_ = Queue();
-    for (Node node : nodes_)
-        node.clear();
-}
-
-double ResumableAStar::distance(int node_id) {
-    Node& node = nodes_[node_id];
-    if (!node.closed)
-        search(node_id);
-
-    return node.distance;
-}
-
-void ResumableAStar::search(int node_id) {
-
-    while (!openset_.empty()) {
-        key top = openset_.top();
-        openset_.pop();
-
-        int current_id = top.second;
-        Node& current = nodes_[current_id];
-
-        if (current.closed)
-            continue;
-
-        current.closed = true;
-
-        for (auto& [n, cost] : graph->get_neighbors(current_id)) {
-            Node &node = nodes_[n];
-            double new_distance = current.distance + cost;
-            if (node.distance < 0) {
-                node.f = new_distance + graph->estimate_distance(n, end_);
-                node.distance = new_distance;
-                openset_.push({node.f, n});
-            }
-            else if (node.distance > new_distance) {
-                node.f = node.f - node.distance + new_distance;
-                node.distance = new_distance;
-                openset_.push({node.f, n});
-            }
-        }
-
-        if (current_id == node_id)
-            return;
-    }
-
-    Node& node = nodes_[node_id];
-    node.closed = true;
-    node.distance = -1;
-}
-
 HCAStar::HCAStar(AbsGraph *graph) : graph(graph) {
     reversed_graph_ = graph->reverse();
 }
@@ -87,21 +26,32 @@ vector<int> HCAStar::reconstruct_path(int start, Node* node) {
     return path;
 }
 
+ResumableSearch* HCAStar::reverse_resumable_search(int node_id) {
+    if (graph->has_coordinates())
+        return new ResumableAStar(reversed_graph_, node_id);
+    else
+        return new ResumableDijkstra(reversed_graph_, node_id);
+}
+
 vector<int> HCAStar::find_path(int start, int end) {
     return find_path(start, end, 100, nullptr);
 }
 
 vector<int> HCAStar::find_path(int start, int end, int search_depth, const ReservationTable *rt) {
-    ResumableAStar rra(reversed_graph_, end, start);
+    ResumableSearch* rrs_ = reverse_resumable_search(end);
+    vector<int> path;
 
     if (!rt) {
         ReservationTable rt_(graph->size());
-        return find_path_(0, start, end, search_depth, rra, rt_);
+        path = find_path_(0, start, end, search_depth, rrs_, rt_);
     }
     else {
         assert(rt->graph_size == int(graph->size()));
-        return find_path_(0, start, end, search_depth, rra, *rt);
+        path = find_path_(0, start, end, search_depth, rrs_, *rt);
     }
+
+    delete rrs_;
+    return path;
 }
 
 vector<int> HCAStar::find_path_(
@@ -109,10 +59,10 @@ vector<int> HCAStar::find_path_(
     int start,
     int goal,
     int search_depth,
-    ResumableAStar &rra,
+    ResumableSearch *rrs,
     const ReservationTable &rt
 ) {
-    double f0 = rra.distance(start);
+    double f0 = rrs->distance(start);
     if (f0 == -1)
         // unreachable
         return {};
@@ -143,7 +93,7 @@ vector<int> HCAStar::find_path_(
 
         int h = node_id + time * graph_size;
         if (!nodes.count(h)) {
-            double f = distance + rra.distance(node_id);
+            double f = distance + rrs->distance(node_id);
             Node* n = new Node(current, node_id, time, distance, f);
             nodes[h] = n;
             openset.push({f, n});
@@ -178,7 +128,7 @@ vector<int> HCAStar::find_path_(
 
         if (current->time >= terminal_time) {
             // terminal node
-            if (process_node(goal, rra.distance(current->node_id), current)) {
+            if (process_node(goal, rrs->distance(current->node_id), current)) {
                 nodes[goal + (current->time + 1) * graph_size]->time = -1;
             }
         }
@@ -224,8 +174,9 @@ vector<vector<int>> HCAStar::mapf(
 
     vector<vector<int>> paths;
     for (size_t i = 0; i < starts.size(); i++) {
-        ResumableAStar rra(reversed_graph_, goals[i], starts[i]);
-        vector<int> path = find_path_(0, starts[i], goals[i], search_depth, rra, reservation_table);
+        ResumableSearch* rrs_ = reverse_resumable_search(goals[i]);
+        vector<int> path = find_path_(0, starts[i], goals[i], search_depth, rrs_, reservation_table);
+        delete rrs_;
         paths.push_back(path);
         reservation_table.add_path(i, 0, path, !despawn_at_destination, edge_collision);
     }

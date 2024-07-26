@@ -9,12 +9,12 @@ class WHCAStar : public HCAStar {
 
     struct Agent {
         int start, goal;
-        ResumableAStar rra;
+        ResumableSearch *rrs;
         bool active = true;
 
         vector<int> full_path;
 
-        Agent(int start, int goal, ResumableAStar &rra) : start(start), goal(goal), rra(rra) {
+        Agent(int start, int goal, ResumableSearch *rrs) : start(start), goal(goal), rrs(rrs) {
             full_path.push_back(start);
         }
 
@@ -32,10 +32,6 @@ class WHCAStar : public HCAStar {
 
         void add_path(vector<int> &path) {
             full_path.insert(full_path.end(), path.begin(), path.end());
-        }
-
-        double distance() {
-            return rra.distance(position());
         }
     };
 

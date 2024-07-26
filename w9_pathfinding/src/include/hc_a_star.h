@@ -1,42 +1,9 @@
 #pragma once
 
 #include "grid.h"
+#include "resumable_search.h"
 #include "reservation_table.h"
 #include "unordered_map"
-
-
-class ResumableAStar {
-
-    typedef pair<double, int> key;
-    typedef priority_queue<key, vector<key>, std::greater<key>> Queue;
-
-    struct Node {
-        double distance;
-        double f;
-        bool closed;
-
-        Node() : distance(-1), f(0), closed(false) {};
-
-        void clear() {
-            distance = -1;
-            f = 0;
-            closed = false;
-        }
-    };
-
-    public:
-        AbsGraph* graph;
-        ResumableAStar(AbsGraph* graph, int start, int end);
-
-        double distance(int node_id);  // true distance from the start to this node
-
-    private:
-        int start_, end_;
-        vector<Node> nodes_;
-        Queue openset_;
-        void search(int node_id);
-        void clear();
-};
 
 
 class HCAStar : public AbsMAPF {
@@ -75,13 +42,14 @@ class HCAStar : public AbsMAPF {
 
     protected:
         AbsGraph* reversed_graph_;
+        ResumableSearch* reverse_resumable_search(int node_id);
         vector<int> reconstruct_path(int start, Node* node);
         vector<int> find_path_(
             int start_time,
             int start,
             int goal,
             int search_depth,
-            ResumableAStar &rra,
+            ResumableSearch *rrs,
             const ReservationTable &rt
         );
 };

@@ -1,6 +1,13 @@
 import unittest
 from collections import defaultdict
-from w9_pathfinding import Grid, DiagonalMovement, HCAStar, WHCAStar, ReservationTable
+from w9_pathfinding import (
+    Graph,
+    Grid,
+    DiagonalMovement,
+    HCAStar,
+    WHCAStar,
+    ReservationTable,
+)
 
 MAPF_ALGORITHMS = [HCAStar, WHCAStar]
 
@@ -116,17 +123,31 @@ class TestMAPF(unittest.TestCase):
     pytest tests/test_mapf.py::TestMAPF
     """
 
-    def test_3x3(self):
+    def test_with_directed_graph(self):
+        graph = Graph(5, edges=[[0, 2], [1, 2], [2, 3], [2, 4]])
+        starts = [0, 1]
+        goals = [3, 4]
+
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a.__name__):
+                paths = a(graph).mapf(starts, goals, despawn_at_destination=False)
+
+                self.assertTrue(check_paths(graph, paths))
+                for path, goal in zip(paths, goals):
+                    self.assertEqual(len(paths[0]), len(path))
+                    self.assertEqual(path[-1], goal)
+
+    def test_with_grid(self):
         """
         + -  -  - +
-        | s1 s2   |
-        | #     # |
-        | e1 e2   |
+        | #  s1 # |
+        | s2    e1|
+        | #  e2 # |
         + -  -  - +
         """
-        grid = Grid([[1, 1, 1], [-1, 1, -1], [1, 1, 1]], edge_collision=True)
-        starts = [(0, 0), (1, 0)]
-        goals = [(0, 2), (1, 2)]
+        grid = Grid([[-1, 1, -1], [1, 1, 1], [-1, 1, -1]])
+        starts = [(1, 0), (0, 1)]
+        goals = [(2, 1), (1, 2)]
 
         for a in MAPF_ALGORITHMS:
             with self.subTest(a.__name__):
@@ -137,7 +158,7 @@ class TestMAPF(unittest.TestCase):
                     self.assertEqual(len(paths[0]), len(path))
                     self.assertEqual(path[-1], goal)
 
-    def test_3x7(self):
+    def test_edge_collision(self):
         """
         + -  -  - +
         | #  s1 # |

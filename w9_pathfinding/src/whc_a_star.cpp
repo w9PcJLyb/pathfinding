@@ -31,8 +31,7 @@ vector<vector<int>> WHCAStar::mapf(
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
         int goal = goals[agent_id];
-        ResumableAStar rra(reversed_graph_, goal, start);
-        agents.push_back({start, goal, rra});
+        agents.push_back({start, goal, reverse_resumable_search(goal)});
         reservation_table.add_vertex_constraint(agent_id, 0, start);
     }
 
@@ -65,7 +64,7 @@ vector<vector<int>> WHCAStar::mapf(
                 agent.position(),
                 agent.goal,
                 w,
-                agent.rra,
+                agent.rrs,
                 reservation_table
             );
             if (path.empty()) {
@@ -94,6 +93,7 @@ vector<vector<int>> WHCAStar::mapf(
     vector<vector<int>> paths;
     for (auto &agent: agents) {
         paths.push_back(agent.full_path);
+        delete agent.rrs;
     }
 
     return paths;

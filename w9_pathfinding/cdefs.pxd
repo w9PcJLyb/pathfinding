@@ -42,6 +42,14 @@ cdef extern from "src/include/core.h":
         vector[vector[int]] mapf(vector[int], vector[int])
 
 
+cdef extern from "src/resumable_search.cpp":
+    pass
+
+
+cdef extern from "src/include/resumable_search.h":
+    pass
+
+
 cdef extern from "src/reservation_table.cpp":
     pass
 

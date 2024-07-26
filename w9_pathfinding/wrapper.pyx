@@ -155,7 +155,12 @@ cdef class Graph(_AbsGraph):
 
     def add_edges(self, edges):
         starts, ends, costs = [], [], []
-        for start, end, cost in edges:
+        for edge in edges:
+            if len(edge) == 2:
+                start, end = edge
+                cost = 1
+            else:
+                start, end, cost = edge
             self.assert_in(start)
             self.assert_in(end)
             if cost < 0:
@@ -907,7 +912,7 @@ def _mapf(func):
             for i in range(len(starts)):
                 g.assert_in(starts[i])
                 g.assert_in(goals[i])
-            path = func(finder, starts, goals, **kwargs)
+            paths = func(finder, starts, goals, **kwargs)
 
         elif isinstance(g, (Grid, Grid3D, HexGrid)):
             starts = [g.get_node_id(x) for x in starts]
@@ -947,7 +952,7 @@ cdef class _AbsMAPF():
 cdef class HCAStar(_AbsMAPF):
     cdef CHCAStar* _obj
 
-    def __cinit__(self, _AbsGrid graph):
+    def __cinit__(self, _AbsGraph graph):
         self.graph = graph
         self._obj = new CHCAStar(graph._baseobj)
         self._baseobj = self._obj
@@ -986,7 +991,7 @@ cdef class HCAStar(_AbsMAPF):
 cdef class WHCAStar(_AbsMAPF):
     cdef CWHCAStar* _obj
 
-    def __cinit__(self, _AbsGrid graph):
+    def __cinit__(self, _AbsGraph graph):
         self.graph = graph
         self._obj = new CWHCAStar(graph._baseobj)
         self._baseobj = self._obj
