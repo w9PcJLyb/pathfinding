@@ -31,6 +31,15 @@ class TestHexGrid(unittest.TestCase):
         self.assertEqual(neighbors(grid, 0, 0), {(1, 0), (0, 1), (1, 1)})
         self.assertEqual(neighbors(grid, 1, 0), {(0, 0), (2, 0), (1, 1)})
 
+    def test_init_with_unknown_layout(self):
+        with self.assertRaises(ValueError):
+            HexGrid(width=4, height=4, layout=10)
+
+    def test_update_layout(self):
+        grid = HexGrid(width=4, height=4, layout=HexLayout.even_q)
+        with self.assertRaises(AttributeError):
+            grid.layout = HexLayout.odd_q
+
     def test_find_components(self):
         """
         _ # _
@@ -57,13 +66,32 @@ class TestHexGrid(unittest.TestCase):
             sorted_components(grid), [[(0, 0), (0, 2), (2, 0), (2, 1)]]
         )
 
-    def test_passable_up_down_border_with_odd_height(self):
+    def test_pointy_top_layout_with_odd_height(self):
         with self.assertRaises(ValueError):
-            HexGrid(width=4, height=3, passable_up_down_border=True)
+            HexGrid(
+                width=4, height=3, layout=HexLayout.odd_r, passable_up_down_border=True
+            )
 
-        grid = HexGrid(width=4, height=3, passable_up_down_border=False)
+        grid = HexGrid(
+            width=4, height=3, layout=HexLayout.odd_r, passable_up_down_border=False
+        )
         with self.assertRaises(ValueError):
             grid.passable_up_down_border = True
+
+    def test_flat_top_layout_with_odd_width(self):
+        with self.assertRaises(ValueError):
+            HexGrid(
+                width=3,
+                height=4,
+                layout=HexLayout.odd_q,
+                passable_left_right_border=True,
+            )
+
+        grid = HexGrid(
+            width=3, height=4, layout=HexLayout.odd_q, passable_left_right_border=False
+        )
+        with self.assertRaises(ValueError):
+            grid.passable_left_right_border = True
 
     def test_passable_borders(self):
         grid = HexGrid(width=4, height=4)

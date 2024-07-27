@@ -90,6 +90,14 @@ class TestGrid(unittest.TestCase):
         grid.diagonal_movement = DiagonalMovement.always
         self.assertEqual(diagonal_neighbors(1, 1), {(0, 0), (2, 0), (0, 2), (2, 2)})
 
+    def test_with_unknown_diagonal_movement(self):
+        with self.assertRaises(ValueError):
+            Grid(width=4, height=4, diagonal_movement=10)
+
+        grid = Grid(width=4, height=4, diagonal_movement=1)
+        with self.assertRaises(ValueError):
+            grid.diagonal_movement = 10
+
     def test_init_with_numpy_weights(self):
         weights = np.random.random((4, 3))
         grid = Grid(weights)

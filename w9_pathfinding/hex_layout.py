@@ -14,3 +14,9 @@ class HexLayout(enum.IntEnum):
 
     def __repr__(self) -> str:
         return f"HexLayout.{self.name}"
+
+    def is_pointy_top(self):
+        return self == HexLayout.odd_r or self == HexLayout.even_r
+
+    def is_flat_top(self):
+        return self == HexLayout.odd_q or self == HexLayout.even_q

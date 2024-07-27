@@ -1,5 +1,5 @@
 import random
-from w9_pathfinding import Grid, Graph, Grid3D, HexGrid
+from w9_pathfinding import Grid, Graph, Grid3D, HexGrid, HexLayout
 
 
 class _Generator:
@@ -235,13 +235,14 @@ class HexGridGenerator(GridGenerator):
         if layout is None:
             layout = random.randint(0, 3)
 
+        layout = HexLayout(layout)
         passable_up_down_border = random.randint(0, 1)
         passable_left_right_border = random.randint(0, 1)
 
-        if layout in [0, 1]:
+        if layout.is_pointy_top():
             if self.height % 2 == 1:
                 passable_up_down_border = False
-        elif layout in [2, 3]:
+        elif layout.is_flat_top():
             if self.width % 2 == 1:
                 passable_left_right_border = False
 

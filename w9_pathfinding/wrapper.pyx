@@ -21,6 +21,8 @@ from w9_pathfinding.cdefs cimport (
     HCAStar as CHCAStar,
     WHCAStar as CWHCAStar,
 )
+from w9_pathfinding.hex_layout import HexLayout
+from w9_pathfinding.diagonal_movement import DiagonalMovement
 
 
 cdef class _AbsGraph:
@@ -330,12 +332,12 @@ cdef class Grid(_AbsGrid):
 
     @property
     def diagonal_movement(self):
-        return self._obj.get_diagonal_movement()
+        return DiagonalMovement(self._obj.get_diagonal_movement())
 
     @diagonal_movement.setter
     def diagonal_movement(self, int _x):
-        assert 0 <= _x < 4
-        self._obj.set_diagonal_movement(_x)
+        diagonal_movement = DiagonalMovement(_x)
+        self._obj.set_diagonal_movement(diagonal_movement)
 
     @property
     def passable_left_right_border(self):
@@ -433,7 +435,7 @@ cdef class Grid(_AbsGrid):
             "width": self.width,
             "height": self.height,
             "weights": self.weights,
-            "diagonal_movement": self.diagonal_movement,
+            "diagonal_movement": self.diagonal_movement.value,
             "passable_left_right_border": self.passable_left_right_border,
             "passable_up_down_border": self.passable_up_down_border,
             "diagonal_movement_cost_multiplier": self.diagonal_movement_cost_multiplier,
@@ -578,7 +580,7 @@ cdef class HexGrid(_AbsGrid):
     # Hexagonal Grid
 
     cdef CHexGrid* _obj
-    cdef readonly int width, height, layout
+    cdef readonly int width, height
 
     def __cinit__(
         self,
@@ -604,24 +606,9 @@ cdef class HexGrid(_AbsGrid):
         if height <= 0:
             raise ValueError("Height must be greater than zero.")
 
-        if layout in [0, 1]:
-            if passable_up_down_border and height % 2 == 1:
-                raise ValueError(
-                    "With layout {layout} It's possible to pass the border "
-                    "from top to bottom, only if the height is even"
-                )
-        elif layout in [2, 3]:
-            if passable_left_right_border and width % 2 == 1:
-                raise ValueError(
-                    "With layout {layout} It's possible to pass the border "
-                    "from left to right, only if the width is even"
-                )
-        else:
-            raise ValueError("Unknown layout")
-
         self.width = width
         self.height = height
-        self.layout = layout
+        layout = HexLayout(layout)
 
         if weights is None:
             self._obj = new CHexGrid(width, height, layout)
@@ -669,11 +656,26 @@ cdef class HexGrid(_AbsGrid):
         self._obj.remove_obstacle(self.get_node_id(point))
 
     @property
+    def layout(self):
+        return HexLayout(self._obj.layout)
+
+    def is_flat_top_layout(self):
+        return self.layout.is_flat_top()
+
+    def is_pointy_top_layout(self):
+        return self.layout.is_pointy_top()
+
+    @property
     def passable_left_right_border(self):
         return self._obj.passable_left_right_border
 
     @passable_left_right_border.setter
     def passable_left_right_border(self, bool _b):
+        if _b and self.is_flat_top_layout() and self.width % 2 == 1:
+            raise ValueError(
+                "With flat_top layout the left-right border can only be passable, "
+                "if the width is even"
+            )
         self._obj.passable_left_right_border = _b
 
     @property
@@ -682,9 +684,10 @@ cdef class HexGrid(_AbsGrid):
 
     @passable_up_down_border.setter
     def passable_up_down_border(self, bool _b):
-        if _b and self.height % 2 == 1:
+        if _b and self.is_pointy_top_layout() and self.height % 2 == 1:
             raise ValueError(
-                "It is possible to pass the border from top to bottom, only if the height is even"
+                "With pointy_top layout the up-down border can only be passable, "
+                "if the height is even"
             )
         self._obj.passable_up_down_border = _b
 
@@ -725,7 +728,7 @@ cdef class HexGrid(_AbsGrid):
             "width": self.width,
             "height": self.height,
             "weights": self.weights,
-            "layout": self.layout,
+            "layout": self.layout.value,
             "passable_left_right_border": self.passable_left_right_border,
             "passable_up_down_border": self.passable_up_down_border,
             **super().to_dict(),
