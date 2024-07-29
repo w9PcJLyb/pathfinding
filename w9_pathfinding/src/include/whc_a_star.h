@@ -1,9 +1,12 @@
 #pragma once
 
-#include "hc_a_star.h"
+#include "core.h"
+#include "space_time_a_star.h"
+#include "resumable_search.h"
+#include "reservation_table.h"
 
 
-class WHCAStar : public HCAStar {
+class WHCAStar : public AbsMAPF {
     // Windowed Hierarchical Cooperative A*
     // Silver, D. 2005. Cooperative pathfinding. In AIIDE, 117–122.
 
@@ -36,7 +39,7 @@ class WHCAStar : public HCAStar {
     };
 
     public:
-
+        AbsGraph* graph;
         WHCAStar(AbsGraph* graph);
 
         vector<vector<int>> mapf(vector<int> starts, vector<int> goals);
@@ -48,4 +51,7 @@ class WHCAStar : public HCAStar {
             bool despawn_at_destination,
             const ReservationTable *rt
         );
+
+    private:
+        SpaceTimeAStar st_a_star_;
 };

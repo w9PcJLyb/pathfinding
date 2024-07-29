@@ -1,7 +1,7 @@
 #include "include/whc_a_star.h"
 
 
-WHCAStar::WHCAStar(AbsGraph *graph) : HCAStar(graph) {
+WHCAStar::WHCAStar(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
 }
 
 vector<vector<int>> WHCAStar::mapf(vector<int> starts, vector<int> goals) {
@@ -31,7 +31,7 @@ vector<vector<int>> WHCAStar::mapf(
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
         int goal = goals[agent_id];
-        agents.push_back({start, goal, reverse_resumable_search(goal)});
+        agents.push_back({start, goal, st_a_star_.reverse_resumable_search(goal)});
         reservation_table.add_vertex_constraint(agent_id, 0, start);
     }
 
@@ -59,13 +59,13 @@ vector<vector<int>> WHCAStar::mapf(
                 continue;
             }
 
-            vector<int> path = find_path_(
+            vector<int> path = st_a_star_.find_path(
                 time,
                 agent.position(),
                 agent.goal,
                 w,
                 agent.rrs,
-                reservation_table
+                &reservation_table
             );
             if (path.empty()) {
                 agent.active = false;

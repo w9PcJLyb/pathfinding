@@ -102,10 +102,9 @@ class AbsPathFinder {
 };
 
 
-class AbsMAPF : public AbsPathFinder {
+class AbsMAPF {
     public:
         AbsMAPF() {};
         virtual ~AbsMAPF() {};
-        virtual vector<int> find_path(int start, int end) = 0;
         virtual vector<vector<int>> mapf(vector<int> starts, vector<int> goals) = 0;
 };

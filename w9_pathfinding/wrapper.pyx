@@ -16,6 +16,7 @@ from w9_pathfinding.cdefs cimport (
     BiDijkstra as CBiDijkstra,
     AStar as CAStar,
     BiAStar as CBiAStar,
+    SpaceTimeAStar as CSpaceTimeAStar,
     ReservationTable as CReservationTable,
     AbsMAPF as CAbsMAPF,
     HCAStar as CHCAStar,
@@ -870,6 +871,35 @@ cdef class BiAStar(_AbsPathFinder):
         del self._obj
 
 
+cdef class SpaceTimeAStar(_AbsPathFinder):
+    cdef CSpaceTimeAStar* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        self.graph = graph
+        self._obj = new CSpaceTimeAStar(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+    @_pathfinding
+    def find_path(
+        self,
+        int start,
+        int goal,
+        int search_depth=100,
+        ReservationTable reservation_table=None,
+    ):
+        cdef CReservationTable* crt
+        if reservation_table is None:
+            crt = NULL
+        else:
+            assert(reservation_table.graph == self.graph)
+            crt = reservation_table._obj
+
+        return self._obj.find_path(start, goal, search_depth, crt)
+
+
 cdef class ReservationTable:
     cdef CReservationTable* _obj
     cdef public _AbsGraph graph
@@ -965,6 +995,10 @@ cdef class _AbsMAPF():
             crt = reservation_table._obj
         return crt
 
+    @_mapf
+    def mapf(self, vector[int] starts, vector[int] goals):
+        return self._baseobj.mapf(starts, goals)
+
 
 cdef class HCAStar(_AbsMAPF):
     cdef CHCAStar* _obj
@@ -976,16 +1010,6 @@ cdef class HCAStar(_AbsMAPF):
 
     def __dealloc__(self):
         del self._obj
-
-    @_pathfinding
-    def find_path(
-        self,
-        int start,
-        int goal,
-        int search_depth=100,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path(start, goal, search_depth, self._to_crt(reservation_table))
 
     @_mapf
     def mapf(
@@ -1015,16 +1039,6 @@ cdef class WHCAStar(_AbsMAPF):
 
     def __dealloc__(self):
         del self._obj
-
-    @_pathfinding
-    def find_path(
-        self,
-        int start,
-        int goal,
-        int search_depth=100,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path(start, goal, search_depth, self._to_crt(reservation_table))
 
     @_mapf
     def mapf(

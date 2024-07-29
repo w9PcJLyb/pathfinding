@@ -1,7 +1,7 @@
 import unittest
-from w9_pathfinding import Graph, DFS, BFS, BiBFS, Dijkstra, BiDijkstra
+from w9_pathfinding import Graph, DFS, BFS, BiBFS, Dijkstra, BiDijkstra, SpaceTimeAStar
 
-SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra]
+SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, SpaceTimeAStar]
 ALL_ALGORITHMS = [DFS, BFS, BiBFS, Dijkstra, BiDijkstra]
 
 
@@ -17,7 +17,7 @@ class TestSimpleGraph(unittest.TestCase):
             with self.subTest(a.__name__):
                 with self.assertRaises(ValueError):
                     a(graph).find_path(0, 0)
-            
+
     def test_with_single_node(self):
         graph = Graph(1)
 
@@ -37,7 +37,7 @@ class TestSimpleGraph(unittest.TestCase):
     def test_with_two_nodes_with_edge(self):
         graph = Graph(2)
         graph.add_edges([[0, 1, 1]])
-        
+
         for a in ALL_ALGORITHMS:
             with self.subTest(a.__name__):
                 path = a(graph).find_path(0, 1)
@@ -86,4 +86,3 @@ class TestShortestPath(unittest.TestCase):
             with self.subTest(a.__name__):
                 path = a(graph).find_path(0, 5)
                 self.assertListEqual(path, answer)
-

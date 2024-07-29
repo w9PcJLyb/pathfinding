@@ -1,8 +1,8 @@
 from copy import copy
 
-import w9_pathfinding as pf
 from tests.stress_tests.utils import run_graph
 from tests.stress_tests.random_instance import HexGridGenerator, random_queries
+from tests.stress_tests.grid import ALGORITHMS
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
@@ -22,18 +22,6 @@ WEIGHTED_GRID_GENERATOR = HexGridGenerator(
     min_weight=0.5,
     max_weight=1.5,
 )
-
-# - unweighted - can find the shortest path in an unweighted graph
-# - weighted - can find the shortest path in a weighted graph
-ALGORITHMS = [
-    {"name": "DFS", "class": pf.DFS, "unw": 0, "w": 0},
-    {"name": "BFS", "class": pf.BFS, "unw": 1, "w": 0},
-    {"name": "BiBFS", "class": pf.BiBFS, "unw": 1, "w": 0},
-    {"name": "Dijkstra", "class": pf.Dijkstra, "unw": 1, "w": 1},
-    {"name": "BiDijkstra", "class": pf.BiDijkstra, "unw": 1, "w": 1},
-    {"name": "A*", "class": pf.AStar, "unw": 1, "w": 1},
-    {"name": "Bi A*", "class": pf.BiAStar, "unw": 1, "w": 1},
-]
 
 
 def stress_test(weighted):

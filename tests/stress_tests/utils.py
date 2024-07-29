@@ -16,9 +16,9 @@ def compare_results(results):
     return True
 
 
-def find_path(finder, start, end):
+def find_path(finder, start, end, **kwargs):
     t = time.time()
-    path = finder.find_path(start, end)
+    path = finder.find_path(start, end, **kwargs)
     return path, time.time() - t
 
 
@@ -30,7 +30,8 @@ def show_graph_info(graph, start, end):
 def run_graph(algorithms, graph, start, end):
     results = []
     for a in algorithms:
-        path, time = find_path(a["finder"], start, end)
+        params = a.get("params", {})
+        path, time = find_path(a["finder"], start, end, **params)
         a["total_time"] += time
 
         path_cost = graph.calculate_cost(path)
