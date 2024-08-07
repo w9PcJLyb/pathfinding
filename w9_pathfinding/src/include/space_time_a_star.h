@@ -29,7 +29,7 @@ class SpaceTimeAStar : public AbsPathFinder {
         ResumableSearch* reverse_resumable_search(int node_id);
         vector<int> find_path(int start, int end);
         vector<int> find_path(int start, int end, int search_depth, const ReservationTable *rt);
-        vector<int> find_path(
+        pair<vector<int>, double> find_path(
             int start_time,
             int start,
             int goal,

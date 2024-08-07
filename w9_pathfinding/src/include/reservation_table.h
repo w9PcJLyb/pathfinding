@@ -19,12 +19,16 @@ class ReservationTable {
 
         void add_vertex_constraint(int agent_id, int time, int node_id);
         void add_edge_constraint(int agent_id, int time, int n1, int n2);
+        void add_semi_static_constraint(int agent_id, int time, int node_id);
+        void clear_semi_static_constraints();
         bool is_reserved(int time, int node_id) const;
         int get_reserved_edge(int time, int node_id) const;
         int reserved_by(int time, int node_id) const;
         void add_path(int agent_id, int start_time, vector<int> &path, bool reserve_destination, bool add_edge_constraints);
         void remove_path(int start_time, vector<int> &path);
         int last_time_reserved(int node_id) const;
+        int num_constraints() const;
+        void print() const;
 
     private:
         int max_time_ = 0;

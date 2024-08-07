@@ -25,4 +25,6 @@ class HCAStar : public AbsMAPF {
 
     private:
         SpaceTimeAStar st_a_star_;
+
+        void expand_paths(vector<vector<int>> &paths);
 };

@@ -1,5 +1,8 @@
 #include "include/reservation_table.h"
 
+using std::cout;
+using std::endl;
+
 ReservationTable::ReservationTable(int graph_size) : graph_size(graph_size) {
 }
 
@@ -8,17 +11,28 @@ ReservationTable& ReservationTable::operator=(const ReservationTable& rt) {
         throw std::invalid_argument("graph_size should be the same");
     }
     vertex_constraints_ = rt.vertex_constraints_;
+    edge_constraints_ = rt.edge_constraints_;
     semi_static_constraints_ = rt.semi_static_constraints_;
     max_time_ = rt.max_time_;
     return *this;
 }
 
 void ReservationTable::add_vertex_constraint(int agent_id, int time, int node_id) {
+    if (time > max_time_)
+        max_time_ = time;
     vertex_constraints_[st(time, node_id)] = agent_id;
 }
 
 void ReservationTable::add_edge_constraint(int agent_id, int time, int n1, int n2) {
     edge_constraints_[st(time, n1)] = {n2, agent_id};
+}
+
+void ReservationTable::add_semi_static_constraint(int agent_id, int time, int node_id) {
+    semi_static_constraints_[node_id] = {time, agent_id};
+}
+
+void ReservationTable::clear_semi_static_constraints() {
+    semi_static_constraints_.clear();
 }
 
 bool ReservationTable::is_reserved(int time, int node_id) const {
@@ -110,4 +124,47 @@ int ReservationTable::last_time_reserved(int node_id) const {
         }
     }
     return 0;
+}
+
+int ReservationTable::num_constraints() const {
+    return vertex_constraints_.size() + semi_static_constraints_.size() + edge_constraints_.size();
+}
+
+void ReservationTable::print() const {
+    if (vertex_constraints_.empty() && edge_constraints_.empty() && semi_static_constraints_.empty()) {
+        cout << "No constraints" << endl;
+        return;
+    }
+
+    if (!vertex_constraints_.empty()) {
+        cout << "Vertex constraints:" << endl;
+        for (auto &[st, agent_id] : vertex_constraints_) {
+            int time = st / graph_size;
+            int node_id = st % graph_size;
+            cout << "- (time=" << time << ", node=" << node_id << ")";
+            cout << " by agent " << agent_id << endl;
+        }
+    }
+
+    if (!edge_constraints_.empty()) {
+        cout << "Edge constraints:" << endl;
+        for (auto &[st, d] : edge_constraints_) {
+            int time = st / graph_size;
+            int n1 = st % graph_size;
+            int n2 = d.first;
+            int agent_id = d.second;
+            cout << "- (time=" << time << ", edge=" << n1 << "->" << n2 << ")";
+            cout << " by agent " << agent_id << endl;
+        }
+    }
+
+    if (!semi_static_constraints_.empty()) {
+        cout << "Semi static constraints:" << endl;
+        for (auto &[node_id, d] : semi_static_constraints_) {
+            int time = d.first;
+            int agent_id = d.second;
+            cout << "- (time=" << time << ", node=" << node_id << ")";
+            cout << " by agent " << agent_id << endl;
+        }
+    }
 }

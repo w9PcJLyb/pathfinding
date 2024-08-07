@@ -8,7 +8,10 @@
 #include "include/bi_dijkstra.h"
 #include "include/a_star.h"
 #include "include/bi_a_star.h"
+#include "include/space_time_a_star.h"
 #include "include/hc_a_star.h"
+#include "include/whc_a_star.h"
+#include "include/cbs.h"
 
 
 void print_path(vector<int> nodes) {
@@ -53,13 +56,15 @@ void test_graph() {
     BiBFS bibfs(&graph);
     Dijkstra dijkstra(&graph);
     BiDijkstra bidijkstra(&graph);
+    SpaceTimeAStar stastar(&graph);
 
     vector<pair<std::string, AbsPathFinder*>> finders = {
         {"DFS", &dfs},
         {"BFS", &bfs},
         {"Bidirectional BFS", &bibfs},
         {"Dijkstra", &dijkstra},
-        {"Bidirectional Dijkstra", &bidijkstra}
+        {"Bidirectional Dijkstra", &bidijkstra},
+        {"Space-Time A*", &stastar}
     };
 
     for (auto &[name, finder] : finders) {
@@ -108,7 +113,7 @@ void test_grid() {
     BiDijkstra bidijkstra(&grid);
     AStar astar(&grid);
     BiAStar biastar(&grid);
-    HCAStar stastar(&grid);
+    SpaceTimeAStar stastar(&grid);
 
     vector<pair<std::string, AbsPathFinder*>> finders = {
         {"DFS", &dfs},
@@ -147,8 +152,42 @@ void test_grid() {
     print_path(grid, path);
 }
 
+void test_mapf() {
+    cout << "\nTest mapf" << endl;
+
+    Graph graph(5, true);
+
+    graph.add_edge(0, 2, 1);
+    graph.add_edge(1, 2, 1);
+    graph.add_edge(2, 3, 1);
+    graph.add_edge(2, 4, 1);
+
+    vector<int> starts = {0, 1};
+    vector<int> goals = {3, 4};
+
+    HCAStar hc_astar(&graph);
+    WHCAStar whc_astar(&graph);
+    CBS cbs(&graph);
+
+    vector<pair<std::string, AbsMAPF*>> finders = {
+        {"HCA*", &hc_astar},
+        {"WHCA*", &whc_astar},
+        {"CBS", &cbs}
+    };
+
+    vector<vector<int>> paths;
+    for (auto &[name, finder] : finders) {
+        paths = finder->mapf(starts, goals);
+        cout << name << ":" << endl;
+        for (auto &path : paths) {
+            print_path(path);
+        }
+    }
+}
+
 int main() {
     test_graph();
     test_grid();
+    test_mapf();
     return 0;
 }

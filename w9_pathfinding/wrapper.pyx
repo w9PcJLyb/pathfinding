@@ -21,6 +21,7 @@ from w9_pathfinding.cdefs cimport (
     AbsMAPF as CAbsMAPF,
     HCAStar as CHCAStar,
     WHCAStar as CWHCAStar,
+    CBS as CCBS,
 )
 from w9_pathfinding.hex_layout import HexLayout
 from w9_pathfinding.diagonal_movement import DiagonalMovement
@@ -947,6 +948,16 @@ cdef class ReservationTable:
         cdef vector[int] node_ids = self._convert_path(path)
         self._obj.remove_path(start_time, node_ids)
 
+    def add_vertex_constraint(self, node, int time=0, int agent_id=0):
+        cdef int node_id = self._to_node_id(node)
+        self._obj.add_vertex_constraint(agent_id, time, node_id)
+
+    def add_edge_constraint(self, n1, n2, int time=0, int agent_id=0):
+        cdef int n1_id, n2_id
+        n1_id = self._to_node_id(n1)
+        n2_id = self._to_node_id(n2)
+        self._obj.add_edge_constraint(agent_id, time, n1_id, n2_id)
+
 
 def _mapf(func):
 
@@ -1055,6 +1066,37 @@ cdef class WHCAStar(_AbsMAPF):
             goals,
             search_depth,
             window_size,
+            despawn_at_destination,
+            self._to_crt(reservation_table),
+        )
+
+
+cdef class CBS(_AbsMAPF):
+    cdef CCBS* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        self.graph = graph
+        self._obj = new CCBS(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+    @_mapf
+    def mapf(
+        self,
+        vector[int] starts,
+        vector[int] goals,
+        int search_depth=100,
+        int max_iter=100,
+        bool despawn_at_destination=False,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.mapf(
+            starts,
+            goals,
+            search_depth,
+            max_iter,
             despawn_at_destination,
             self._to_crt(reservation_table),
         )

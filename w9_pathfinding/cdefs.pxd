@@ -60,6 +60,8 @@ cdef extern from "src/include/reservation_table.h":
         int reserved_by(int, int)
         void add_path(int, int, vector[int], bool, bool)
         void remove_path(int, vector[int])
+        void add_vertex_constraint(int, int, int)
+        void add_edge_constraint(int, int, int, int)
         int last_time_reserved(int)
 
 
@@ -232,4 +234,15 @@ cdef extern from "src/include/whc_a_star.h":
 
     cdef cppclass WHCAStar(AbsMAPF):
         WHCAStar(AbsGraph*) except +
+        vector[vector[int]] mapf(vector[int], vector[int], int, int, bool, ReservationTable*)
+
+
+cdef extern from "src/cbs.cpp":
+    pass
+
+
+cdef extern from "src/include/cbs.h":
+
+    cdef cppclass CBS(AbsMAPF):
+        CBS(AbsGraph*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, int, bool, ReservationTable*)

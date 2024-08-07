@@ -36,21 +36,23 @@ vector<vector<int>> WHCAStar::mapf(
     }
 
     int time = 0;
+    bool solved = false;
     while (time <= search_depth) {
 
-        bool finished = true;
+        solved = true;
         for (auto &agent: agents) {
             if (agent.active && agent.position(time) != agent.goal) {
-                finished = false;
+                solved = false;
                 break;   
             }
         }
 
-        if (finished) {
+        if (solved)
             break;
-        }
 
         int w = std::min(window_size, search_depth - time);
+        if (w == 0)
+            break;
 
         for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
             Agent &agent = agents[agent_id];
@@ -66,10 +68,11 @@ vector<vector<int>> WHCAStar::mapf(
                 w,
                 agent.rrs,
                 &reservation_table
-            );
+            ).first;
             if (path.empty()) {
-                agent.active = false;
-                continue;
+                for (auto &agent: agents)
+                    delete agent.rrs;
+                return {};
             }
 
             if (path.size() == 1) {
@@ -92,7 +95,8 @@ vector<vector<int>> WHCAStar::mapf(
 
     vector<vector<int>> paths;
     for (auto &agent: agents) {
-        paths.push_back(agent.full_path);
+        if (solved)
+            paths.push_back(agent.full_path);
         delete agent.rrs;
     }
 

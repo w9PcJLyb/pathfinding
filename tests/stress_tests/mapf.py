@@ -29,6 +29,7 @@ WEIGHTED_GRID_GENERATOR = GridGenerator(
 ALGORITHMS = [
     {"name": "HCA*", "class": pf.HCAStar},
     {"name": "WHCA*", "class": pf.WHCAStar},
+    {"name": "CBS", "class": pf.CBS, "params": {"max_iter": 100}},
 ]
 
 
@@ -104,8 +105,13 @@ def is_solved(paths, goals, despawn_at_destination):
 
 def run_graph(algorithms, graph, starts, goals, despawn_at_destination=False):
     for a in algorithms:
+        params = a.get("params", {})
         paths, time = find_path(
-            a["finder"], starts, goals, despawn_at_destination=despawn_at_destination
+            a["finder"],
+            starts,
+            goals,
+            despawn_at_destination=despawn_at_destination,
+            **params,
         )
         a["total_time"] += time
 

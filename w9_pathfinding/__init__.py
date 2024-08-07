@@ -14,6 +14,7 @@ from .cpf import (
     ReservationTable,
     HCAStar,
     WHCAStar,
+    CBS,
 )
 from .diagonal_movement import DiagonalMovement
 from .hex_layout import HexLayout

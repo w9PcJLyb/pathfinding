@@ -41,19 +41,19 @@ vector<int> SpaceTimeAStar::find_path(int start, int end, int search_depth, cons
 
     if (!rt) {
         ReservationTable* rt_ = new ReservationTable(graph->size());
-        path = find_path(0, start, end, search_depth, rrs_, rt_);
+        path = find_path(0, start, end, search_depth, rrs_, rt_).first;
         delete rt_;
     }
     else {
         assert(rt->graph_size == int(graph->size()));
-        path = find_path(0, start, end, search_depth, rrs_, rt);
+        path = find_path(0, start, end, search_depth, rrs_, rt).first;
     }
 
     delete rrs_;
     return path;
 }
 
-vector<int> SpaceTimeAStar::find_path(
+pair<vector<int>, double> SpaceTimeAStar::find_path(
     int start_time,
     int start,
     int goal,
@@ -62,9 +62,10 @@ vector<int> SpaceTimeAStar::find_path(
     const ReservationTable *rt
 ) {
     double f0 = rrs->distance(start);
-    if (f0 == -1)
+    if (f0 == -1) {
         // unreachable
-        return {};
+        return {{}, -1};
+    }
 
     int graph_size = graph->size();
     int terminal_time = start_time + search_depth;
@@ -117,9 +118,10 @@ vector<int> SpaceTimeAStar::find_path(
         if (current->node_id == goal) {
             if (current->time >= min_search_depth || current->time == -1) {
                 auto path = reconstruct_path(start, current);
+                double distance = current->distance;
                 for (auto it : nodes)
                     delete it.second;
-                return path;
+                return {path, distance};
             }
         }
 
@@ -135,7 +137,9 @@ vector<int> SpaceTimeAStar::find_path(
             }
         }
         else {
-            if (pause_action_allowed)
+            if (current->node_id == goal)
+                process_node(current->node_id, 0, current);
+            else if (pause_action_allowed)
                 process_node(current->node_id, pause_action_cost, current);
 
             int reserved_edge = rt->get_reserved_edge(current->time, current->node_id);
@@ -149,5 +153,5 @@ vector<int> SpaceTimeAStar::find_path(
     for (auto it : nodes)
         delete it.second;
 
-    return {};
+    return {{}, -1};
 }

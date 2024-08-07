@@ -1,8 +1,8 @@
 import unittest
 from collections import defaultdict
-from w9_pathfinding import Graph, Grid, HCAStar, WHCAStar
+from w9_pathfinding import Graph, Grid, HCAStar, WHCAStar, CBS
 
-MAPF_ALGORITHMS = [HCAStar, WHCAStar]
+MAPF_ALGORITHMS = [HCAStar, WHCAStar, CBS]
 
 
 def check_paths(graph, paths):
@@ -87,36 +87,67 @@ class TestMAPF(unittest.TestCase):
 
     def test_edge_collision(self):
         """
-        + -  -  - +
-        | #  s1 # |
-        | #  e2 # |
-        | #     # |
-        |       # |
-        | #     # |
-        | #  e1 # |
-        | #  s2 # |
-        + -  -  - +
+        + -  -  -  -  -  -  - +
+        | s1 g2          g1 s2|
+        | #  #  #     #  #  # |
+        + -  -  -  -  -  -  - +
         """
         grid = Grid(
-            [
-                [-1, 1, -1],
-                [-1, 1, -1],
-                [-1, 1, -1],
-                [1, 1, -1],
-                [-1, 1, -1],
-                [-1, 1, -1],
-                [-1, 1, -1],
-            ],
+            [[1, 1, 1, 1, 1, 1, 1], [-1, -1, -1, 1, -1, -1, -1]],
             edge_collision=True,
         )
-        starts = [(1, 0), (1, 6)]
-        goals = [(1, 5), (1, 1)]
+        starts = [(0, 0), (6, 0)]
+        goals = [(5, 0), (1, 0)]
 
-        for a in [WHCAStar]:
-            with self.subTest(a.__name__):
-                paths = a(grid).mapf(starts, goals, despawn_at_destination=False)
+        paths = CBS(grid).mapf(starts, goals, despawn_at_destination=False)
+        self.assertEqual(len(paths), 2)
+        self.assertTrue(check_paths(grid, paths))
+        for path, goal in zip(paths, goals):
+            self.assertEqual(len(path), 8)
+            self.assertEqual(path[-1], goal)
 
-                self.assertTrue(check_paths(grid, paths))
-                for path, goal in zip(paths, goals):
-                    self.assertEqual(len(paths[0]), len(path))
-                    self.assertEqual(path[-1], goal)
+    def test_edge_collision_2(self):
+        """
+        + -  -  -  -  -  - +
+        | s1 s2 g2 g1      |
+        | #  #  #  #     # |
+        + -  -  -  -  -  - +
+        """
+        grid = Grid(
+            [[1, 1, 1, 1, 1, 1], [-1, -1, -1, -1, 1, -1]],
+            edge_collision=True,
+        )
+        starts = [(0, 0), (1, 0)]
+        goals = [(3, 0), (2, 0)]
+
+        paths = CBS(grid).mapf(
+            starts, goals, despawn_at_destination=False, max_iter=10000
+        )
+        self.assertEqual(len(paths), 2)
+        self.assertTrue(check_paths(grid, paths))
+        for path, goal in zip(paths, goals):
+            self.assertEqual(len(paths[0]), 8)
+            self.assertEqual(path[-1], goal)
+
+    def test_edge_collision_3(self):
+        """
+        + -  -  -  -  -  - +
+        | s1 g2 g1 s2      |
+        | #  #  #  #     # |
+        + -  -  -  -  -  - +
+        """
+        grid = Grid(
+            [[1, 1, 1, 1, 1, 1], [-1, -1, -1, -1, 1, -1]],
+            edge_collision=True,
+        )
+        starts = [(0, 0), (3, 0)]
+        goals = [(2, 0), (1, 0)]
+
+        paths = CBS(grid).mapf(
+            starts, goals, despawn_at_destination=False, max_iter=10000
+        )
+        self.assertEqual(len(paths), 2)
+        self.assertTrue(check_paths(grid, paths))
+        for path, goal in zip(paths, goals):
+            self.assertEqual(len(paths[0]), 9)
+            self.assertEqual(path[-1], goal)
