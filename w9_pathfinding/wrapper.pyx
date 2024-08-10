@@ -930,33 +930,24 @@ cdef class ReservationTable:
         cdef int node_id = self._to_node_id(node)
         return self._obj.is_reserved(time, node_id)
 
-    def reserved_by(self, int time, node):
-        cdef int node_id = self._to_node_id(node)
-        return self._obj.reserved_by(time, node_id)
-
     def add_path(
         self,
         path,
-        int agent_id=0,
         int start_time=0,
         bool reserve_destination=False,
     ):
         cdef vector[int] node_ids = self._convert_path(path)
-        self._obj.add_path(agent_id, start_time, node_ids, reserve_destination, self.graph.edge_collision)
+        self._obj.add_path(start_time, node_ids, reserve_destination, self.graph.edge_collision)
 
-    def remove_path(self, path, int start_time=0):
-        cdef vector[int] node_ids = self._convert_path(path)
-        self._obj.remove_path(start_time, node_ids)
-
-    def add_vertex_constraint(self, node, int time=0, int agent_id=0):
+    def add_vertex_constraint(self, node, int time=0):
         cdef int node_id = self._to_node_id(node)
-        self._obj.add_vertex_constraint(agent_id, time, node_id)
+        self._obj.add_vertex_constraint(time, node_id)
 
-    def add_edge_constraint(self, n1, n2, int time=0, int agent_id=0):
+    def add_edge_constraint(self, n1, n2, int time=0):
         cdef int n1_id, n2_id
         n1_id = self._to_node_id(n1)
         n2_id = self._to_node_id(n2)
-        self._obj.add_edge_constraint(agent_id, time, n1_id, n2_id)
+        self._obj.add_edge_constraint(time, n1_id, n2_id)
 
 
 def _mapf(func):

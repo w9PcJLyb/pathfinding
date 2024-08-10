@@ -107,4 +107,7 @@ class AbsMAPF {
         AbsMAPF() {};
         virtual ~AbsMAPF() {};
         virtual vector<vector<int>> mapf(vector<int> starts, vector<int> goals) = 0;
+
+    protected:
+        void normalize_paths(vector<vector<int>> &paths) const;
 };

@@ -142,9 +142,9 @@ pair<vector<int>, double> SpaceTimeAStar::find_path(
             else if (pause_action_allowed)
                 process_node(current->node_id, pause_action_cost, current);
 
-            int reserved_edge = rt->get_reserved_edge(current->time, current->node_id);
+            auto reserved_edges = rt->get_reserved_edges(current->time, current->node_id);
             for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {
-                if (reserved_edge != node_id)
+                if (!reserved_edges.count(node_id))
                     process_node(node_id, cost, current);
             }
         }

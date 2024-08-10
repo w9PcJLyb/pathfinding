@@ -32,7 +32,7 @@ vector<vector<int>> WHCAStar::mapf(
         int start = starts[agent_id];
         int goal = goals[agent_id];
         agents.push_back({start, goal, st_a_star_.reverse_resumable_search(goal)});
-        reservation_table.add_vertex_constraint(agent_id, 0, start);
+        reservation_table.add_vertex_constraint(0, start);
     }
 
     int time = 0;
@@ -78,12 +78,12 @@ vector<vector<int>> WHCAStar::mapf(
             if (path.size() == 1) {
                 // pause action
                 agent.add_path(path);
-                reservation_table.add_path(agent_id, time + 1, path, false, edge_collision);
+                reservation_table.add_path(time + 1, path, false, edge_collision);
             }
             else {
                 agent.full_path.pop_back();
                 agent.add_path(path);
-                reservation_table.add_path(agent_id, time, path, false, edge_collision);
+                reservation_table.add_path(time, path, false, edge_collision);
             }
 
             if (despawn_at_destination && agent.position() == agent.goal)

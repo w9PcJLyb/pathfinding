@@ -3,6 +3,7 @@
 #include <vector>
 #include <cassert>
 #include <iostream>
+#include <unordered_set>
 #include <unordered_map>
 
 using std::pair;
@@ -17,33 +18,30 @@ class ReservationTable {
 
         ReservationTable& operator=(const ReservationTable& rt);
 
-        void add_vertex_constraint(int agent_id, int time, int node_id);
-        void add_edge_constraint(int agent_id, int time, int n1, int n2);
-        void add_semi_static_constraint(int agent_id, int time, int node_id);
+        void add_vertex_constraint(int time, int node_id);
+        void add_edge_constraint(int time, int n1, int n2);
+        void add_semi_static_constraint(int time, int node_id);
         void clear_semi_static_constraints();
         bool is_reserved(int time, int node_id) const;
-        int get_reserved_edge(int time, int node_id) const;
-        int reserved_by(int time, int node_id) const;
-        void add_path(int agent_id, int start_time, vector<int> &path, bool reserve_destination, bool add_edge_constraints);
-        void remove_path(int start_time, vector<int> &path);
+        std::unordered_set<int> get_reserved_edges(int time, int node_id) const;
+        void add_path(int start_time, vector<int> &path, bool reserve_destination, bool add_edge_constraints);
         int last_time_reserved(int node_id) const;
-        int num_constraints() const;
         void print() const;
 
     private:
         int max_time_ = 0;
 
         // nodes in space-time reserved by other agents
-        // (time, node_id) -> agent_id
-        std::unordered_map<int, int> vertex_constraints_;
+        // {(time, node_id), ...}
+        std::unordered_set<int> vertex_constraints_;
 
         // static obstacles from specific times, e.g. agents that have reached their destinations
-        // node_id -> (start time, agent_id)
-        std::unordered_map<int, pair<int, int>> semi_static_constraints_;
+        // node_id -> start time
+        std::unordered_map<int, int> semi_static_constraints_;
 
         // edges in space-time reserved by other agents
-        // (time, node_id) -> (node_id, agent_id)
-        std::unordered_map<int, pair<int, int>> edge_constraints_;
+        // (time, node_id) -> {node_id, ...}
+        std::unordered_map<int, std::unordered_set<int>> edge_constraints_;
 
         int st(int time, int node_id) const {
             return time * graph_size + node_id;

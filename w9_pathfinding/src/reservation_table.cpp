@@ -17,18 +17,21 @@ ReservationTable& ReservationTable::operator=(const ReservationTable& rt) {
     return *this;
 }
 
-void ReservationTable::add_vertex_constraint(int agent_id, int time, int node_id) {
+void ReservationTable::add_vertex_constraint(int time, int node_id) {
     if (time > max_time_)
         max_time_ = time;
-    vertex_constraints_[st(time, node_id)] = agent_id;
+    vertex_constraints_.insert(st(time, node_id));
 }
 
-void ReservationTable::add_edge_constraint(int agent_id, int time, int n1, int n2) {
-    edge_constraints_[st(time, n1)] = {n2, agent_id};
+void ReservationTable::add_edge_constraint(int time, int n1, int n2) {
+    edge_constraints_[st(time, n1)].insert(n2);
 }
 
-void ReservationTable::add_semi_static_constraint(int agent_id, int time, int node_id) {
-    semi_static_constraints_[node_id] = {time, agent_id};
+void ReservationTable::add_semi_static_constraint(int time, int node_id) {
+    if (semi_static_constraints_.count(node_id))
+        semi_static_constraints_[node_id] = std::min(time, semi_static_constraints_[node_id]);
+    else
+        semi_static_constraints_[node_id] = time;
 }
 
 void ReservationTable::clear_semi_static_constraints() {
@@ -40,45 +43,29 @@ bool ReservationTable::is_reserved(int time, int node_id) const {
         return true;
 
     if (semi_static_constraints_.count(node_id)) {
-        auto time_agent = semi_static_constraints_.at(node_id);
-        if (time_agent.first <= time)
+        if (semi_static_constraints_.at(node_id) <= time)
             return true;
     }
 
     return false;
 }
 
-int ReservationTable::get_reserved_edge(int time, int node_id) const {
+std::unordered_set<int> ReservationTable::get_reserved_edges(int time, int node_id) const {
     int st_ = st(time, node_id);
-    if (edge_constraints_.count(st_)) {
-        return edge_constraints_.at(st_).first;
+    if (edge_constraints_.count(st_))
+        return edge_constraints_.at(st_);
+    else {
+        std::unordered_set<int> nodes;
+        return nodes;
     }
-    return -1;
-}
-
-int ReservationTable::reserved_by(int time, int node_id) const {
-    if (vertex_constraints_.count(st(time, node_id)))
-        return vertex_constraints_.at(st(time, node_id));
-
-    if (semi_static_constraints_.count(node_id)) {
-        auto time_agent = semi_static_constraints_.at(node_id);
-        if (time_agent.first <= time) {
-            return time_agent.second;
-        }
-    }
-
-    return -1;
 }
 
 void ReservationTable::add_path(
-    int agent_id,
     int start_time,
     vector<int> &path,
     bool reserve_destination,
     bool add_edge_constraints
 ) {
-    assert(agent_id >= 0);
-
     if (path.empty())
         return;
 
@@ -88,33 +75,14 @@ void ReservationTable::add_path(
             max_time_ = time;
         }
         if (add_edge_constraints && i > 0) {
-            edge_constraints_[st(time - 1, path[i])] = {path[i - 1], agent_id};
+            edge_constraints_[st(time - 1, path[i])].insert(path[i - 1]);
         }
-        vertex_constraints_[st(time, path[i])] = agent_id;
+        vertex_constraints_.insert(st(time, path[i]));
     }
 
     if (reserve_destination) {
-        semi_static_constraints_[path.back()] = {start_time + path.size(), agent_id};
+        semi_static_constraints_[path.back()] = start_time + path.size();
     }
-}
-
-void ReservationTable::remove_path(int start_time, vector<int> &path) {
-    if (path.empty())
-        return;
-
-    for (size_t i = 0; i < path.size(); i++) {
-        vertex_constraints_.erase(st(start_time + i, path[i]));
-        if (i > 0) {
-            int st_ = st(start_time + i - 1, path[i]);
-            if (edge_constraints_.count(st_)) {
-                if (edge_constraints_[st_].first == path[i - 1]) {
-                    edge_constraints_.erase(st_);
-                }
-            }
-        }
-    }
-
-    vertex_constraints_.erase(st(start_time + path.size(), path.back()));
 }
 
 int ReservationTable::last_time_reserved(int node_id) const {
@@ -126,10 +94,6 @@ int ReservationTable::last_time_reserved(int node_id) const {
     return 0;
 }
 
-int ReservationTable::num_constraints() const {
-    return vertex_constraints_.size() + semi_static_constraints_.size() + edge_constraints_.size();
-}
-
 void ReservationTable::print() const {
     if (vertex_constraints_.empty() && edge_constraints_.empty() && semi_static_constraints_.empty()) {
         cout << "No constraints" << endl;
@@ -138,11 +102,10 @@ void ReservationTable::print() const {
 
     if (!vertex_constraints_.empty()) {
         cout << "Vertex constraints:" << endl;
-        for (auto &[st, agent_id] : vertex_constraints_) {
+        for (auto st : vertex_constraints_) {
             int time = st / graph_size;
             int node_id = st % graph_size;
-            cout << "- (time=" << time << ", node=" << node_id << ")";
-            cout << " by agent " << agent_id << endl;
+            cout << "- time=" << time << ", node=" << node_id << endl;
         }
     }
 
@@ -151,20 +114,16 @@ void ReservationTable::print() const {
         for (auto &[st, d] : edge_constraints_) {
             int time = st / graph_size;
             int n1 = st % graph_size;
-            int n2 = d.first;
-            int agent_id = d.second;
-            cout << "- (time=" << time << ", edge=" << n1 << "->" << n2 << ")";
-            cout << " by agent " << agent_id << endl;
+            for (auto n2 : d) {
+                cout << "- time=" << time << ", edge=" << n1 << "->" << n2 << endl;
+            }
         }
     }
 
     if (!semi_static_constraints_.empty()) {
         cout << "Semi static constraints:" << endl;
-        for (auto &[node_id, d] : semi_static_constraints_) {
-            int time = d.first;
-            int agent_id = d.second;
-            cout << "- (time=" << time << ", node=" << node_id << ")";
-            cout << " by agent " << agent_id << endl;
+        for (auto &[node_id, time] : semi_static_constraints_) {
+            cout << "- time=" << time << ", node=" << node_id << endl;
         }
     }
 }

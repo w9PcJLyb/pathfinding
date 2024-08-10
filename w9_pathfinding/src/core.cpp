@@ -258,3 +258,23 @@ vector<vector<int>> AbsGrid::find_components() const {
     }
     return components_without_walls;
 }
+
+void AbsMAPF::normalize_paths(vector<vector<int>> &paths) const {
+    if (paths.empty())
+        return;
+
+    size_t max_size = paths[0].size();
+    for (size_t i = 1; i < paths.size(); i++) {
+        max_size = std::max(max_size, paths[i].size());
+    }
+
+    for (size_t i = 0; i < paths.size(); i++) {
+        if (paths[i].empty()) {
+            continue;
+        }
+        else if (paths[i].size() < max_size) {
+            vector<int> path(max_size - paths[i].size(), paths[i].back());
+            paths[i].insert(paths[i].end(), path.begin(), path.end());
+        }
+    }
+}

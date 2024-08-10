@@ -85,6 +85,12 @@ class TestMAPF(unittest.TestCase):
                     self.assertEqual(len(paths[0]), len(path))
                     self.assertEqual(path[-1], goal)
 
+
+class TestCBS(unittest.TestCase):
+    """
+    pytest tests/test_mapf.py::TestCBS
+    """
+
     def test_edge_collision(self):
         """
         + -  -  -  -  -  -  - +
@@ -126,7 +132,7 @@ class TestMAPF(unittest.TestCase):
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
-            self.assertEqual(len(paths[0]), 8)
+            self.assertEqual(len(path), 8)
             self.assertEqual(path[-1], goal)
 
     def test_edge_collision_3(self):
@@ -149,5 +155,24 @@ class TestMAPF(unittest.TestCase):
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
-            self.assertEqual(len(paths[0]), 9)
+            self.assertEqual(len(path), 9)
+            self.assertEqual(path[-1], goal)
+
+    def test_with_three_agents(self):
+        """
+        + -  -  -  +
+        |          |
+        | #        |
+        + -  -  -  +
+        """
+        grid = Grid([[1, 1, 1], [-1, 1, 1]], edge_collision=True)
+        starts, goals = ((2, 0), (0, 0), (1, 0)), ((0, 0), (2, 1), (1, 1))
+
+        paths = CBS(grid).mapf(
+            starts, goals, despawn_at_destination=False, max_iter=1000
+        )
+        self.assertEqual(len(paths), 3)
+        self.assertTrue(check_paths(grid, paths))
+        for path, goal in zip(paths, goals):
+            self.assertEqual(len(path), 5)
             self.assertEqual(path[-1], goal)

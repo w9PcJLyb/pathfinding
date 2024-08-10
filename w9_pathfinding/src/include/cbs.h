@@ -123,7 +123,6 @@ class CBS : public AbsMAPF {
 
         ConflictResult find_conflict(vector<vector<int>> &paths, bool despawn_at_destination);
         pair<vector<int>, double> low_level(Agent &agent, ReservationTable &rt, int search_depth);
-        void expand_paths(vector<vector<int>> &paths);
         vector<CTNode> split_node(
             CTNode &ct_node, vector<Agent> &agents, ConflictResult &conflict, int search_depth
         );

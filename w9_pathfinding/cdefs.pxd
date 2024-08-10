@@ -57,11 +57,9 @@ cdef extern from "src/include/reservation_table.h":
     cdef cppclass ReservationTable:
         ReservationTable(int) except +
         bool is_reserved(int, int)
-        int reserved_by(int, int)
-        void add_path(int, int, vector[int], bool, bool)
-        void remove_path(int, vector[int])
-        void add_vertex_constraint(int, int, int)
-        void add_edge_constraint(int, int, int, int)
+        void add_path(int, vector[int], bool, bool)
+        void add_vertex_constraint(int, int)
+        void add_edge_constraint(int, int, int)
         int last_time_reserved(int)
 
 

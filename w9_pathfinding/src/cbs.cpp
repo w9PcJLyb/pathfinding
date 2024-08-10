@@ -78,23 +78,6 @@ CBS::ConflictResult CBS::find_conflict(vector<vector<int>> &paths, bool despawn_
     return ConflictResult();
 }
 
-void CBS::expand_paths(vector<vector<int>> &paths) {
-    size_t max_size = paths[0].size();
-    for (size_t i = 1; i < paths.size(); i++) {
-        max_size = std::max(max_size, paths[i].size());
-    }
-
-    for (size_t i = 0; i < paths.size(); i++) {
-        if (paths[i].empty()) {
-            continue;
-        }
-        else if (paths[i].size() < max_size) {
-            vector<int> path(max_size - paths[i].size(), paths[i].back());
-            paths[i].insert(paths[i].end(), path.begin(), path.end());
-        }
-    }
-}
-
 vector<CBS::CTNode> CBS::split_node(
     CTNode &ct_node, vector<Agent> &agents, ConflictResult &conflict, int search_depth
 ) {
@@ -108,16 +91,12 @@ vector<CBS::CTNode> CBS::split_node(
 
         if (conflict.is_edge_conflict()) {
             if (i == 0)
-                rt.add_edge_constraint(
-                    0, conflict.time, conflict.node1, conflict.node2
-                );
+                rt.add_edge_constraint(conflict.time, conflict.node1, conflict.node2);
             else
-                rt.add_edge_constraint(
-                    0, conflict.time, conflict.node2, conflict.node1
-                );
+                rt.add_edge_constraint(conflict.time, conflict.node2, conflict.node1);
         }
         else {
-            rt.add_vertex_constraint(0, conflict.time, conflict.node1);
+            rt.add_vertex_constraint(conflict.time, conflict.node1);
         }
 
         auto [new_path, new_cost] = low_level(agents[agent_id], rt, search_depth);
@@ -193,7 +172,7 @@ vector<vector<int>> CBS::mapf(
         ConflictResult result = find_conflict(ct_node.solutions, despawn_at_destination);
         if (!result.has_conflict()) {
             if (!despawn_at_destination)
-                expand_paths(ct_node.solutions);
+                normalize_paths(ct_node.solutions);
             for (Agent &agent: agents)
                 delete agent.rrs;
             return ct_node.solutions;
