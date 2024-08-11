@@ -111,3 +111,9 @@ class AbsMAPF {
     protected:
         void normalize_paths(vector<vector<int>> &paths) const;
 };
+
+
+class timeout_exception : public std::runtime_error {
+    public:
+        using std::runtime_error::runtime_error;
+};

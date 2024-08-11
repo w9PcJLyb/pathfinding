@@ -29,7 +29,7 @@ WEIGHTED_GRID_GENERATOR = GridGenerator(
 ALGORITHMS = [
     {"name": "HCA*", "class": pf.HCAStar},
     {"name": "WHCA*", "class": pf.WHCAStar},
-    {"name": "CBS", "class": pf.CBS, "params": {"max_iter": 100}},
+    {"name": "CBS", "class": pf.CBS, "params": {"max_time": 0.1}},
 ]
 
 
@@ -40,7 +40,10 @@ def show_graph_info(graph, starts, goals):
 
 def find_path(finder, starts, goals, **kwargs):
     t = time.time()
-    paths = finder.mapf(starts, goals, **kwargs)
+    try:
+        paths = finder.mapf(starts, goals, **kwargs)
+    except RuntimeError:
+        paths = []
     return paths, time.time() - t
 
 

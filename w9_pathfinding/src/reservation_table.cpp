@@ -34,10 +34,6 @@ void ReservationTable::add_semi_static_constraint(int time, int node_id) {
         semi_static_constraints_[node_id] = time;
 }
 
-void ReservationTable::clear_semi_static_constraints() {
-    semi_static_constraints_.clear();
-}
-
 bool ReservationTable::is_reserved(int time, int node_id) const {
     if (vertex_constraints_.count(st(time, node_id)))
         return true;

@@ -35,33 +35,6 @@ class CBS : public AbsMAPF {
         bool operator> (const CTNode& other) const {
             return total_cost > other.total_cost;
         }
-
-        friend std::ostream& operator << (std::ostream& os, const CTNode& node) {
-            os << "Node: cost=" << node.total_cost << ", solution=";
-            size_t t = 0;
-            while (true) {
-                bool end = true;
-                std::string s;
-                for (auto &path : node.solutions) {
-                    if (t < path.size()) {
-                        s += std::to_string(path[t]) + " ";
-                        end = false;
-                    }
-                    else
-                        s += "- ";
-                }
-                if (end)
-                    break;
-                s.pop_back();
-                os << "(" << s << ") ";
-                t++;
-            }
-            os << " costs: ";
-            for (auto x : node.costs) {
-                os << x << " ";
-            }
-            return os;
-        }
     };
 
     struct ConflictResult {
@@ -86,20 +59,6 @@ class CBS : public AbsMAPF {
         bool is_edge_conflict() const {
             return node2 >= 0;
         };
-
-        friend std::ostream& operator << (std::ostream& os, const ConflictResult& r) {
-            if (!r.has_conflict()) {
-                os << "No conflicts";
-            }
-            else if (r.is_edge_conflict()) {
-                os << "Edge conflict at time=" << r.time;
-                os << ", edge=" << r.node1 << "->" << r.node2 << ")";
-            }
-            else {
-                os << "Vertex conflict at time=" << r.time << ", node=" << r.node1;
-            }
-            return os;
-        }
     };
 
     typedef priority_queue<CTNode, vector<CTNode>, std::greater<CTNode>> Queue;
@@ -113,7 +72,7 @@ class CBS : public AbsMAPF {
             vector<int> starts,
             vector<int> goals,
             int search_depth,
-            int max_iter,
+            double max_time,
             bool despawn_at_destination,
             const ReservationTable *rt
         );
@@ -126,4 +85,6 @@ class CBS : public AbsMAPF {
         vector<CTNode> split_node(
             CTNode &ct_node, vector<Agent> &agents, ConflictResult &conflict, int search_depth
         );
+        void print_node(CTNode &ct_node);
+        void print_conflict(ConflictResult &conflict);
 };

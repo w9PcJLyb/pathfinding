@@ -1079,7 +1079,7 @@ cdef class CBS(_AbsMAPF):
         vector[int] starts,
         vector[int] goals,
         int search_depth=100,
-        int max_iter=100,
+        double max_time=1,
         bool despawn_at_destination=False,
         ReservationTable reservation_table=None,
     ):
@@ -1087,7 +1087,7 @@ cdef class CBS(_AbsMAPF):
             starts,
             goals,
             search_depth,
-            max_iter,
+            max_time,
             despawn_at_destination,
             self._to_crt(reservation_table),
         )

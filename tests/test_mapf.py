@@ -126,9 +126,7 @@ class TestCBS(unittest.TestCase):
         starts = [(0, 0), (1, 0)]
         goals = [(3, 0), (2, 0)]
 
-        paths = CBS(grid).mapf(
-            starts, goals, despawn_at_destination=False, max_iter=10000
-        )
+        paths = CBS(grid).mapf(starts, goals, despawn_at_destination=False, max_time=10)
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
@@ -149,9 +147,7 @@ class TestCBS(unittest.TestCase):
         starts = [(0, 0), (3, 0)]
         goals = [(2, 0), (1, 0)]
 
-        paths = CBS(grid).mapf(
-            starts, goals, despawn_at_destination=False, max_iter=10000
-        )
+        paths = CBS(grid).mapf(starts, goals, despawn_at_destination=False, max_time=10)
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
@@ -168,9 +164,7 @@ class TestCBS(unittest.TestCase):
         grid = Grid([[1, 1, 1], [-1, 1, 1]], edge_collision=True)
         starts, goals = ((2, 0), (0, 0), (1, 0)), ((0, 0), (2, 1), (1, 1))
 
-        paths = CBS(grid).mapf(
-            starts, goals, despawn_at_destination=False, max_iter=1000
-        )
+        paths = CBS(grid).mapf(starts, goals, despawn_at_destination=False, max_time=10)
         self.assertEqual(len(paths), 3)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):

@@ -1,17 +1,62 @@
+#include <chrono>
+
 #include "include/cbs.h"
 #include "unordered_map"
 #include "unordered_set"
+
+using std::chrono::duration;
+using std::chrono::high_resolution_clock;
 
 
 CBS::CBS(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
 }
 
 vector<vector<int>> CBS::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 100, 100, false, nullptr);
+    return mapf(starts, goals, 100, 1.0, false, nullptr);
 }
 
 pair<vector<int>, double> CBS::low_level(Agent &agent, ReservationTable &rt, int search_depth) {
     return st_a_star_.find_path(0, agent.start, agent.goal, search_depth, agent.rrs, &rt);
+}
+
+void CBS::print_node(CTNode &node) {
+    cout << "Node: cost=" << node.total_cost << ", solution=";
+    size_t t = 0;
+    while (true) {
+        bool end = true;
+        std::string s;
+        for (auto &path : node.solutions) {
+            if (t < path.size()) {
+                s += std::to_string(path[t]) + " ";
+                end = false;
+            }
+            else
+                s += "- ";
+        }
+        if (end)
+            break;
+        s.pop_back();
+        cout << "(" << s << ") ";
+        t++;
+    }
+    cout << " costs: ";
+    for (auto x : node.costs) {
+        cout << x << " ";
+    }
+    cout << endl;
+}
+
+void CBS::print_conflict(ConflictResult &r) {
+    if (!r.has_conflict()) {
+        cout << "No conflicts" << endl;
+    }
+    else if (r.is_edge_conflict()) {
+        cout << "Edge conflict at time=" << r.time;
+        cout << ", edge=" << r.node1 << "->" << r.node2 << endl;
+    }
+    else {
+        cout << "Vertex conflict at time=" << r.time << ", node=" << r.node1 << endl;
+    }
 }
 
 CBS::ConflictResult CBS::find_conflict(vector<vector<int>> &paths, bool despawn_at_destination) {
@@ -100,7 +145,7 @@ vector<CBS::CTNode> CBS::split_node(
         }
 
         auto [new_path, new_cost] = low_level(agents[agent_id], rt, search_depth);
-        if (new_cost == -1)
+        if (new_path.empty() || new_path.back() != agents[agent_id].goal)
             continue;
 
         new_node.solutions[agent_id] = new_path;
@@ -116,7 +161,7 @@ vector<vector<int>> CBS::mapf(
     vector<int> starts,
     vector<int> goals,
     int search_depth,
-    int max_iter,
+    double max_time,
     bool despawn_at_destination,
     const ReservationTable *rt
 ) {
@@ -134,12 +179,19 @@ vector<vector<int>> CBS::mapf(
         }
     }
 
+    auto begin_time = high_resolution_clock::now();
+
     vector<Agent> agents;
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
         int goal = goals[agent_id];
         agents.push_back({start, goal, st_a_star_.reverse_resumable_search(goal)});
     }
+
+    auto clear = [&] () {
+        for (Agent &agent: agents)
+            delete agent.rrs;
+    };
 
     Queue openset;
     {
@@ -151,10 +203,10 @@ vector<vector<int>> CBS::mapf(
 
             auto [path, cost] = low_level(agents[i], reservation_table, search_depth);
             if (cost == -1) {
-                for (Agent &agent: agents)
-                    delete agent.rrs;
+                clear();
                 return {};
             }
+
             root.constraints.push_back(reservation_table);
             root.solutions.push_back(path);
             root.costs.push_back(cost);
@@ -163,7 +215,6 @@ vector<vector<int>> CBS::mapf(
         openset.push(root);
     }
 
-    int iter = 0;
     while (!openset.empty()) {
         CTNode ct_node = openset.top();
 
@@ -173,8 +224,7 @@ vector<vector<int>> CBS::mapf(
         if (!result.has_conflict()) {
             if (!despawn_at_destination)
                 normalize_paths(ct_node.solutions);
-            for (Agent &agent: agents)
-                delete agent.rrs;
+            clear();
             return ct_node.solutions;
         }
 
@@ -182,13 +232,12 @@ vector<vector<int>> CBS::mapf(
             openset.push(new_node);
         }
 
-        iter++;
-        if (iter >= max_iter)
-            break;
+        if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time) {
+            clear();
+            throw timeout_exception("Timeout");
+        }
     }
 
-    for (Agent &agent: agents)
-        delete agent.rrs;
-
+    clear();
     return {};
 }

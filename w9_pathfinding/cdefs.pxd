@@ -243,4 +243,4 @@ cdef extern from "src/include/cbs.h":
 
     cdef cppclass CBS(AbsMAPF):
         CBS(AbsGraph*) except +
-        vector[vector[int]] mapf(vector[int], vector[int], int, int, bool, ReservationTable*)
+        vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
