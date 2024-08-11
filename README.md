@@ -51,6 +51,7 @@ Currently implemented:
 
 - HCAStar - Hierarchical Cooperative A*
 - WHCAStar - Windowed Hierarchical Cooperative A*
+- CBS - Conflict Based Search
 
 Example:
 
