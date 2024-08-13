@@ -202,6 +202,17 @@ cdef extern from "src/include/bi_a_star.h":
         vector[int] find_path(int, int)
 
 
+cdef extern from "src/gbs.cpp":
+    pass
+
+
+cdef extern from "src/include/gbs.h":
+
+    cdef cppclass GBS(AbsPathFinder):
+        GBS(AbsGraph*) except +
+        vector[int] find_path(int, int)
+
+
 cdef extern from "src/space_time_a_star.cpp":
     pass
 

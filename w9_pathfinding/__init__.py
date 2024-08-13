@@ -10,6 +10,7 @@ from .cpf import (
     BiDijkstra,
     AStar,
     BiAStar,
+    GBS,
     SpaceTimeAStar,
     ReservationTable,
     HCAStar,

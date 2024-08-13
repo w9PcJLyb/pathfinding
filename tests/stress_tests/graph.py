@@ -40,6 +40,7 @@ GRAPH_WITH_COORDINATES_GENERATOR = GraphWithCoordinatesGenerator(
 # - h - heuristic algorithm
 ALGORITHMS = [
     {"name": "DFS", "class": pf.DFS, "unw": 0, "w": 0, "h": 0},
+    {"name": "GBS", "class": pf.GBS, "unw": 0, "w": 0, "h": 1},
     {"name": "BFS", "class": pf.BFS, "unw": 1, "w": 0, "h": 0},
     {"name": "BiBFS", "class": pf.BiBFS, "unw": 1, "w": 0, "h": 0},
     {"name": "Dijkstra", "class": pf.Dijkstra, "unw": 1, "w": 1, "h": 0},

@@ -27,6 +27,7 @@ WEIGHTED_GRID_GENERATOR = GridGenerator(
 # - weighted - can find the shortest path in a weighted graph
 ALGORITHMS = [
     {"name": "DFS", "class": pf.DFS, "unw": 0, "w": 0},
+    {"name": "GBS", "class": pf.GBS, "unw": 0, "w": 0},
     {"name": "BFS", "class": pf.BFS, "unw": 1, "w": 0},
     {"name": "BiBFS", "class": pf.BiBFS, "unw": 1, "w": 0},
     {"name": "Dijkstra", "class": pf.Dijkstra, "unw": 1, "w": 1},

@@ -8,6 +8,7 @@
 #include "include/bi_dijkstra.h"
 #include "include/a_star.h"
 #include "include/bi_a_star.h"
+#include "include/gbs.h"
 #include "include/space_time_a_star.h"
 #include "include/hc_a_star.h"
 #include "include/whc_a_star.h"
@@ -113,6 +114,7 @@ void test_grid() {
     BiDijkstra bidijkstra(&grid);
     AStar astar(&grid);
     BiAStar biastar(&grid);
+    GBS gbs(&grid);
     SpaceTimeAStar stastar(&grid);
 
     vector<pair<std::string, AbsPathFinder*>> finders = {
@@ -123,6 +125,7 @@ void test_grid() {
         {"Bidirectional Dijkstra", &bidijkstra},
         {"A*", &astar},
         {"Bidirectional A*", &biastar},
+        {"GBS", &gbs},
         {"Space-Time A*", &stastar}
     };
 

@@ -16,6 +16,7 @@ from w9_pathfinding.cdefs cimport (
     BiDijkstra as CBiDijkstra,
     AStar as CAStar,
     BiAStar as CBiAStar,
+    GBS as CGBS,
     SpaceTimeAStar as CSpaceTimeAStar,
     ReservationTable as CReservationTable,
     AbsMAPF as CAbsMAPF,
@@ -866,6 +867,26 @@ cdef class BiAStar(_AbsPathFinder):
             )
         self.graph = graph
         self._obj = new CBiAStar(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+
+cdef class GBS(_AbsPathFinder):
+    # Greedy Best-first Search
+
+    cdef CGBS* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        if isinstance(graph, Graph) and not graph.has_coordinates():
+            raise ValueError(
+                "GBS cannot work with a graph without coordinates. "
+                "You can add coordinates using graph.set_coordinates(), "
+                "or choose some non-heuristic algorithm."
+            )
+        self.graph = graph
+        self._obj = new CGBS(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):

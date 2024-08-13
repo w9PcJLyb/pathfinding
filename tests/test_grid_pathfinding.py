@@ -4,6 +4,7 @@ from w9_pathfinding import (
     Grid,
     DFS,
     BFS,
+    GBS,
     BiBFS,
     Dijkstra,
     BiDijkstra,
@@ -14,7 +15,7 @@ from w9_pathfinding import (
 )
 
 SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar, SpaceTimeAStar]
-ALL_ALGORITHMS = [DFS, BFS, BiBFS] + SHORTEST_PATH_ALGORITHMS
+ALL_ALGORITHMS = [DFS, GBS, BFS, BiBFS] + SHORTEST_PATH_ALGORITHMS
 
 
 class TestSimpleGrid(unittest.TestCase):

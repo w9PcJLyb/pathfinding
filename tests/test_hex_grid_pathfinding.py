@@ -1,18 +1,6 @@
 import unittest
-from w9_pathfinding import (
-    HexGrid,
-    DFS,
-    BFS,
-    BiBFS,
-    Dijkstra,
-    BiDijkstra,
-    AStar,
-    BiAStar,
-    SpaceTimeAStar,
-)
-
-SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar, SpaceTimeAStar]
-ALL_ALGORITHMS = [DFS, BFS, BiBFS] + SHORTEST_PATH_ALGORITHMS
+from w9_pathfinding import HexGrid
+from tests.test_grid_pathfinding import ALL_ALGORITHMS
 
 
 class TestHexGrid(unittest.TestCase):

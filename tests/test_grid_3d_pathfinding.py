@@ -1,18 +1,6 @@
 import unittest
-from w9_pathfinding import (
-    Grid3D,
-    DFS,
-    BFS,
-    BiBFS,
-    Dijkstra,
-    BiDijkstra,
-    AStar,
-    BiAStar,
-    SpaceTimeAStar,
-)
-
-SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar, SpaceTimeAStar]
-ALL_ALGORITHMS = [DFS, BFS, BiBFS] + SHORTEST_PATH_ALGORITHMS
+from w9_pathfinding import Grid3D
+from tests.test_grid_pathfinding import ALL_ALGORITHMS
 
 
 class TestSimpleGrid3D(unittest.TestCase):

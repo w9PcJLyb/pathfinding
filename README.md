@@ -11,6 +11,7 @@ There are several pathfinding algorithms available here. Some algorithms do not 
 | Algorithm   | Class name  | Finds the shortest path on an unweighted graph | Finds the shortest path on a weighted graph |
 | ----------- | ----------- |----------- | ----------- |
 | Depth-first search | DFS | False | False |
+| Best-first search | GBS | False | False |
 | Breadth-first search | BFS | True | False |
 | Bidirectional Breadth-first search | BiBFS | True | False |
 | Dijkstra | Dijkstra | True | True |
