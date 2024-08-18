@@ -213,6 +213,18 @@ cdef extern from "src/include/gbs.h":
         vector[int] find_path(int, int)
 
 
+
+cdef extern from "src/ida_star.cpp":
+    pass
+
+
+cdef extern from "src/include/ida_star.h":
+
+    cdef cppclass IDAStar(AbsPathFinder):
+        IDAStar(AbsGraph*) except +
+        vector[int] find_path(int, int, double)
+
+
 cdef extern from "src/space_time_a_star.cpp":
     pass
 

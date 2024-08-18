@@ -18,6 +18,7 @@ There are several pathfinding algorithms available here. Some algorithms do not 
 | Bidirectional Dijkstra | BiDijkstra | True | True |
 | A* | AStar | True | True |
 | Bidirectional A* | BiAStar | True | True |
+| Iterative deepening A* | IDAStar | True | True |
 
 Example:
 
@@ -87,7 +88,7 @@ There are several types of graphs available:
 
 Any algorithm can work with any type of graph. But there are a few limitations:
 
-1. AStar and BiAStar will work with generic graph only if you provide coordinates for each vertex. You can add coordinates using `set_coordinates` method.
+1. Algorithms with a heuristic function (AStar, BiAStar, IDAStar, GBS) will work with generic graph only if coordinates are provided for each vertex. Coordinates can be added using the `set_coordinates` method.
 2. An undirected generic graph does not support `edge_collision` option. You still can use MAPF algorithms with this kind of graph, but it's impossible right now to mark head to head collisions as illegal actions.
 
 # Visualization

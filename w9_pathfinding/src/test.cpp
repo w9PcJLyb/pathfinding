@@ -13,6 +13,7 @@
 #include "include/hc_a_star.h"
 #include "include/whc_a_star.h"
 #include "include/cbs.h"
+#include "include/ida_star.h"
 
 
 void print_path(vector<int> nodes) {
@@ -115,6 +116,7 @@ void test_grid() {
     AStar astar(&grid);
     BiAStar biastar(&grid);
     GBS gbs(&grid);
+    IDAStar idastar(&grid);
     SpaceTimeAStar stastar(&grid);
 
     vector<pair<std::string, AbsPathFinder*>> finders = {
@@ -126,6 +128,7 @@ void test_grid() {
         {"A*", &astar},
         {"Bidirectional A*", &biastar},
         {"GBS", &gbs},
+        {"IDA*", &idastar},
         {"Space-Time A*", &stastar}
     };
 

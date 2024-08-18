@@ -11,6 +11,7 @@ from .cpf import (
     AStar,
     BiAStar,
     GBS,
+    IDAStar,
     SpaceTimeAStar,
     ReservationTable,
     HCAStar,

@@ -17,6 +17,7 @@ from w9_pathfinding.cdefs cimport (
     AStar as CAStar,
     BiAStar as CBiAStar,
     GBS as CGBS,
+    IDAStar as CIDAStar,
     SpaceTimeAStar as CSpaceTimeAStar,
     ReservationTable as CReservationTable,
     AbsMAPF as CAbsMAPF,
@@ -891,6 +892,30 @@ cdef class GBS(_AbsPathFinder):
 
     def __dealloc__(self):
         del self._obj
+
+
+cdef class IDAStar(_AbsPathFinder):
+    # Iterative deepening A*
+
+    cdef CIDAStar* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        if isinstance(graph, Graph) and not graph.has_coordinates():
+            raise ValueError(
+                "IDA* cannot work with a graph without coordinates. "
+                "You can add coordinates using graph.set_coordinates(), "
+                "or choose some non-heuristic algorithm."
+            )
+        self.graph = graph
+        self._obj = new CIDAStar(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+    @_pathfinding
+    def find_path(self, int start, int goal, double max_distance=10):
+        return self._obj.find_path(start, goal, max_distance)
 
 
 cdef class SpaceTimeAStar(_AbsPathFinder):

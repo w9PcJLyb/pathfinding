@@ -1,21 +1,17 @@
 import math
 import unittest
-from w9_pathfinding import (
-    Grid,
-    DFS,
-    BFS,
-    GBS,
-    BiBFS,
-    Dijkstra,
-    BiDijkstra,
-    AStar,
-    BiAStar,
-    SpaceTimeAStar,
-    DiagonalMovement,
-)
+import w9_pathfinding as pf
+from w9_pathfinding import Grid, DiagonalMovement
 
-SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, AStar, BiAStar, SpaceTimeAStar]
-ALL_ALGORITHMS = [DFS, GBS, BFS, BiBFS] + SHORTEST_PATH_ALGORITHMS
+SHORTEST_PATH_ALGORITHMS = [
+    pf.Dijkstra,
+    pf.BiDijkstra,
+    pf.AStar,
+    pf.BiAStar,
+    pf.IDAStar,
+    pf.SpaceTimeAStar,
+]
+ALL_ALGORITHMS = [pf.DFS, pf.GBS, pf.BFS, pf.BiBFS] + SHORTEST_PATH_ALGORITHMS
 
 
 class TestSimpleGrid(unittest.TestCase):
