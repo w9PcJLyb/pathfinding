@@ -222,8 +222,6 @@ vector<vector<int>> CBS::mapf(
 
         ConflictResult result = find_conflict(ct_node.solutions, despawn_at_destination);
         if (!result.has_conflict()) {
-            if (!despawn_at_destination)
-                normalize_paths(ct_node.solutions);
             clear();
             return ct_node.solutions;
         }

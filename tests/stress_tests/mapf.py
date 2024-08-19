@@ -29,7 +29,7 @@ WEIGHTED_GRID_GENERATOR = GridGenerator(
 ALGORITHMS = [
     {"name": "HCA*", "class": pf.HCAStar},
     {"name": "WHCA*", "class": pf.WHCAStar},
-    {"name": "CBS", "class": pf.CBS, "params": {"max_time": 0.1}},
+    {"name": "CBS", "class": pf.CBS, "params": {"max_time": 0.1}, "optimal": True},
 ]
 
 
@@ -45,6 +45,17 @@ def find_path(finder, starts, goals, **kwargs):
     except RuntimeError:
         paths = []
     return paths, time.time() - t
+
+
+def normalize_paths(paths):
+    if not paths:
+        return paths
+
+    max_len = max(len(p) for p in paths)
+    for path in paths:
+        if path:
+            while len(path) < max_len:
+                path.append(path[-1])
 
 
 def check_paths(graph, paths):
@@ -106,7 +117,21 @@ def is_solved(paths, goals, despawn_at_destination):
     return True
 
 
+def compare_results(results):
+    solved = [x for x in results if x["solved"]]
+    if not solved:
+        return True
+
+    best_result = min(x["cost"] for x in solved)
+    for x in solved:
+        if x["optimal"] and abs(x["cost"] - best_result) > 0.001:
+            return False
+
+    return True
+
+
 def run_graph(algorithms, graph, starts, goals, despawn_at_destination=False):
+    results = []
     for a in algorithms:
         params = a.get("params", {})
         paths, time = find_path(
@@ -116,15 +141,6 @@ def run_graph(algorithms, graph, starts, goals, despawn_at_destination=False):
             despawn_at_destination=despawn_at_destination,
             **params,
         )
-        a["total_time"] += time
-
-        solved = is_solved(paths, goals, despawn_at_destination)
-        a["num_solved"] += solved
-
-        if not check_paths(graph, paths):
-            show_graph_info(graph, starts, goals)
-            print(f"Error: algorithm {a['name']} returns paths with collisions")
-            return False
 
         total_cost = 0
         for path in paths:
@@ -135,8 +151,38 @@ def run_graph(algorithms, graph, starts, goals, despawn_at_destination=False):
                 return False
             total_cost += path_cost
 
+        if not despawn_at_destination:
+            normalize_paths(paths)
+
+        a["total_time"] += time
+
+        solved = is_solved(paths, goals, despawn_at_destination)
+        a["num_solved"] += solved
+
+        if not check_paths(graph, paths):
+            show_graph_info(graph, starts, goals)
+            print(f"Error: algorithm {a['name']} returns paths with collisions")
+            return False
+
         if solved:
             a["total_cost"] += total_cost
+
+        results.append(
+            {
+                "algorithm": a["name"],
+                "paths": paths,
+                "solved": solved,
+                "cost": total_cost,
+                "optimal": a.get("optimal", False),
+            }
+        )
+
+    if not compare_results(results):
+        show_graph_info(graph, starts, goals)
+        print("Error: ")
+        for r in results:
+            print(f" - {r['algorithm']} : cost = {r['cost']}, paths = {r['paths']}")
+        return False
 
     return True
 

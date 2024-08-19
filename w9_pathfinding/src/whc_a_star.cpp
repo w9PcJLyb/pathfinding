@@ -95,8 +95,12 @@ vector<vector<int>> WHCAStar::mapf(
 
     vector<vector<int>> paths;
     for (auto &agent: agents) {
-        if (solved)
-            paths.push_back(agent.full_path);
+        if (solved) {
+            vector<int> path = agent.full_path;
+            while (path.size() > 1 && path.back() == agent.goal && path[path.size() - 2] == agent.goal)
+                path.pop_back();
+            paths.push_back(path);
+        }
         delete agent.rrs;
     }
 

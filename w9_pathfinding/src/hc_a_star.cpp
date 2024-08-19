@@ -35,8 +35,5 @@ vector<vector<int>> HCAStar::mapf(
         reservation_table.add_path(0, path, !despawn_at_destination, edge_collision);
     }
 
-    if (!despawn_at_destination)
-        normalize_paths(paths);
-
     return paths;
 }

@@ -61,7 +61,7 @@ class TestMAPF(unittest.TestCase):
 
                 self.assertTrue(check_paths(graph, paths))
                 for path, goal in zip(paths, goals):
-                    self.assertEqual(len(paths[0]), len(path))
+                    self.assertLessEqual(len(path), 4)
                     self.assertEqual(path[-1], goal)
 
     def test_with_grid(self):
@@ -82,7 +82,7 @@ class TestMAPF(unittest.TestCase):
 
                 self.assertTrue(check_paths(grid, paths))
                 for path, goal in zip(paths, goals):
-                    self.assertEqual(len(paths[0]), len(path))
+                    self.assertLessEqual(len(path), 4)
                     self.assertEqual(path[-1], goal)
 
 
@@ -109,7 +109,7 @@ class TestCBS(unittest.TestCase):
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
-            self.assertEqual(len(path), 8)
+            self.assertLessEqual(len(path), 8)
             self.assertEqual(path[-1], goal)
 
     def test_edge_collision_2(self):
@@ -130,7 +130,7 @@ class TestCBS(unittest.TestCase):
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
-            self.assertEqual(len(path), 8)
+            self.assertLessEqual(len(path), 8)
             self.assertEqual(path[-1], goal)
 
     def test_edge_collision_3(self):
@@ -151,7 +151,7 @@ class TestCBS(unittest.TestCase):
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
-            self.assertEqual(len(path), 9)
+            self.assertLessEqual(len(path), 9)
             self.assertEqual(path[-1], goal)
 
     def test_with_three_agents(self):
@@ -168,5 +168,5 @@ class TestCBS(unittest.TestCase):
         self.assertEqual(len(paths), 3)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
-            self.assertEqual(len(path), 5)
+            self.assertLessEqual(len(path), 5)
             self.assertEqual(path[-1], goal)

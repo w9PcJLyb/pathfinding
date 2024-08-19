@@ -70,7 +70,6 @@ pair<vector<int>, double> SpaceTimeAStar::find_path(
     int graph_size = graph->size();
     int terminal_time = start_time + search_depth;
     double pause_action_cost = graph->get_pause_action_cost();
-    bool pause_action_allowed = graph->is_pause_action_allowed();
 
     int min_search_depth = rt->last_time_reserved(goal);
 
@@ -137,10 +136,7 @@ pair<vector<int>, double> SpaceTimeAStar::find_path(
             }
         }
         else {
-            if (current->node_id == goal)
-                process_node(current->node_id, 0, current);
-            else if (pause_action_allowed)
-                process_node(current->node_id, pause_action_cost, current);
+            process_node(current->node_id, pause_action_cost, current);
 
             auto reserved_edges = rt->get_reserved_edges(current->time, current->node_id);
             for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {

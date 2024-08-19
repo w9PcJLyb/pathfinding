@@ -65,9 +65,6 @@ cdef class _AbsGraph:
             raise ValueError("pause_action_cost must be either non-negative or equal to -1")
         self._baseobj.set_pause_action_cost(cost)
 
-    def is_pause_action_allowed(self):
-        return self._baseobj.is_pause_action_allowed()
-
     @property
     def edge_collision(self):
         return self._baseobj.edge_collision()

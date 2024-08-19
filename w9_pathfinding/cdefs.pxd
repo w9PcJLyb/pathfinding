@@ -20,7 +20,6 @@ cdef extern from "src/include/core.h":
         bool adjacent(int, int)
         void set_pause_action_cost(double)
         double get_pause_action_cost()
-        bool is_pause_action_allowed()
         void set_edge_collision(bool)
         bool edge_collision()
 

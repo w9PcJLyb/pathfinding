@@ -5,7 +5,6 @@ double AbsGraph::calculate_cost(vector<int> &path) const {
     if (path.size() <= 1)
         return 0;
 
-    bool pause_action_allowed = is_pause_action_allowed();
     double pause_action_cost = get_pause_action_cost();
 
     double total_cost = 0;
@@ -24,10 +23,8 @@ double AbsGraph::calculate_cost(vector<int> &path) const {
             }
         }
 
-        if (pause_action_allowed && next_node_id == node_id) {
-            if (step_cost == -1)
-                step_cost = get_pause_action_cost();
-            else if (pause_action_cost < step_cost)
+        if (next_node_id == node_id) {
+            if (step_cost == -1 || pause_action_cost < step_cost)
                 step_cost = pause_action_cost;
         }
 
@@ -184,10 +181,6 @@ double AbsGraph::get_pause_action_cost() const {
     return pause_action_cost_;
 }
 
-bool AbsGraph::is_pause_action_allowed() const {
-    return pause_action_cost_ >= 0;
-}
-
 void AbsGraph::set_edge_collision(bool b) {
     edge_collision_ = b;
 }
@@ -257,24 +250,4 @@ vector<vector<int>> AbsGrid::find_components() const {
         components_without_walls.push_back(x);
     }
     return components_without_walls;
-}
-
-void AbsMAPF::normalize_paths(vector<vector<int>> &paths) const {
-    if (paths.empty())
-        return;
-
-    size_t max_size = paths[0].size();
-    for (size_t i = 1; i < paths.size(); i++) {
-        max_size = std::max(max_size, paths[i].size());
-    }
-
-    for (size_t i = 0; i < paths.size(); i++) {
-        if (paths[i].empty()) {
-            continue;
-        }
-        else if (paths[i].size() < max_size) {
-            vector<int> path(max_size - paths[i].size(), paths[i].back());
-            paths[i].insert(paths[i].end(), path.begin(), path.end());
-        }
-    }
 }
