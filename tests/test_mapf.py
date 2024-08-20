@@ -1,6 +1,6 @@
 import unittest
 from collections import defaultdict
-from w9_pathfinding import Graph, Grid, HCAStar, WHCAStar, CBS
+from w9_pathfinding import Graph, Grid, HCAStar, WHCAStar, CBS, ReservationTable
 
 MAPF_ALGORITHMS = [HCAStar, WHCAStar, CBS]
 
@@ -57,7 +57,7 @@ class TestMAPF(unittest.TestCase):
 
         for a in MAPF_ALGORITHMS:
             with self.subTest(a.__name__):
-                paths = a(graph).mapf(starts, goals, despawn_at_destination=False)
+                paths = a(graph).mapf(starts, goals)
 
                 self.assertTrue(check_paths(graph, paths))
                 for path, goal in zip(paths, goals):
@@ -68,8 +68,8 @@ class TestMAPF(unittest.TestCase):
         """
         + -  -  - +
         | #  s1 # |
-        | s2    e1|
-        | #  e2 # |
+        | s2    g1|
+        | #  g2 # |
         + -  -  - +
         """
         grid = Grid([[-1, 1, -1], [1, 1, 1], [-1, 1, -1]])
@@ -78,11 +78,55 @@ class TestMAPF(unittest.TestCase):
 
         for a in MAPF_ALGORITHMS:
             with self.subTest(a.__name__):
-                paths = a(grid).mapf(starts, goals, despawn_at_destination=False)
+                paths = a(grid).mapf(starts, goals)
 
                 self.assertTrue(check_paths(grid, paths))
                 for path, goal in zip(paths, goals):
                     self.assertLessEqual(len(path), 4)
+                    self.assertEqual(path[-1], goal)
+
+    def test_edge_collision(self):
+        """
+        + -  -  -  - +
+        | s1 g2 g1 s2|
+        | #        # |
+        + -  -  -  - +
+        """
+        grid = Grid([[1, 1, 1, 1], [-1, 1, 1, -1]], edge_collision=True)
+        starts = [(0, 0), (3, 0)]
+        goals = [(2, 0), (1, 0)]
+
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a.__name__):
+                paths = a(grid).mapf(starts, goals)
+
+                self.assertTrue(check_paths(grid, paths))
+                for path, goal in zip(paths, goals):
+                    self.assertLessEqual(len(path), 5)
+                    self.assertEqual(path[-1], goal)
+
+    def test_grid_with_reservations(self):
+        """
+        + -  -  -  - +
+        | s1       g1|
+        | s2       g2|
+        + -  -  -  - +
+        """
+        grid = Grid(width=4, height=2, edge_collision=True)
+        starts = [(0, 0), (0, 1)]
+        goals = [(3, 0), (3, 1)]
+        reserved_path = [(3, 0), (2, 0), (1, 0), (0, 0)]
+
+        rt = ReservationTable(grid)
+        rt.add_path(reserved_path)
+
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a.__name__):
+                paths = a(grid).mapf(starts, goals, reservation_table=rt)
+
+                self.assertTrue(check_paths(grid, paths + [reserved_path]))
+                for path, goal in zip(paths, goals):
+                    self.assertLessEqual(len(path), 6)
                     self.assertEqual(path[-1], goal)
 
 
@@ -105,7 +149,7 @@ class TestCBS(unittest.TestCase):
         starts = [(0, 0), (6, 0)]
         goals = [(5, 0), (1, 0)]
 
-        paths = CBS(grid).mapf(starts, goals, despawn_at_destination=False)
+        paths = CBS(grid).mapf(starts, goals)
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
@@ -126,7 +170,7 @@ class TestCBS(unittest.TestCase):
         starts = [(0, 0), (1, 0)]
         goals = [(3, 0), (2, 0)]
 
-        paths = CBS(grid).mapf(starts, goals, despawn_at_destination=False, max_time=10)
+        paths = CBS(grid).mapf(starts, goals, max_time=10)
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
@@ -147,7 +191,7 @@ class TestCBS(unittest.TestCase):
         starts = [(0, 0), (3, 0)]
         goals = [(2, 0), (1, 0)]
 
-        paths = CBS(grid).mapf(starts, goals, despawn_at_destination=False, max_time=10)
+        paths = CBS(grid).mapf(starts, goals, max_time=10)
         self.assertEqual(len(paths), 2)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):
@@ -164,7 +208,7 @@ class TestCBS(unittest.TestCase):
         grid = Grid([[1, 1, 1], [-1, 1, 1]], edge_collision=True)
         starts, goals = ((2, 0), (0, 0), (1, 0)), ((0, 0), (2, 1), (1, 1))
 
-        paths = CBS(grid).mapf(starts, goals, despawn_at_destination=False, max_time=10)
+        paths = CBS(grid).mapf(starts, goals, max_time=10)
         self.assertEqual(len(paths), 3)
         self.assertTrue(check_paths(grid, paths))
         for path, goal in zip(paths, goals):

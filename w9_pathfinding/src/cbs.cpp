@@ -20,7 +20,7 @@ pair<vector<int>, double> CBS::low_level(Agent &agent, ReservationTable &rt, int
 }
 
 void CBS::print_node(CTNode &node) {
-    cout << "Node: cost=" << node.total_cost << ", solution=";
+    cout << "Node: solution=";
     size_t t = 0;
     while (true) {
         bool end = true;
@@ -59,7 +59,7 @@ void CBS::print_conflict(ConflictResult &r) {
     }
 }
 
-CBS::ConflictResult CBS::find_conflict(vector<vector<int>> &paths, bool despawn_at_destination) {
+pair<vector<int>, CBS::ConflictResult> CBS::find_conflict(vector<vector<int>> &paths, bool despawn_at_destination) {
     int num_agents = paths.size();
 
     size_t time = 0;
@@ -87,7 +87,7 @@ CBS::ConflictResult CBS::find_conflict(vector<vector<int>> &paths, bool despawn_
 
                     if (p1 == paths[other_agent_id][time]) {
                         // edge conflict
-                        return ConflictResult(time - 1, p1, p2, {agent_id, other_agent_id});
+                        return {{agent_id, other_agent_id}, ConflictResult(time - 1, p1, p2)};
                     }
                 }
             }
@@ -112,7 +112,7 @@ CBS::ConflictResult CBS::find_conflict(vector<vector<int>> &paths, bool despawn_
         for (auto &[node_id, agent_ids] : node_to_agents) {
             if (agent_ids.size() > 1) {
                 // vertex conflict
-                return ConflictResult(time, node_id, agent_ids);
+                return {agent_ids, ConflictResult(time, node_id)};
             }
         }
 
@@ -120,41 +120,33 @@ CBS::ConflictResult CBS::find_conflict(vector<vector<int>> &paths, bool despawn_
     }
 
     // there are no conflicts
-    return ConflictResult();
+    return {{}, ConflictResult()};
 }
 
-vector<CBS::CTNode> CBS::split_node(
-    CTNode &ct_node, vector<Agent> &agents, ConflictResult &conflict, int search_depth
+bool CBS::resolve_conflict(
+    CTNode *node, Agent &agent, ReservationTable rt, int search_depth
 ) {
-    vector<CTNode> nodes;
+    int agent_id = node->agent_id;
 
-    for (size_t i = 0; i < conflict.agent_ids.size(); i++) {
-        int agent_id = conflict.agent_ids[i];
-
-        CTNode new_node = ct_node;
-        ReservationTable& rt = new_node.constraints[agent_id];
-
-        if (conflict.is_edge_conflict()) {
-            if (i == 0)
-                rt.add_edge_constraint(conflict.time, conflict.node1, conflict.node2);
+    CTNode *node_ = node;
+    while (node_) {
+        if (node_->agent_id == agent_id) {
+            ConflictResult &c = node_->conflict;
+            if (c.is_edge_conflict())
+                rt.add_edge_constraint(c.time, c.node1, c.node2);
             else
-                rt.add_edge_constraint(conflict.time, conflict.node2, conflict.node1);
+                rt.add_vertex_constraint(c.time, c.node1);
         }
-        else {
-            rt.add_vertex_constraint(conflict.time, conflict.node1);
-        }
-
-        auto [new_path, new_cost] = low_level(agents[agent_id], rt, search_depth);
-        if (new_path.empty() || new_path.back() != agents[agent_id].goal)
-            continue;
-
-        new_node.solutions[agent_id] = new_path;
-        new_node.total_cost = new_node.total_cost + new_cost - new_node.costs[agent_id];
-        new_node.costs[agent_id] = new_cost;
-
-        nodes.push_back(new_node);
+        node_ = node_->parent;
     }
-    return nodes;
+
+    auto [path, cost] = low_level(agent, rt, search_depth);
+    if (path.empty() || path.back() != agent.goal)
+        return false;
+
+    node->solutions[agent_id] = path;
+    node->costs[agent_id] = cost;
+    return true;
 }
 
 vector<vector<int>> CBS::mapf(
@@ -186,12 +178,16 @@ vector<vector<int>> CBS::mapf(
         agents.push_back({start, goal, st_a_star_.reverse_resumable_search(goal)});
     }
 
+    ReservationTable reservation_table(graph->size());
+    if (rt)
+        reservation_table = *rt;
+
     auto paths = mapf_(
         agents,
         search_depth,
         max_time,
         despawn_at_destination,
-        rt
+        reservation_table
     );
 
     for (Agent &agent: agents)
@@ -200,50 +196,74 @@ vector<vector<int>> CBS::mapf(
     return paths;
 }
 
+void CBS::release_nodes(vector<CTNode*> nodes)
+{
+    for (CTNode *node : nodes)
+        delete node;
+    nodes.clear();
+}
+
 vector<vector<int>> CBS::mapf_(
     vector<Agent> &agents,
     int search_depth,
     double max_time,
     bool despawn_at_destination,
-    const ReservationTable *rt
+    ReservationTable &rt
 ) {
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
+    vector<CTNode*> workset;
     {
-        CTNode root;
+        CTNode* root = new CTNode();
+        double total_cost = 0;
         for (size_t i = 0; i < agents.size(); i++) {
-            ReservationTable reservation_table(graph->size());
-            if (rt) 
-                reservation_table = *rt;
-
-            auto [path, cost] = low_level(agents[i], reservation_table, search_depth);
+            auto [path, cost] = low_level(agents[i], rt, search_depth);
             if (cost == -1)
                 return {};
 
-            root.constraints.push_back(reservation_table);
-            root.solutions.push_back(path);
-            root.costs.push_back(cost);
-            root.total_cost += cost;
+            root->solutions.push_back(path);
+            root->costs.push_back(cost);
+            total_cost += cost;
         }
-        openset.push(root);
+        openset.push({total_cost, root});
+        workset.push_back(root);
     }
 
     while (!openset.empty()) {
-        CTNode ct_node = openset.top();
+        auto [cost, node] = openset.top();
 
         openset.pop();
 
-        ConflictResult result = find_conflict(ct_node.solutions, despawn_at_destination);
-        if (!result.has_conflict())
-            return ct_node.solutions;
+        auto [conflicting_agents, conflict] = find_conflict(node->solutions, despawn_at_destination);
+        if (conflicting_agents.empty()) {
+            auto paths = node->solutions;
+            release_nodes(workset);
+            return paths;
+        }
 
-        for (CTNode &new_node : split_node(ct_node, agents, result, search_depth))
-            openset.push(new_node);
-
-        if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
+        if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time) {
+            release_nodes(workset);
             throw timeout_exception("Timeout");
+        }
+
+        for (size_t i = 0; i < conflicting_agents.size(); i++) {
+            int agent_id = conflicting_agents[i];
+
+            CTNode* new_node = new CTNode(node, agent_id, conflict);
+            if (i > 0 && conflict.is_edge_conflict())
+                std::swap(new_node->conflict.node1, new_node->conflict.node2);
+
+            if (resolve_conflict(new_node, agents[agent_id], rt, search_depth)) {
+                double new_cost = cost - node->costs[agent_id] + new_node->costs[agent_id];
+                openset.push({new_cost, new_node});
+                workset.push_back(new_node);
+            }
+            else
+                delete new_node;
+        }
     }
 
+    release_nodes(workset);
     return {};
 }
