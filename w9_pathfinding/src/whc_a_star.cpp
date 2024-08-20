@@ -25,8 +25,6 @@ vector<vector<int>> WHCAStar::mapf(
     if (rt) 
         reservation_table = *rt;
 
-    bool edge_collision = graph->edge_collision();
-
     vector<Agent> agents;
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
@@ -34,6 +32,23 @@ vector<vector<int>> WHCAStar::mapf(
         agents.push_back({start, goal, st_a_star_.reverse_resumable_search(goal)});
         reservation_table.add_vertex_constraint(0, start);
     }
+
+    auto paths = mapf_(agents, search_depth, window_size, despawn_at_destination, reservation_table);
+
+    for (auto &agent: agents)
+        delete agent.rrs;
+
+    return paths;
+}
+
+vector<vector<int>> WHCAStar::mapf_(
+    vector<Agent> &agents,
+    int search_depth,
+    int window_size,
+    bool despawn_at_destination,
+    ReservationTable &rt
+) {
+    bool edge_collision = graph->edge_collision();
 
     int time = 0;
     bool solved = false;
@@ -43,7 +58,7 @@ vector<vector<int>> WHCAStar::mapf(
         for (auto &agent: agents) {
             if (agent.active && agent.position(time) != agent.goal) {
                 solved = false;
-                break;   
+                break;
             }
         }
 
@@ -54,7 +69,7 @@ vector<vector<int>> WHCAStar::mapf(
         if (w == 0)
             break;
 
-        for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
+        for (size_t agent_id = 0; agent_id < agents.size(); agent_id++) {
             Agent &agent = agents[agent_id];
 
             if (!agent.active || agent.is_moving(time)) {
@@ -67,23 +82,20 @@ vector<vector<int>> WHCAStar::mapf(
                 agent.goal,
                 w,
                 agent.rrs,
-                &reservation_table
+                &rt
             ).first;
-            if (path.empty()) {
-                for (auto &agent: agents)
-                    delete agent.rrs;
+            if (path.empty())
                 return {};
-            }
 
             if (path.size() == 1) {
                 // pause action
                 agent.add_path(path);
-                reservation_table.add_path(time + 1, path, false, edge_collision);
+                rt.add_path(time + 1, path, false, edge_collision);
             }
             else {
                 agent.full_path.pop_back();
                 agent.add_path(path);
-                reservation_table.add_path(time, path, false, edge_collision);
+                rt.add_path(time, path, false, edge_collision);
             }
 
             if (despawn_at_destination && agent.position() == agent.goal)
@@ -94,14 +106,13 @@ vector<vector<int>> WHCAStar::mapf(
     }
 
     vector<vector<int>> paths;
-    for (auto &agent: agents) {
-        if (solved) {
+    if (solved) {
+        for (auto &agent: agents) {
             vector<int> path = agent.full_path;
             while (path.size() > 1 && path.back() == agent.goal && path[path.size() - 2] == agent.goal)
                 path.pop_back();
             paths.push_back(path);
         }
-        delete agent.rrs;
     }
 
     return paths;

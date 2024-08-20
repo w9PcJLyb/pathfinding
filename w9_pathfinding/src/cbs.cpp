@@ -179,8 +179,6 @@ vector<vector<int>> CBS::mapf(
         }
     }
 
-    auto begin_time = high_resolution_clock::now();
-
     vector<Agent> agents;
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
@@ -188,10 +186,28 @@ vector<vector<int>> CBS::mapf(
         agents.push_back({start, goal, st_a_star_.reverse_resumable_search(goal)});
     }
 
-    auto clear = [&] () {
-        for (Agent &agent: agents)
-            delete agent.rrs;
-    };
+    auto paths = mapf_(
+        agents,
+        search_depth,
+        max_time,
+        despawn_at_destination,
+        rt
+    );
+
+    for (Agent &agent: agents)
+        delete agent.rrs;
+
+    return paths;
+}
+
+vector<vector<int>> CBS::mapf_(
+    vector<Agent> &agents,
+    int search_depth,
+    double max_time,
+    bool despawn_at_destination,
+    const ReservationTable *rt
+) {
+    auto begin_time = high_resolution_clock::now();
 
     Queue openset;
     {
@@ -202,10 +218,8 @@ vector<vector<int>> CBS::mapf(
                 reservation_table = *rt;
 
             auto [path, cost] = low_level(agents[i], reservation_table, search_depth);
-            if (cost == -1) {
-                clear();
+            if (cost == -1)
                 return {};
-            }
 
             root.constraints.push_back(reservation_table);
             root.solutions.push_back(path);
@@ -221,21 +235,15 @@ vector<vector<int>> CBS::mapf(
         openset.pop();
 
         ConflictResult result = find_conflict(ct_node.solutions, despawn_at_destination);
-        if (!result.has_conflict()) {
-            clear();
+        if (!result.has_conflict())
             return ct_node.solutions;
-        }
 
-        for (CTNode &new_node : split_node(ct_node, agents, result, search_depth)) {
+        for (CTNode &new_node : split_node(ct_node, agents, result, search_depth))
             openset.push(new_node);
-        }
 
-        if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time) {
-            clear();
+        if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
             throw timeout_exception("Timeout");
-        }
     }
 
-    clear();
     return {};
 }

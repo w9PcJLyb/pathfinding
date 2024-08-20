@@ -87,4 +87,11 @@ class CBS : public AbsMAPF {
         );
         void print_node(CTNode &ct_node);
         void print_conflict(ConflictResult &conflict);
+        vector<vector<int>> mapf_(
+            vector<Agent> &agents,
+            int search_depth,
+            double max_time,
+            bool despawn_at_destination,
+            const ReservationTable *rt
+        );
 };

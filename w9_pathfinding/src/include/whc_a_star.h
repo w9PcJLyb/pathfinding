@@ -54,4 +54,11 @@ class WHCAStar : public AbsMAPF {
 
     private:
         SpaceTimeAStar st_a_star_;
+        vector<vector<int>> mapf_(
+            vector<Agent> &agents,
+            int search_depth,
+            int window_size,
+            bool despawn_at_destination,
+            ReservationTable &rt
+        );
 };
