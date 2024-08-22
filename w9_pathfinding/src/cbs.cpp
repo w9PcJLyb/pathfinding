@@ -262,6 +262,9 @@ vector<vector<int>> CBS::mapf_(
             else
                 delete new_node;
         }
+
+        node->solutions.clear();
+        node->costs.clear();
     }
 
     release_nodes(workset);

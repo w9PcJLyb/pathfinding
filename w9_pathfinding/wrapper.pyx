@@ -18,6 +18,7 @@ from w9_pathfinding.cdefs cimport (
     BiAStar as CBiAStar,
     GBS as CGBS,
     IDAStar as CIDAStar,
+    ResumableDijkstra as CResumableDijkstra,
     SpaceTimeAStar as CSpaceTimeAStar,
     ReservationTable as CReservationTable,
     AbsMAPF as CAbsMAPF,
@@ -736,6 +737,25 @@ cdef class HexGrid(_AbsGrid):
         }
 
 
+def to_node_id(graph, node):
+    if isinstance(graph, Graph):
+        graph.assert_in(node)
+        return node
+    elif isinstance(graph, _AbsGrid):
+        return graph.get_node_id(node)
+    else:
+        raise NotImplementedError
+
+
+def to_python_node(graph, node_id):
+    if isinstance(graph, Graph):
+        return node_id
+    elif isinstance(graph, _AbsGrid):
+        return graph.get_coordinates(node_id)
+    else:
+        raise NotImplementedError
+
+
 def _pathfinding(func):
 
     def wrap(finder, start, goal, **kwargs):
@@ -746,7 +766,7 @@ def _pathfinding(func):
             g.assert_in(goal)
             path = func(finder, start, goal, **kwargs)
 
-        elif isinstance(g, (Grid, Grid3D, HexGrid)):
+        elif isinstance(g, _AbsGrid):
             start = g.get_node_id(start)
             goal = g.get_node_id(goal)
             path = func(finder, start, goal, **kwargs)
@@ -915,6 +935,37 @@ cdef class IDAStar(_AbsPathFinder):
         return self._obj.find_path(start, goal, max_distance)
 
 
+cdef class ResumableDijkstra:
+    cdef CResumableDijkstra* _obj
+    cdef public _AbsGraph graph
+
+    def __cinit__(self, _AbsGraph graph, start_node):
+        self.graph = graph
+        self._obj = new CResumableDijkstra(graph._baseobj, to_node_id(graph, start_node))
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(graph={self.graph}, start_node={self.start_node})"
+
+    def __dealloc__(self):
+        del self._obj
+
+    @property
+    def start_node(self):
+        return to_python_node(self.graph, self._obj.start_node())
+
+    @start_node.setter
+    def start_node(self, start_node):
+        self._obj.set_start_node(to_node_id(self.graph, start_node))
+
+    def distance(self, node):
+        return self._obj.distance(to_node_id(self.graph, node))
+
+    def find_path(self, node):
+        g = self.graph
+        path = self._obj.find_path(to_node_id(g, node))
+        return [to_python_node(g, node_id) for node_id in path]
+
+
 cdef class SpaceTimeAStar(_AbsPathFinder):
     cdef CSpaceTimeAStar* _obj
 
@@ -958,19 +1009,11 @@ cdef class ReservationTable:
     def __repr__(self):
         return f"ReservationTable(graph={self.graph})"
 
-    def _to_node_id(self, node):
-        if isinstance(self.graph, Graph):
-            return node
-        elif isinstance(self.graph, (Grid, Grid3D)):
-            return self.graph.get_node_id(node)
-        else:
-            raise NotImplementedError()
-
     def _convert_path(self, path):
-        return [self._to_node_id(node) for node in path]
+        return [to_node_id(self.graph, node) for node in path]
 
     def is_reserved(self, int time, node):
-        cdef int node_id = self._to_node_id(node)
+        cdef int node_id = to_node_id(self.graph, node)
         return self._obj.is_reserved(time, node_id)
 
     def add_path(
@@ -983,13 +1026,13 @@ cdef class ReservationTable:
         self._obj.add_path(start_time, node_ids, reserve_destination, self.graph.edge_collision)
 
     def add_vertex_constraint(self, node, int time=0):
-        cdef int node_id = self._to_node_id(node)
+        cdef int node_id = to_node_id(self.graph, node)
         self._obj.add_vertex_constraint(time, node_id)
 
     def add_edge_constraint(self, n1, n2, int time=0):
         cdef int n1_id, n2_id
-        n1_id = self._to_node_id(n1)
-        n2_id = self._to_node_id(n2)
+        n1_id = to_node_id(self.graph, n1)
+        n2_id = to_node_id(self.graph, n2)
         self._obj.add_edge_constraint(time, n1_id, n2_id)
 
 
@@ -1006,7 +1049,7 @@ def _mapf(func):
                 g.assert_in(goals[i])
             paths = func(finder, starts, goals, **kwargs)
 
-        elif isinstance(g, (Grid, Grid3D, HexGrid)):
+        elif isinstance(g, _AbsGrid):
             starts = [g.get_node_id(x) for x in starts]
             goals = [g.get_node_id(x) for x in goals]
             paths = []

@@ -10,9 +10,10 @@ class ResumableSearch {
         virtual ~ResumableSearch() {};
 
         virtual double distance(int node_id) = 0;  // true distance from the start to this node
+        int start_node();
 
-    private:
-        const int start_;
+    protected:
+        int start_;
 };
 
 
@@ -22,12 +23,14 @@ class ResumableDijkstra : public ResumableSearch {
 
     struct Node {
         double distance;
+        int parent;
         bool closed;
 
-        Node() : distance(-1), closed(false) {};
+        Node() : distance(-1), parent(-1), closed(false) {};
 
         void clear() {
             distance = -1;
+            parent = -1;
             closed = false;
         }
     };
@@ -35,12 +38,15 @@ class ResumableDijkstra : public ResumableSearch {
     public:
         ResumableDijkstra(AbsGraph* graph, int start);
         double distance(int node_id);
+        vector<int> find_path(int node_id);
+        void set_start_node(int start);
 
     private:
         vector<Node> nodes_;
         Queue openset_;
         void search(int node_id);
         void clear();
+        vector<int> reconstruct_path(int node_id);
 };
 
 
@@ -66,6 +72,7 @@ class ResumableAStar : public ResumableSearch {
     public:
         ResumableAStar(AbsGraph* graph, int start);
         double distance(int node_id);
+        void set_start_node(int start);
 
     private:
         int end_ = -1;

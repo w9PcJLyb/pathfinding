@@ -224,6 +224,20 @@ cdef extern from "src/include/ida_star.h":
         vector[int] find_path(int, int, double)
 
 
+cdef extern from "src/resumable_search.cpp":
+    pass
+
+
+cdef extern from "src/include/resumable_search.h":
+
+    cdef cppclass ResumableDijkstra:
+        ResumableDijkstra(AbsGraph*, int) except +
+        double distance(int)
+        vector[int] find_path(int)
+        int start_node()
+        void set_start_node(int)
+
+
 cdef extern from "src/space_time_a_star.cpp":
     pass
 

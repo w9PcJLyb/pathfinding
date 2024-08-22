@@ -1,5 +1,8 @@
 #include "include/resumable_search.h"
 
+int ResumableSearch::start_node() {
+    return start_;
+}
 
 ResumableAStar::ResumableAStar(AbsGraph *graph, int start) : ResumableSearch(graph, start) {
     nodes_.resize(graph->size());
@@ -12,8 +15,19 @@ ResumableAStar::ResumableAStar(AbsGraph *graph, int start) : ResumableSearch(gra
 
 void ResumableAStar::clear() {
     openset_ = Queue();
-    for (Node node : nodes_)
+    for (Node &node : nodes_)
         node.clear();
+}
+
+void ResumableAStar::set_start_node(int start) {
+    if (start_ != start) {
+        start_ = start;
+        clear();
+
+        openset_.push({0, start});
+        Node &n0 = nodes_[start];
+        n0.distance = 0;
+    }
 }
 
 double ResumableAStar::distance(int node_id) {
@@ -61,7 +75,6 @@ void ResumableAStar::search(int node_id) {
 
     Node& node = nodes_[node_id];
     node.closed = true;
-    node.distance = -1;
 }
 
 ResumableDijkstra::ResumableDijkstra(AbsGraph *graph, int start) : ResumableSearch(graph, start) {
@@ -75,8 +88,19 @@ ResumableDijkstra::ResumableDijkstra(AbsGraph *graph, int start) : ResumableSear
 
 void ResumableDijkstra::clear() {
     openset_ = Queue();
-    for (Node node : nodes_)
+    for (Node &node : nodes_)
         node.clear();
+}
+
+void ResumableDijkstra::set_start_node(int start) {
+    if (start_ != start) {
+        start_ = start;
+        clear();
+
+        openset_.push({0, start});
+        Node &n0 = nodes_[start];
+        n0.distance = 0;
+    }
 }
 
 double ResumableDijkstra::distance(int node_id) {
@@ -85,6 +109,28 @@ double ResumableDijkstra::distance(int node_id) {
         search(node_id);
 
     return node.distance;
+}
+
+vector<int> ResumableDijkstra::reconstruct_path(int node_id) {
+    int p = node_id;
+    vector<int> path;
+    while (p >= 0) {
+        path.push_back(p);
+        p = nodes_[p].parent;
+    }
+    std::reverse(path.begin(), path.end());
+    return path;
+}
+
+vector<int> ResumableDijkstra::find_path(int node_id) {
+    Node& node = nodes_[node_id];
+    if (!node.closed)
+        search(node_id);
+
+    if (node.distance >= 0)
+        return reconstruct_path(node_id);
+
+    return {};
 }
 
 void ResumableDijkstra::search(int node_id) {
@@ -105,6 +151,7 @@ void ResumableDijkstra::search(int node_id) {
             double new_distance = current.distance + cost;
             if (node.distance < 0 || node.distance > new_distance) {
                 node.distance = new_distance;
+                node.parent = current_id;
                 openset_.push({new_distance, n});
             }
         }
@@ -115,5 +162,4 @@ void ResumableDijkstra::search(int node_id) {
 
     Node& node = nodes_[node_id];
     node.closed = true;
-    node.distance = -1;
 }
