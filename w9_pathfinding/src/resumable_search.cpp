@@ -1,15 +1,88 @@
 #include "include/resumable_search.h"
 
-int ResumableSearch::start_node() {
-    return start_;
+
+ResumableBFS::ResumableBFS(AbsGraph *graph, int start) : ResumableSearch(graph, start) {
+    nodes_.resize(graph->size());
+
+    openset_.push(start);
+    Node &n0 = nodes_[start];
+    n0.distance = 0;
+}
+
+void ResumableBFS::clear() {
+    std::queue<int> empty;
+    std::swap(openset_, empty);
+    for (Node &node : nodes_)
+        node.clear();
+}
+
+void ResumableBFS::set_start_node(int start) {
+    if (start_ != start) {
+        start_ = start;
+        clear();
+
+        openset_.push(start);
+        Node &n0 = nodes_[start];
+        n0.distance = 0;
+    }
+}
+
+double ResumableBFS::distance(int node_id) {
+    Node& node = nodes_[node_id];
+    if (node.distance < 0)
+        search(node_id);
+
+    return node.distance;
+}
+
+vector<int> ResumableBFS::reconstruct_path(int node_id) {
+    int p = node_id;
+    vector<int> path;
+    while (p >= 0) {
+        path.push_back(p);
+        p = nodes_[p].parent;
+    }
+    std::reverse(path.begin(), path.end());
+    return path;
+}
+
+vector<int> ResumableBFS::find_path(int node_id) {
+    Node& node = nodes_[node_id];
+    if (node.distance < 0)
+        search(node_id);
+
+    if (node.distance >= 0)
+        return reconstruct_path(node_id);
+
+    return {};
+}
+
+void ResumableBFS::search(int node_id) {
+    while (!openset_.empty()) {
+        int current_id = openset_.front();
+        openset_.pop();
+
+        Node& current = nodes_[current_id];
+
+        for (auto& [n, cost] : graph->get_neighbors(current_id)) {
+            Node &node = nodes_[n];
+            if (node.distance < 0) {
+                node.parent = current_id;
+                node.distance = current.distance + 1;
+                openset_.push(n);
+            }
+        }
+
+        if (current_id == node_id)
+            return;
+    }
 }
 
 ResumableAStar::ResumableAStar(AbsGraph *graph, int start) : ResumableSearch(graph, start) {
     nodes_.resize(graph->size());
 
-    openset_ = Queue();
     openset_.push({0, start});
-    Node &n0 = nodes_[start]; 
+    Node &n0 = nodes_[start];
     n0.distance = 0;
 }
 
@@ -80,7 +153,6 @@ void ResumableAStar::search(int node_id) {
 ResumableDijkstra::ResumableDijkstra(AbsGraph *graph, int start) : ResumableSearch(graph, start) {
     nodes_.resize(graph->size());
 
-    openset_ = Queue();
     openset_.push({0, start});
     Node &n0 = nodes_[start]; 
     n0.distance = 0;

@@ -9,11 +9,40 @@ class ResumableSearch {
         ResumableSearch(AbsGraph* graph, int start) : graph(graph), start_(start) {};
         virtual ~ResumableSearch() {};
 
-        virtual double distance(int node_id) = 0;  // true distance from the start to this node
-        int start_node();
+        int start_node() {return start_;};
+        virtual void set_start_node(int start) = 0;
+        virtual double distance(int node_id) = 0;
 
     protected:
         int start_;
+};
+
+
+class ResumableBFS : public ResumableSearch {
+    struct Node {
+        double distance;
+        int parent;
+
+        Node() : distance(-1), parent(-1) {};
+
+        void clear() {
+            distance = -1;
+            parent = -1;
+        }
+    };
+
+    public:
+        ResumableBFS(AbsGraph* graph, int start);
+        double distance(int node_id);
+        vector<int> find_path(int node_id);
+        void set_start_node(int start);
+
+    private:
+        vector<Node> nodes_;
+        std::queue<int> openset_;
+        void search(int node_id);
+        vector<int> reconstruct_path(int node_id);
+        void clear();
 };
 
 

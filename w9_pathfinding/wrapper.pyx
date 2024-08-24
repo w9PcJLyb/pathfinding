@@ -18,6 +18,7 @@ from w9_pathfinding.cdefs cimport (
     BiAStar as CBiAStar,
     GBS as CGBS,
     IDAStar as CIDAStar,
+    ResumableBFS as CResumableBFS,
     ResumableDijkstra as CResumableDijkstra,
     SpaceTimeAStar as CSpaceTimeAStar,
     ReservationTable as CReservationTable,
@@ -935,6 +936,38 @@ cdef class IDAStar(_AbsPathFinder):
         return self._obj.find_path(start, goal, max_distance)
 
 
+cdef class ResumableBFS:
+    cdef CResumableBFS* _obj
+    cdef public _AbsGraph graph
+
+    def __cinit__(self, _AbsGraph graph, start_node):
+        self.graph = graph
+        self._obj = new CResumableBFS(graph._baseobj, to_node_id(graph, start_node))
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(graph={self.graph}, start_node={self.start_node})"
+
+    def __dealloc__(self):
+        del self._obj
+
+    @property
+    def start_node(self):
+        return to_python_node(self.graph, self._obj.start_node())
+
+    @start_node.setter
+    def start_node(self, start_node):
+        self._obj.set_start_node(to_node_id(self.graph, start_node))
+
+    def distance(self, node):
+        d = self._obj.distance(to_node_id(self.graph, node))
+        return d if d >= 0 else float("inf")
+
+    def find_path(self, node):
+        g = self.graph
+        path = self._obj.find_path(to_node_id(g, node))
+        return [to_python_node(g, node_id) for node_id in path]
+
+
 cdef class ResumableDijkstra:
     cdef CResumableDijkstra* _obj
     cdef public _AbsGraph graph
@@ -958,7 +991,8 @@ cdef class ResumableDijkstra:
         self._obj.set_start_node(to_node_id(self.graph, start_node))
 
     def distance(self, node):
-        return self._obj.distance(to_node_id(self.graph, node))
+        d = self._obj.distance(to_node_id(self.graph, node))
+        return d if d >= 0 else float("inf")
 
     def find_path(self, node):
         g = self.graph

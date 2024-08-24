@@ -230,6 +230,13 @@ cdef extern from "src/resumable_search.cpp":
 
 cdef extern from "src/include/resumable_search.h":
 
+    cdef cppclass ResumableBFS:
+        ResumableBFS(AbsGraph*, int) except +
+        double distance(int)
+        vector[int] find_path(int)
+        int start_node()
+        void set_start_node(int)
+
     cdef cppclass ResumableDijkstra:
         ResumableDijkstra(AbsGraph*, int) except +
         double distance(int)

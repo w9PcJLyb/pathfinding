@@ -12,6 +12,7 @@ from .cpf import (
     BiAStar,
     GBS,
     IDAStar,
+    ResumableBFS,
     ResumableDijkstra,
     SpaceTimeAStar,
     ReservationTable,
