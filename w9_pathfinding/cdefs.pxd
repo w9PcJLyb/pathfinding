@@ -287,3 +287,15 @@ cdef extern from "src/include/cbs.h":
     cdef cppclass CBS(AbsMAPF):
         CBS(AbsGraph*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
+
+
+cdef extern from "src/limited_search.cpp":
+    pass
+
+
+cdef extern from "src/include/limited_search.h":
+
+    cdef cppclass LimitedSearch(AbsMAPF):
+        LimitedSearch(AbsGraph*) except +
+        vector[int] find_path(int, int, int)
+        vector[int] find_path_to_moving_goal(int, vector[int], int)

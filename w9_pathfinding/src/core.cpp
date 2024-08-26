@@ -189,6 +189,10 @@ bool AbsGraph::edge_collision() const {
     return edge_collision_;
 }
 
+double AbsGraph::min_weight() const {
+    return min_weight_;
+}
+
 size_t AbsGrid::size() const {
     return weights_.size();
 }

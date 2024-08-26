@@ -41,6 +41,13 @@ ALGORITHMS = [
         "w": 1,
         "params": {"search_depth": 10**5},
     },
+    {
+        "name": "Limited Search",
+        "class": pf.LimitedSearch,
+        "unw": 0,
+        "w": 0,
+        "params": {"max_steps": 10**5},
+    },
 ]
 
 

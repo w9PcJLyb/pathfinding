@@ -26,6 +26,7 @@ from w9_pathfinding.cdefs cimport (
     HCAStar as CHCAStar,
     WHCAStar as CWHCAStar,
     CBS as CCBS,
+    LimitedSearch as CLimitedSearch,
 )
 from w9_pathfinding.hex_layout import HexLayout
 from w9_pathfinding.diagonal_movement import DiagonalMovement
@@ -1211,3 +1212,31 @@ cdef class CBS(_AbsMAPF):
             despawn_at_destination,
             self._to_crt(reservation_table),
         )
+
+
+cdef class LimitedSearch:
+    cdef CLimitedSearch* _obj
+    cdef public _AbsGraph graph
+
+    def __cinit__(self, _AbsGraph graph):
+        self.graph = graph
+        self._obj = new CLimitedSearch(graph._baseobj)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(graph={self.graph})"
+
+    def __dealloc__(self):
+        del self._obj
+
+    def find_path(self, start, goal, max_steps=10):
+        start = to_node_id(self.graph, start)
+
+        if isinstance(goal, list):
+            goal = [to_node_id(self.graph, x) for x in goal]
+            path = self._obj.find_path_to_moving_goal(start, goal, max_steps)
+        else:
+            goal = to_node_id(self.graph, goal)
+            path = self._obj.find_path(start, goal, max_steps)
+
+        path = [to_python_node(self.graph, node) for node in path]
+        return path

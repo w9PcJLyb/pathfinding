@@ -44,8 +44,13 @@ class AbsGraph {
         // returns true if there is a path of length 1 from vertex v1 to vertex v2
         virtual bool adjacent(int v1, int v2) const;
 
-    private:
+        double min_weight() const;
+
+    protected:
         vector<int> find_component_(vector<bool> &visited, int start) const;
+
+        // the minimum value in weights, used in the heuristic function (estimate_distance)
+        double min_weight_ = 1.0;
 
     // For multi agent path finding
     private:
@@ -82,9 +87,6 @@ class AbsGrid : public AbsGraph {
         // if weight == -1 - there is an impassable obstacle, the node is unreachable
         // if weight >= 0 - weight is the cost of entering this node
         vector<double> weights_;
-
-        // the minimum value in weights, used in the heuristic function (estimate_distance)
-        double min_weight_;
 
         // is a reversed graph, used in bidirectional algorithms
         bool reversed_ = false;
