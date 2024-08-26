@@ -275,7 +275,10 @@ class GridVisualizer:
                 patch = agent.get("patch")
                 text = agent.get("text")
 
-                p = self._get_position(agent["path"], time)
+                p = None
+                if "path" in agent:
+                    p = self._get_position(agent["path"], time)
+
                 if p:
                     if patch:
                         patch.set_center(p)
