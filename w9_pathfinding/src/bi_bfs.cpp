@@ -2,15 +2,10 @@
 
 
 BiBFS::BiBFS(AbsGraph *graph) : graph(graph) {
-    reversed_graph_ = graph->reverse();
     forward_nodes_.resize(graph->size());
     backward_nodes_.resize(graph->size());
     closedset_.resize(graph->size(), 0);
 }
-
-BiBFS::~BiBFS() {
-    delete reversed_graph_;
-} 
 
 void BiBFS::clear() {
     for (int i : workset_) {
@@ -59,7 +54,7 @@ vector<int> BiBFS::reconstruct_path(int start, int end) {
 }
 
 
-bool BiBFS::step(std::queue<int> &queue, vector<Node> &nodes, AbsGraph* g) {
+bool BiBFS::step(int side, std::queue<int> &queue, vector<Node> &nodes) {
     if (queue.empty())
         return false;
 
@@ -71,7 +66,7 @@ bool BiBFS::step(std::queue<int> &queue, vector<Node> &nodes, AbsGraph* g) {
     queue.pop();
     int d = nodes[node_id].distance + 1;
 
-    for (auto& [n, cost] : g->get_neighbors(node_id)) {
+    for (auto& [n, cost] : graph->get_neighbors(node_id, side)) {
         Node &nb = nodes[n];
         if (nb.distance < 0) {
             nb.distance = d;
@@ -100,10 +95,7 @@ vector<int> BiBFS::find_path(int start, int end) {
     workset_.push_back(start);
     workset_.push_back(end);
 
-    while (
-        step(forward_queue, forward_nodes_, graph) 
-        && step(backward_queue, backward_nodes_, reversed_graph_)
-    ) {
+    while (step(0, forward_queue, forward_nodes_) && step(1, backward_queue, backward_nodes_)) {
     }
 
     return reconstruct_path(start, end);

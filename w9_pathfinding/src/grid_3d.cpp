@@ -59,7 +59,7 @@ void Grid3D::warp_point(Point &p) const {
         p.z -= depth;
 }
 
-vector<pair<int, double>> Grid3D::get_neighbors(int node) const {
+vector<pair<int, double>> Grid3D::get_neighbors(int node, bool reversed) {
     vector<pair<int, double>> nb;
 
     double node_weight = weights_.at(node);
@@ -82,7 +82,7 @@ vector<pair<int, double>> Grid3D::get_neighbors(int node) const {
         if (weight == -1)
             continue;
 
-        if (reversed_)
+        if (reversed)
             weight = node_weight;
         
         nb.push_back({node_id, weight});
@@ -111,12 +111,4 @@ double Grid3D::estimate_distance(int v1, int v2) const {
     }
 
     return min_weight_ * (dx + dy + dz);
-}
-
-AbsGraph* Grid3D::reverse() const {
-    Grid3D* reversed_grid(new Grid3D(width, height, depth, weights_));
-    reversed_grid->passable_borders = passable_borders;
-    reversed_grid->set_pause_action_cost(get_pause_action_cost());
-    reversed_grid->reversed_ = !reversed_;
-    return reversed_grid;
 }

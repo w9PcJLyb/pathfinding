@@ -47,6 +47,11 @@ void Graph::add_edge(int start, int end, double cost) {
     edges_[start].push_back(Edge(end, cost));
     if (!directed_)
         edges_[end].push_back(Edge(start, cost));
+    else if (!reversed_edges_.empty()) {
+        reversed_edges_[end].push_back(Edge(start, cost));
+        if (!directed_)
+            reversed_edges_[start].push_back(Edge(end, cost));
+    }
 }
 
 void Graph::add_edges(vector<int> starts, vector<int> ends, vector<double> costs) {
@@ -69,10 +74,24 @@ vector<vector<double>> Graph::get_coordinates() const {
     return coordinates_;
 }
 
-vector<pair<int, double>> Graph::get_neighbors(int node) const {
+vector<pair<int, double>> Graph::get_neighbors(int node, bool reversed) {
     vector<pair<int, double>> nb;
-    for (const Edge &e : edges_[node]) {
-        nb.push_back({e.node_id, e.cost});
+    if (reversed && directed_) {
+        if (reversed_edges_.empty()) {
+            reversed_edges_.resize(num_vertices_, vector<Edge>(0));
+            for (int i = 0; i < num_vertices_; i++) {
+                for (const Edge &e: edges_[i]) {
+                    reversed_edges_[e.node_id].push_back(Edge(i, e.cost));
+                }
+            }
+        }
+
+        for (const Edge &e : reversed_edges_[node])
+            nb.push_back({e.node_id, e.cost});
+    }
+    else {
+        for (const Edge &e : edges_[node])
+            nb.push_back({e.node_id, e.cost});
     }
     return nb;
 }

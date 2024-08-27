@@ -27,17 +27,15 @@ class BiAStar : public AbsPathFinder {
     public:
         AbsGraph* graph;
         BiAStar(AbsGraph* graph);
-        ~BiAStar();
 
         vector<int> find_path(int start, int end);
 
     private:
         int start_node_, end_node_;
-        AbsGraph* reversed_graph_;
         vector<vector<Node>> nodes_;
         vector<int> workset_;
         vector<int> reconstruct_path(int start, int end); 
         void clear();
-        bool step(int side, Queue &queue, AbsGraph* g);
+        bool step(int side, Queue &queue);
         double potential(int node_id, int side);
 };

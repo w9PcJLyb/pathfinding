@@ -2,12 +2,7 @@
 
 
 BiAStar::BiAStar(AbsGraph *graph) : graph(graph) {
-    reversed_graph_ = graph->reverse();
     nodes_.resize(2, vector<Node>(graph->size()));
-}
-
-BiAStar::~BiAStar() {
-    delete reversed_graph_;
 }
 
 void BiAStar::clear() {
@@ -64,7 +59,7 @@ double BiAStar::potential(int node_id, int side) {
         return (d1 - d2) / 2;
 }
 
-bool BiAStar::step(int side, Queue &queue, AbsGraph* g) {
+bool BiAStar::step(int side, Queue &queue) {
     int node_id = -1;
     while (!queue.empty()) {
         key top = queue.top();
@@ -85,7 +80,7 @@ bool BiAStar::step(int side, Queue &queue, AbsGraph* g) {
     nodes_[side][node_id].visited = true;
 
     double d = nodes_[side][node_id].distance;
-    for (auto& [n, cost] : g->get_neighbors(node_id)) {
+    for (auto& [n, cost] : graph->get_neighbors(node_id, side)) {
         Node &nb = nodes_[side][n];
         if (nb.visited)
             continue;
@@ -125,10 +120,7 @@ vector<int> BiAStar::find_path(int start, int end) {
     workset_.push_back(start);
     workset_.push_back(end);
 
-    while (
-        step(0, forward_queue, graph)
-        && step(1, backward_queue, reversed_graph_)
-    ) {
+    while (step(0, forward_queue) && step(1, backward_queue)) {
     }
 
     return reconstruct_path(start, end);

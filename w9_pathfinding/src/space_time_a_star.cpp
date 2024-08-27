@@ -2,11 +2,6 @@
 
 
 SpaceTimeAStar::SpaceTimeAStar(AbsGraph *graph) : graph(graph) {
-    reversed_graph_ = graph->reverse();
-}
-
-SpaceTimeAStar::~SpaceTimeAStar() {
-    delete reversed_graph_;
 }
 
 vector<int> SpaceTimeAStar::reconstruct_path(int start, Node* node) {
@@ -26,9 +21,9 @@ vector<int> SpaceTimeAStar::reconstruct_path(int start, Node* node) {
 
 ResumableSearch* SpaceTimeAStar::reverse_resumable_search(int node_id) {
     if (graph->has_coordinates())
-        return new ResumableAStar(reversed_graph_, node_id);
+        return new ResumableAStar(graph, node_id, true);
     else
-        return new ResumableDijkstra(reversed_graph_, node_id);
+        return new ResumableDijkstra(graph, node_id, true);
 }
 
 vector<int> SpaceTimeAStar::find_path(int start, int end) {

@@ -6,7 +6,7 @@
 class ResumableSearch {
     public:
         AbsGraph* graph;
-        ResumableSearch(AbsGraph* graph, int start) : graph(graph), start_(start) {};
+        ResumableSearch(AbsGraph* graph, int start, bool reverse=false) : graph(graph), start_(start), reverse_(reverse) {};
         virtual ~ResumableSearch() {};
 
         int start_node() {return start_;};
@@ -15,6 +15,7 @@ class ResumableSearch {
 
     protected:
         int start_;
+        bool reverse_;
 };
 
 
@@ -32,7 +33,7 @@ class ResumableBFS : public ResumableSearch {
     };
 
     public:
-        ResumableBFS(AbsGraph* graph, int start);
+        ResumableBFS(AbsGraph* graph, int start, bool reverse=false);
         double distance(int node_id);
         vector<int> find_path(int node_id);
         void set_start_node(int start);
@@ -65,7 +66,7 @@ class ResumableDijkstra : public ResumableSearch {
     };
 
     public:
-        ResumableDijkstra(AbsGraph* graph, int start);
+        ResumableDijkstra(AbsGraph* graph, int start, bool reverse=false);
         double distance(int node_id);
         vector<int> find_path(int node_id);
         void set_start_node(int start);
@@ -99,7 +100,7 @@ class ResumableAStar : public ResumableSearch {
     };
 
     public:
-        ResumableAStar(AbsGraph* graph, int start);
+        ResumableAStar(AbsGraph* graph, int start, bool reverse=false);
         double distance(int node_id);
         void set_start_node(int start);
 

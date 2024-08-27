@@ -24,7 +24,6 @@ class SpaceTimeAStar : public AbsPathFinder {
     public:
         AbsGraph* graph;
         SpaceTimeAStar(AbsGraph* graph);
-        ~SpaceTimeAStar();
 
         ResumableSearch* reverse_resumable_search(int node_id);
         vector<int> find_path(int start, int end);
@@ -39,6 +38,5 @@ class SpaceTimeAStar : public AbsPathFinder {
         );
 
     private:
-        AbsGraph* reversed_graph_;
         vector<int> reconstruct_path(int start, Node* node);
 };

@@ -37,9 +37,8 @@ class Grid3D : public AbsGrid {
         int get_node_id(const Point &p) const;
         Point get_coordinates(int node) const;
         bool is_inside(const Point &p) const;
-        vector<pair<int, double>> get_neighbors(int node) const;
+        vector<pair<int, double>> get_neighbors(int node, bool reversed=false);
         double estimate_distance(int v1, int v2) const;
-        AbsGraph* reverse() const;
 
     private:
         const vector<Point> directions_ = {

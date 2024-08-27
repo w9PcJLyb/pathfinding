@@ -1,7 +1,7 @@
 #include "include/core.h"
 
 
-double AbsGraph::calculate_cost(vector<int> &path) const {
+double AbsGraph::calculate_cost(vector<int> &path) {
     if (path.size() <= 1)
         return 0;
 
@@ -40,7 +40,7 @@ double AbsGraph::calculate_cost(vector<int> &path) const {
     return total_cost;
 }
 
-vector<int> AbsGraph::find_component_(vector<bool> &visited, int start) const {
+vector<int> AbsGraph::find_component_(vector<bool> &visited, int start) {
     visited[start] = true;
     vector<int> component = {start};
 
@@ -60,7 +60,7 @@ vector<int> AbsGraph::find_component_(vector<bool> &visited, int start) const {
     return component;
 }
 
-vector<vector<int>> AbsGraph::find_components() const {
+vector<vector<int>> AbsGraph::find_components() {
     if (is_directed_graph())
         throw std::runtime_error("find_components only works for an undirected graph");
 
@@ -89,16 +89,16 @@ vector<vector<int>> AbsGraph::find_components() const {
     return components;
 }
 
-void dfs_with_order_(const AbsGraph *graph, vector<bool> &visited, vector<int> &order, int start) {
+void dfs_with_order_(AbsGraph *graph, vector<bool> &visited, vector<int> &order, int start) {
     visited[start] = true;
-    for (auto& [n, cost] : graph->get_neighbors(start)) {
+    for (auto& [n, cost] : graph->get_neighbors(start, true)) {
         if (!visited[n])
             dfs_with_order_(graph, visited, order, n);
     }
     order.push_back(start);
 }
 
-vector<int> dfs_sort_(const AbsGraph *graph) {
+vector<int> dfs_sort_(AbsGraph *graph) {
     int graph_size = graph->size();
 
     vector<bool> visited(graph_size, false);
@@ -125,17 +125,15 @@ vector<int> dfs_sort_(const AbsGraph *graph) {
     return order;
 }
 
-vector<vector<int>> AbsGraph::find_scc() const {
+vector<vector<int>> AbsGraph::find_scc() {
     if (!is_directed_graph()) {
         throw std::runtime_error("find_scc only works for a directed graph");
     }
 
     // Kosaraju's algorithm
 
-    AbsGraph* reversed_graph = reverse();
-    vector<int> order = dfs_sort_(reversed_graph);
+    vector<int> order = dfs_sort_(this);
     std::reverse(order.begin(), order.end());
-    delete reversed_graph;
 
     int graph_size = size();
     vector<bool> visited(graph_size, false);
@@ -162,7 +160,7 @@ vector<vector<int>> AbsGraph::find_scc() const {
     return scc;
 }
 
-bool AbsGraph::adjacent(int v1, int v2) const {
+bool AbsGraph::adjacent(int v1, int v2) {
     for (auto &[node_id, cost] : get_neighbors(v1)) {
         if (node_id == v2) {
             return true;
@@ -241,7 +239,7 @@ void AbsGrid::clear_weights() {
     std::fill(weights_.begin(), weights_.end(), 1);
 }
 
-vector<vector<int>> AbsGrid::find_components() const {
+vector<vector<int>> AbsGrid::find_components() {
     vector<vector<int>> components = AbsGraph::find_components();
     vector<vector<int>> components_without_walls;
     for (vector<int> &x : components) {

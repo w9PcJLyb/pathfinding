@@ -21,8 +21,7 @@ class AbsGraph {
         AbsGraph() {};
         virtual ~AbsGraph() {};
         virtual size_t size() const = 0;
-        virtual vector<pair<int, double>> get_neighbors(int node) const = 0;
-        virtual AbsGraph* reverse() const = 0;
+        virtual vector<pair<int, double>> get_neighbors(int node, bool reversed=false) = 0;
         virtual bool has_coordinates() const = 0;
 
         // returns a lower bound of the distance between two vertices
@@ -33,19 +32,19 @@ class AbsGraph {
 
         // returns a cost of moving along the path
         // returns -1 if the path is not possible
-        double calculate_cost(vector<int> &path) const;
+        double calculate_cost(vector<int> &path);
 
         // returns connected components in an undirected graph
-        virtual vector<vector<int>> find_components() const;
+        virtual vector<vector<int>> find_components();
 
         // returns Strongly Connected Components (SCC) in a directed graph
-        virtual vector<vector<int>> find_scc() const;
+        virtual vector<vector<int>> find_scc();
 
         // returns true if there is a path of length 1 from vertex v1 to vertex v2
-        virtual bool adjacent(int v1, int v2) const;
+        virtual bool adjacent(int v1, int v2);
 
     private:
-        vector<int> find_component_(vector<bool> &visited, int start) const;
+        vector<int> find_component_(vector<bool> &visited, int start);
 
     // For multi agent path finding
     private:
@@ -76,7 +75,7 @@ class AbsGrid : public AbsGraph {
         void add_obstacle(int node);
         void remove_obstacle(int node);
         void clear_weights();
-        vector<vector<int>> find_components() const override;
+        vector<vector<int>> find_components() override;
 
     protected:
         // if weight == -1 - there is an impassable obstacle, the node is unreachable
@@ -85,9 +84,6 @@ class AbsGrid : public AbsGraph {
 
         // the minimum value in weights, used in the heuristic function (estimate_distance)
         double min_weight_;
-
-        // is a reversed graph, used in bidirectional algorithms
-        bool reversed_ = false;
 };
 
 

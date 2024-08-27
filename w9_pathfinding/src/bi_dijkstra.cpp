@@ -2,15 +2,10 @@
 
 
 BiDijkstra::BiDijkstra(AbsGraph *graph) : graph(graph) {
-    reversed_graph_ = graph->reverse();
     forward_nodes_.resize(graph->size());
     backward_nodes_.resize(graph->size());
     closedset_.resize(graph->size(), 0);
 }
-
-BiDijkstra::~BiDijkstra() {
-    delete reversed_graph_;
-} 
 
 void BiDijkstra::clear() {
     for (int i : workset_) {
@@ -58,7 +53,7 @@ vector<int> BiDijkstra::reconstruct_path(int start, int end) {
     return path;
 }
 
-bool BiDijkstra::step(Queue &queue, vector<Node> &nodes, AbsGraph* g) {
+bool BiDijkstra::step(int side, Queue &queue, vector<Node> &nodes) {
     int node_id = -1;
     key top;
     while (!queue.empty()) {
@@ -80,7 +75,7 @@ bool BiDijkstra::step(Queue &queue, vector<Node> &nodes, AbsGraph* g) {
 
     closedset_[node_id] = 1;
 
-    for (auto& [n, cost] : g->get_neighbors(node_id)) {
+    for (auto& [n, cost] : graph->get_neighbors(node_id, side)) {
         Node &nb = nodes[n];
         double new_cost = top.first + cost;
         if (nb.distance < 0 || nb.distance - new_cost > epsilon) {
@@ -107,10 +102,7 @@ vector<int> BiDijkstra::find_path(int start, int end) {
     workset_.push_back(start);
     workset_.push_back(end);
 
-    while (
-        step(forward_queue, forward_nodes_, graph)
-        && step(backward_queue, backward_nodes_, reversed_graph_)
-    ) {
+    while (step(0, forward_queue, forward_nodes_) && step(1, backward_queue, backward_nodes_)) {
     }
 
     return reconstruct_path(start, end);

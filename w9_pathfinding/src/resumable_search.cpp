@@ -1,7 +1,7 @@
 #include "include/resumable_search.h"
 
 
-ResumableBFS::ResumableBFS(AbsGraph *graph, int start) : ResumableSearch(graph, start) {
+ResumableBFS::ResumableBFS(AbsGraph *graph, int start, bool reverse) : ResumableSearch(graph, start, reverse) {
     nodes_.resize(graph->size());
 
     openset_.push(start);
@@ -64,7 +64,7 @@ void ResumableBFS::search(int node_id) {
 
         Node& current = nodes_[current_id];
 
-        for (auto& [n, cost] : graph->get_neighbors(current_id)) {
+        for (auto& [n, cost] : graph->get_neighbors(current_id, reverse_)) {
             Node &node = nodes_[n];
             if (node.distance < 0) {
                 node.parent = current_id;
@@ -78,7 +78,7 @@ void ResumableBFS::search(int node_id) {
     }
 }
 
-ResumableAStar::ResumableAStar(AbsGraph *graph, int start) : ResumableSearch(graph, start) {
+ResumableAStar::ResumableAStar(AbsGraph *graph, int start, bool reverse) : ResumableSearch(graph, start, reverse) {
     nodes_.resize(graph->size());
 
     openset_.push({0, start});
@@ -127,7 +127,7 @@ void ResumableAStar::search(int node_id) {
 
         current.closed = true;
 
-        for (auto& [n, cost] : graph->get_neighbors(current_id)) {
+        for (auto& [n, cost] : graph->get_neighbors(current_id, reverse_)) {
             Node &node = nodes_[n];
             double new_distance = current.distance + cost;
             if (node.distance < 0) {
@@ -150,7 +150,7 @@ void ResumableAStar::search(int node_id) {
     node.closed = true;
 }
 
-ResumableDijkstra::ResumableDijkstra(AbsGraph *graph, int start) : ResumableSearch(graph, start) {
+ResumableDijkstra::ResumableDijkstra(AbsGraph *graph, int start, bool reverse) : ResumableSearch(graph, start, reverse) {
     nodes_.resize(graph->size());
 
     openset_.push({0, start});
@@ -218,7 +218,7 @@ void ResumableDijkstra::search(int node_id) {
 
         current.closed = true;
 
-        for (auto& [n, cost] : graph->get_neighbors(current_id)) {
+        for (auto& [n, cost] : graph->get_neighbors(current_id, reverse_)) {
             Node &node = nodes_[n];
             double new_distance = current.distance + cost;
             if (node.distance < 0 || node.distance > new_distance) {

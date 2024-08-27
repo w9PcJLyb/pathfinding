@@ -69,7 +69,7 @@ Grid::Point Grid::get_coordinates(int node) const {
     return {node % width, node / width};
 }
 
-vector<pair<int, double>> Grid::get_neighbors(int node) const {
+vector<pair<int, double>> Grid::get_neighbors(int node, bool reversed) {
     vector<pair<int, double>> nb;
     nb.reserve(diagonal_movement_ == 0 ? 4 : 8);
     
@@ -95,7 +95,7 @@ vector<pair<int, double>> Grid::get_neighbors(int node) const {
         if (weight == -1)
             return -1;
 
-        if (reversed_)
+        if (reversed)
             weight = node_weight;
 
         if (direction_id < 4)
@@ -167,15 +167,4 @@ double Grid::estimate_distance(int v1, int v2) const {
     else {
         return min_weight_ * (dy + dx * (diagonal_movement_cost_multiplier - 1));
     }
-}
-
-AbsGraph* Grid::reverse() const {
-    Grid* reversed_grid(new Grid(width, height, weights_));
-    reversed_grid->set_diagonal_movement(diagonal_movement_);
-    reversed_grid->passable_left_right_border = passable_left_right_border;
-    reversed_grid->passable_up_down_border = passable_up_down_border;
-    reversed_grid->diagonal_movement_cost_multiplier = diagonal_movement_cost_multiplier;
-    reversed_grid->set_pause_action_cost(get_pause_action_cost());
-    reversed_grid->reversed_ = !reversed_;
-    return reversed_grid;
 }

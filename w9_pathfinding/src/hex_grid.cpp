@@ -59,7 +59,7 @@ HexGrid::points_ HexGrid::get_directions(const Point &p) const {
     }
 }
 
-vector<pair<int, double>> HexGrid::get_neighbors(int node) const {
+vector<pair<int, double>> HexGrid::get_neighbors(int node, bool reversed) {
     vector<pair<int, double>> nb;
     
     double node_weight = weights_.at(node);
@@ -85,7 +85,7 @@ vector<pair<int, double>> HexGrid::get_neighbors(int node) const {
         if (weight == -1)
             continue;
 
-        if (reversed_)
+        if (reversed)
             weight = node_weight;
 
         nb.push_back({node_id, weight});
@@ -111,11 +111,3 @@ double HexGrid::estimate_distance(int v1, int v2) const {
     return min_weight_ * std::max(dx, dy);  // not as tight as possible
 }
 
-AbsGraph* HexGrid::reverse() const {
-    HexGrid* reversed_grid(new HexGrid(width, height, layout, weights_));
-    reversed_grid->passable_left_right_border = passable_left_right_border;
-    reversed_grid->passable_up_down_border = passable_up_down_border;
-    reversed_grid->set_pause_action_cost(get_pause_action_cost());
-    reversed_grid->reversed_ = !reversed_;
-    return reversed_grid;
-}
