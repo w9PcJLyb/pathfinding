@@ -17,48 +17,36 @@ class CBS : public AbsMAPF {
         Agent(int start, int goal, ResumableSearch *rrs) : start(start), goal(goal), rrs(rrs) {};
     };
 
-    struct ConflictResult {
-        int time = -1, node1 = -1, node2 = -1;
-
-        // there are no conflicts
-        ConflictResult() {}
+    struct Conflict {
+        int agent_id, time, node1, node2 = -1;
 
         // vertex conflict
-        ConflictResult(int time, int node_id) :
-            time(time), node1(node_id) {}
+        Conflict(int agent_id, int time, int node_id) :
+            agent_id(agent_id), time(time), node1(node_id) {}
 
         // edge conflict
-        ConflictResult(int time, int node1, int node2) :
-            time(time), node1(node1), node2(node2) {}
+        Conflict(int agent_id, int time, int node1, int node2) :
+            agent_id(agent_id), time(time), node1(node1), node2(node2) {}
 
-        bool has_conflict() const {
-            return time >= 0;
-        };
-
-        bool is_edge_conflict() const {
+        bool is_edge_conflict() {
             return node2 >= 0;
         };
     };
 
     struct CTNode {
         // Constraint Tree Node
+        int parent;
         vector<vector<int>> solutions;
         vector<double> costs;
-        CTNode *parent = nullptr;
-        int agent_id = -1;
-        ConflictResult conflict = ConflictResult();
+        Conflict conflict;
 
-        CTNode() {};
-        CTNode(CTNode *parent_node, int agent_id, ConflictResult &conflict) :
-            solutions(parent_node->solutions),
-            costs(parent_node->costs),
-            parent(parent_node),
-            agent_id(agent_id),
-            conflict(conflict) {};
+        CTNode() : parent(-1), conflict(Conflict(-1, -1, -1)) {};
+        CTNode(int parent, Conflict conflict) : parent(parent), conflict(conflict) {};
     };
 
-    typedef pair<double, CTNode*> key;
+    typedef pair<double, int> key;
     typedef priority_queue<key, vector<key>, std::greater<key>> Queue;
+    typedef vector<CTNode> ConstraintTree;
 
     public:
         AbsGraph* graph;
@@ -77,12 +65,11 @@ class CBS : public AbsMAPF {
     private:
         SpaceTimeAStar st_a_star_;
 
-        pair<vector<int>, ConflictResult> find_conflict(vector<vector<int>> &paths, bool despawn_at_destination);
+        vector<Conflict> find_conflict(vector<vector<int>> &paths, bool despawn_at_destination);
         pair<vector<int>, double> low_level(Agent &agent, ReservationTable &rt, int search_depth);
-        bool resolve_conflict(CTNode *ct_node, Agent &agent, ReservationTable rt, int search_depth);
+        bool resolve_conflict(CTNode &ct_node, ConstraintTree &tree, Agent &agent, ReservationTable rt, int search_depth);
         void print_node(CTNode &ct_node);
-        void print_conflict(ConflictResult &conflict);
-        void release_nodes(vector<CTNode*> nodes);
+        void print_conflict(Conflict &conflict);
         vector<vector<int>> mapf_(
             vector<Agent> &agents,
             int search_depth,
