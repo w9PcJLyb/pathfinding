@@ -170,8 +170,8 @@ bool AbsGraph::adjacent(int v1, int v2) {
 }
 
 void AbsGraph::set_pause_action_cost(double cost) {
-    if (cost < 0 && cost != -1)
-        throw std::invalid_argument("Pause action cost must be either non-negative or equal to -1");
+    if (cost < 0)
+        throw std::invalid_argument("Pause action cost must be non-negative");
     pause_action_cost_ = cost;
 }
 

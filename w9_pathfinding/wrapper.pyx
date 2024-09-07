@@ -63,8 +63,8 @@ cdef class _AbsGraph:
 
     @pause_action_cost.setter
     def pause_action_cost(self, double cost):
-        if cost < 0 and cost != -1:
-            raise ValueError("pause_action_cost must be either non-negative or equal to -1")
+        if cost < 0:
+            raise ValueError("pause_action_cost must be non-negative.")
         self._baseobj.set_pause_action_cost(cost)
 
     @property
