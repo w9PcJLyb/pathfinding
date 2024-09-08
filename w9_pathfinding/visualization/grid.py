@@ -284,13 +284,6 @@ class GridVisualizer:
                         patch.set_center(p)
                     if text:
                         text.set_position(p)
-                else:
-                    # disable
-                    if patch:
-                        patch.set_fill(False)
-                        patch.set_edgecolor(agent["color"])
-                    if text:
-                        text.set_color("grey")
 
             return plot_objects
 

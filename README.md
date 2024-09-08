@@ -46,7 +46,7 @@ print(path)  # [0, 1, 3]
 Multi-Agent Path Finding (MAPF) is the problem of finding collision-free paths for a group of agents from their location to an assigned target.
 
 <p align="left">
-    <img style="width:300px" src="images/mapf_hex.gif"/>
+    <img src="images/mapf_hex.gif" width="300"/>
 </p>
 
 Currently implemented:
