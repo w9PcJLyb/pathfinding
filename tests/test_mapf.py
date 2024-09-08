@@ -1,8 +1,9 @@
 import unittest
 from collections import defaultdict
-from w9_pathfinding import Graph, Grid, HCAStar, WHCAStar, CBS, ReservationTable
+import w9_pathfinding as pf
+from w9_pathfinding import CBS, Graph, Grid, ReservationTable
 
-MAPF_ALGORITHMS = [HCAStar, WHCAStar, CBS]
+MAPF_ALGORITHMS = [pf.HCAStar, pf.WHCAStar, pf.CBS, pf.MultiAgentAStar]
 
 
 def check_paths(graph, paths):
@@ -123,7 +124,6 @@ class TestMAPF(unittest.TestCase):
         for a in MAPF_ALGORITHMS:
             with self.subTest(a.__name__):
                 paths = a(grid).mapf(starts, goals, reservation_table=rt)
-
                 self.assertTrue(check_paths(grid, paths + [reserved_path]))
                 for path, goal in zip(paths, goals):
                     self.assertLessEqual(len(path), 6)

@@ -26,6 +26,7 @@ from w9_pathfinding.cdefs cimport (
     HCAStar as CHCAStar,
     WHCAStar as CWHCAStar,
     CBS as CCBS,
+    MultiAgentAStar as CMultiAgentAStar,
 )
 from w9_pathfinding.hex_layout import HexLayout
 from w9_pathfinding.diagonal_movement import DiagonalMovement
@@ -1209,5 +1210,32 @@ cdef class CBS(_AbsMAPF):
             search_depth,
             max_time,
             despawn_at_destination,
+            self._to_crt(reservation_table),
+        )
+
+
+cdef class MultiAgentAStar(_AbsMAPF):
+    cdef CMultiAgentAStar* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        self.graph = graph
+        self._obj = new CMultiAgentAStar(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+    @_mapf
+    def mapf(
+        self,
+        vector[int] starts,
+        vector[int] goals,
+        double max_time=1,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.mapf(
+            starts,
+            goals,
+            max_time,
             self._to_crt(reservation_table),
         )

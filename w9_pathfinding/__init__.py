@@ -19,6 +19,7 @@ from .cpf import (
     HCAStar,
     WHCAStar,
     CBS,
+    MultiAgentAStar,
 )
 from .diagonal_movement import DiagonalMovement
 from .hex_layout import HexLayout

@@ -14,6 +14,7 @@
 #include "include/whc_a_star.h"
 #include "include/cbs.h"
 #include "include/ida_star.h"
+#include "include/multi_agent_a_star.h"
 
 
 void print_path(vector<int> nodes) {
@@ -174,11 +175,13 @@ void test_mapf() {
     HCAStar hc_astar(&graph);
     WHCAStar whc_astar(&graph);
     CBS cbs(&graph);
+    MultiAgentAStar maastar(&graph);
 
     vector<pair<std::string, AbsMAPF*>> finders = {
         {"HCA*", &hc_astar},
         {"WHCA*", &whc_astar},
-        {"CBS", &cbs}
+        {"CBS", &cbs},
+        {"Multi Agent A*", &maastar}
     };
 
     vector<vector<int>> paths;

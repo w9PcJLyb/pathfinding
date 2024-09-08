@@ -22,6 +22,7 @@ class ReservationTable {
         void add_edge_constraint(int time, int n1, int n2);
         void add_semi_static_constraint(int time, int node_id);
         bool is_reserved(int time, int node_id) const;
+        bool is_reserved_edge(int time, int n1, int n2) const;
         std::unordered_set<int> get_reserved_edges(int time, int node_id) const;
         void add_path(int start_time, vector<int> &path, bool reserve_destination, bool add_edge_constraints);
         int last_time_reserved(int node_id) const;

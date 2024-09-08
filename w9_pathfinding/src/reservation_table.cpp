@@ -46,6 +46,13 @@ bool ReservationTable::is_reserved(int time, int node_id) const {
     return false;
 }
 
+bool ReservationTable::is_reserved_edge(int time, int n1, int n2) const {
+    int st_ = st(time, n1);
+    if (edge_constraints_.count(st_))
+        return edge_constraints_.at(st_).count(n2);
+    return false;
+}
+
 std::unordered_set<int> ReservationTable::get_reserved_edges(int time, int node_id) const {
     int st_ = st(time, node_id);
     if (edge_constraints_.count(st_))

@@ -287,3 +287,14 @@ cdef extern from "src/include/cbs.h":
     cdef cppclass CBS(AbsMAPF):
         CBS(AbsGraph*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
+
+
+cdef extern from "src/multi_agent_a_star.cpp":
+    pass
+
+
+cdef extern from "src/include/multi_agent_a_star.h":
+
+    cdef cppclass MultiAgentAStar(AbsMAPF):
+        MultiAgentAStar(AbsGraph*) except +
+        vector[vector[int]] mapf(vector[int], vector[int], double, ReservationTable*) except +
