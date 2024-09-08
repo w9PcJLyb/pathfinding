@@ -126,7 +126,7 @@ anim = animate_grid(grid, agents)
 
 # Installation
 
-1. Setup virtual environment
+1. Setup virtual environment (preferred Python versions are 3.10 and 3.11)
 
 2. Install Cython, it is needed to wrap the C++ code:
 
