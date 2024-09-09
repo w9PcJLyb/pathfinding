@@ -264,7 +264,7 @@ cdef extern from "src/include/hc_a_star.h":
 
     cdef cppclass HCAStar(AbsMAPF):
         HCAStar(AbsGraph*) except +
-        vector[vector[int]] mapf(vector[int], vector[int], int, bool, ReservationTable*)
+        vector[vector[int]] mapf(vector[int], vector[int], int, ReservationTable*)
 
 
 cdef extern from "src/whc_a_star.cpp":
@@ -275,7 +275,7 @@ cdef extern from "src/include/whc_a_star.h":
 
     cdef cppclass WHCAStar(AbsMAPF):
         WHCAStar(AbsGraph*) except +
-        vector[vector[int]] mapf(vector[int], vector[int], int, int, bool, ReservationTable*)
+        vector[vector[int]] mapf(vector[int], vector[int], int, int, ReservationTable*)
 
 
 cdef extern from "src/cbs.cpp":
@@ -286,7 +286,7 @@ cdef extern from "src/include/cbs.h":
 
     cdef cppclass CBS(AbsMAPF):
         CBS(AbsGraph*) except +
-        vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
+        vector[vector[int]] mapf(vector[int], vector[int], int, double, ReservationTable*) except +
 
 
 cdef extern from "src/multi_agent_a_star.cpp":

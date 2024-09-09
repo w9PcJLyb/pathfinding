@@ -5,7 +5,7 @@ WHCAStar::WHCAStar(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
 }
 
 vector<vector<int>> WHCAStar::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 100, 16, false, nullptr);
+    return mapf(starts, goals, 100, 16, nullptr);
 }
 
 vector<vector<int>> WHCAStar::mapf(
@@ -13,7 +13,6 @@ vector<vector<int>> WHCAStar::mapf(
     vector<int> goals,
     int search_depth,
     int window_size,
-    bool despawn_at_destination,
     const ReservationTable *rt
 ) {
     assert(starts.size() == goals.size());
@@ -33,7 +32,7 @@ vector<vector<int>> WHCAStar::mapf(
         reservation_table.add_vertex_constraint(0, start);
     }
 
-    auto paths = mapf_(agents, search_depth, window_size, despawn_at_destination, reservation_table);
+    auto paths = mapf_(agents, search_depth, window_size, reservation_table);
 
     for (auto &agent: agents)
         delete agent.rrs;
@@ -45,7 +44,6 @@ vector<vector<int>> WHCAStar::mapf_(
     vector<Agent> &agents,
     int search_depth,
     int window_size,
-    bool despawn_at_destination,
     ReservationTable &rt
 ) {
     bool edge_collision = graph->edge_collision();
@@ -56,7 +54,7 @@ vector<vector<int>> WHCAStar::mapf_(
 
         solved = true;
         for (auto &agent: agents) {
-            if (agent.active && agent.position(time) != agent.goal) {
+            if (agent.position(time) != agent.goal) {
                 solved = false;
                 break;
             }
@@ -72,7 +70,7 @@ vector<vector<int>> WHCAStar::mapf_(
         for (size_t agent_id = 0; agent_id < agents.size(); agent_id++) {
             Agent &agent = agents[agent_id];
 
-            if (!agent.active || agent.is_moving(time)) {
+            if (agent.is_moving(time)) {
                 continue;
             }
 
@@ -97,9 +95,6 @@ vector<vector<int>> WHCAStar::mapf_(
                 agent.add_path(path);
                 rt.add_path(time, path, false, edge_collision);
             }
-
-            if (despawn_at_destination && agent.position() == agent.goal)
-                agent.active = false;
         }
 
         time++;

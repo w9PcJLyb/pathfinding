@@ -13,7 +13,6 @@ class WHCAStar : public AbsMAPF {
     struct Agent {
         int start, goal;
         ResumableSearch *rrs;
-        bool active = true;
 
         vector<int> full_path;
 
@@ -48,7 +47,6 @@ class WHCAStar : public AbsMAPF {
             vector<int> goals,
             int search_depth,
             int window_size,
-            bool despawn_at_destination,
             const ReservationTable *rt
         );
 
@@ -58,7 +56,6 @@ class WHCAStar : public AbsMAPF {
             vector<Agent> &agents,
             int search_depth,
             int window_size,
-            bool despawn_at_destination,
             ReservationTable &rt
         );
 };

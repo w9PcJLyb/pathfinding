@@ -58,14 +58,13 @@ class CBS : public AbsMAPF {
             vector<int> goals,
             int search_depth,
             double max_time,
-            bool despawn_at_destination,
             const ReservationTable *rt
         );
 
     private:
         SpaceTimeAStar st_a_star_;
 
-        vector<Conflict> find_conflict(vector<vector<int>> &paths, bool despawn_at_destination);
+        vector<Conflict> find_conflict(vector<vector<int>> &paths);
         pair<vector<int>, double> low_level(Agent &agent, ReservationTable &rt, int search_depth);
         bool resolve_conflict(CTNode &ct_node, ConstraintTree &tree, Agent &agent, ReservationTable rt, int search_depth);
         void print_node(CTNode &ct_node);
@@ -74,7 +73,6 @@ class CBS : public AbsMAPF {
             vector<Agent> &agents,
             int search_depth,
             double max_time,
-            bool despawn_at_destination,
             ReservationTable &rt
         );
 };

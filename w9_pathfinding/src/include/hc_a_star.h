@@ -19,7 +19,6 @@ class HCAStar : public AbsMAPF {
             vector<int> starts,
             vector<int> goals,
             int search_depth,
-            bool despawn_at_destination,
             const ReservationTable *rt
         );
 

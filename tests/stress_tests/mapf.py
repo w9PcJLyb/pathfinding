@@ -30,6 +30,11 @@ ALGORITHMS = [
     {"name": "HCA*", "class": pf.HCAStar},
     {"name": "WHCA*", "class": pf.WHCAStar},
     {"name": "CBS", "class": pf.CBS, "params": {"max_time": 0.1}, "optimal": True},
+    # {
+    #     "name": "Multi Agent A*",
+    #     "class": pf.MultiAgentAStar,
+    #     "params": {"max_time": 0.1},
+    # },
 ]
 
 
@@ -98,19 +103,14 @@ def check_paths(graph, paths):
     return True
 
 
-def is_solved(paths, goals, despawn_at_destination):
+def is_solved(paths, goals):
     if len(paths) != len(goals):
         return False
 
     if not goals:
         return True
 
-    path_length = len(paths[0])
-
     for path, goal in zip(paths, goals):
-        if not despawn_at_destination and len(path) != path_length:
-            return False
-
         if not path or path[-1] != goal:
             return False
 
@@ -130,17 +130,11 @@ def compare_results(results):
     return True
 
 
-def run_graph(algorithms, graph, starts, goals, despawn_at_destination=False):
+def run_graph(algorithms, graph, starts, goals):
     results = []
     for a in algorithms:
         params = a.get("params", {})
-        paths, time = find_path(
-            a["finder"],
-            starts,
-            goals,
-            despawn_at_destination=despawn_at_destination,
-            **params,
-        )
+        paths, time = find_path(a["finder"], starts, goals, **params)
 
         total_cost = 0
         for path in paths:
@@ -151,12 +145,11 @@ def run_graph(algorithms, graph, starts, goals, despawn_at_destination=False):
                 return False
             total_cost += path_cost
 
-        if not despawn_at_destination:
-            normalize_paths(paths)
+        normalize_paths(paths)
 
         a["total_time"] += time
 
-        solved = is_solved(paths, goals, despawn_at_destination)
+        solved = is_solved(paths, goals)
         a["num_solved"] += solved
 
         if not check_paths(graph, paths):
@@ -201,7 +194,7 @@ def create_graph_with_queries(generator):
         return graph, starts, goals
 
 
-def stress_test(weighted=False, despawn_at_destination=False, edge_collision=True):
+def stress_test(weighted=False, edge_collision=True):
 
     algorithms = copy(ALGORITHMS)
 
@@ -225,13 +218,7 @@ def stress_test(weighted=False, despawn_at_destination=False, edge_collision=Tru
         for a in algorithms:
             a["finder"] = a["class"](graph)
 
-        r = run_graph(
-            algorithms,
-            graph,
-            starts,
-            goals,
-            despawn_at_destination=despawn_at_destination,
-        )
+        r = run_graph(algorithms, graph, starts, goals)
         if not r:
             return
 
@@ -257,13 +244,6 @@ if __name__ == "__main__":
         help="generate weighted graphs",
     )
     parser.add_argument(
-        "--despawn",
-        "-d",
-        default=False,
-        action=argparse.BooleanOptionalAction,
-        help="despawn an agent at destination",
-    )
-    parser.add_argument(
         "--edge_collision",
         "-e",
         default=False,
@@ -275,6 +255,5 @@ if __name__ == "__main__":
 
     stress_test(
         weighted=flags.weighted,
-        despawn_at_destination=flags.despawn,
         edge_collision=flags.edge_collision,
     )

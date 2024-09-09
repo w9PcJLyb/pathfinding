@@ -12,7 +12,7 @@ CBS::CBS(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
 }
 
 vector<vector<int>> CBS::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 100, 1.0, false, nullptr);
+    return mapf(starts, goals, 100, 1.0, nullptr);
 }
 
 pair<vector<int>, double> CBS::low_level(Agent &agent, ReservationTable &rt, int search_depth) {
@@ -54,7 +54,7 @@ void CBS::print_conflict(Conflict &r) {
         cout << ", node=" << r.node1 << endl;
 }
 
-vector<CBS::Conflict> CBS::find_conflict(vector<vector<int>> &paths, bool despawn_at_destination) {
+vector<CBS::Conflict> CBS::find_conflict(vector<vector<int>> &paths) {
     int num_agents = paths.size();
 
     size_t time = 0;
@@ -99,7 +99,7 @@ vector<CBS::Conflict> CBS::find_conflict(vector<vector<int>> &paths, bool despaw
                 node_to_agents[paths[agent_id][time]].push_back(agent_id);
                 end = false;
             }
-            else if (!despawn_at_destination) {
+            else {
                 node_to_agents[paths[agent_id].back()].push_back(agent_id);
             }
         }
@@ -163,7 +163,6 @@ vector<vector<int>> CBS::mapf(
     vector<int> goals,
     int search_depth,
     double max_time,
-    bool despawn_at_destination,
     const ReservationTable *rt
 ) {
     assert(starts.size() == goals.size());
@@ -171,13 +170,11 @@ vector<vector<int>> CBS::mapf(
     if (starts.size() == 0)
         return {};
 
-    if (!despawn_at_destination) {
-        std::unordered_set<int> goals_set;
-        for (int g: goals) {
-            if (goals_set.count(g))
-                return {};
-            goals_set.insert(g);
-        }
+    std::unordered_set<int> goals_set;
+    for (int g: goals) {
+        if (goals_set.count(g))
+            return {};
+        goals_set.insert(g);
     }
 
     vector<Agent> agents;
@@ -195,7 +192,6 @@ vector<vector<int>> CBS::mapf(
         agents,
         search_depth,
         max_time,
-        despawn_at_destination,
         reservation_table
     );
 
@@ -209,7 +205,6 @@ vector<vector<int>> CBS::mapf_(
     vector<Agent> &agents,
     int search_depth,
     double max_time,
-    bool despawn_at_destination,
     ReservationTable &rt
 ) {
     auto begin_time = high_resolution_clock::now();
@@ -239,7 +234,7 @@ vector<vector<int>> CBS::mapf_(
         auto [cost, node_id] = openset.top();
         openset.pop();
 
-        vector<Conflict> conflicts = find_conflict(tree[node_id].solutions, despawn_at_destination);
+        vector<Conflict> conflicts = find_conflict(tree[node_id].solutions);
         if (conflicts.empty())
             return tree[node_id].solutions;
 

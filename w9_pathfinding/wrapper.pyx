@@ -1140,14 +1140,12 @@ cdef class HCAStar(_AbsMAPF):
         vector[int] starts,
         vector[int] goals,
         int search_depth=100,
-        bool despawn_at_destination=False,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
             starts,
             goals,
             search_depth,
-            despawn_at_destination,
             self._to_crt(reservation_table),
         )
 
@@ -1170,7 +1168,6 @@ cdef class WHCAStar(_AbsMAPF):
         vector[int] goals,
         int search_depth=100,
         int window_size=16,
-        bool despawn_at_destination=False,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
@@ -1178,7 +1175,6 @@ cdef class WHCAStar(_AbsMAPF):
             goals,
             search_depth,
             window_size,
-            despawn_at_destination,
             self._to_crt(reservation_table),
         )
 
@@ -1201,7 +1197,6 @@ cdef class CBS(_AbsMAPF):
         vector[int] goals,
         int search_depth=100,
         double max_time=1,
-        bool despawn_at_destination=False,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
@@ -1209,7 +1204,6 @@ cdef class CBS(_AbsMAPF):
             goals,
             search_depth,
             max_time,
-            despawn_at_destination,
             self._to_crt(reservation_table),
         )
 
