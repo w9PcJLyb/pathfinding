@@ -293,7 +293,7 @@ cdef extern from "src/multi_agent_a_star.cpp":
     pass
 
 
-cdef extern from "src/include/multi_agent_a_star.h":
+cdef extern from "src/include/multi_agent_a_star.h" namespace "maas":
 
     cdef cppclass MultiAgentAStar(AbsMAPF):
         MultiAgentAStar(AbsGraph*) except +

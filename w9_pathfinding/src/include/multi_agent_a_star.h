@@ -4,22 +4,7 @@
 #include "resumable_search.h"
 #include "space_time_a_star.h"
 
-
-class MultiAgentState {
-    public:
-        MultiAgentState(AbsGraph* graph, vector<int>& positions);
-
-        pair<vector<int>, double> next();
-    
-    private:
-        vector<vector<pair<int, double>>> neighbors_;
-        vector<int> next_positions_;
-        vector<int> ids_;
-        bool update_indexes_();
-};
-
-
-class MultiAgentAStar : public AbsMAPF {
+namespace maas {
 
     struct Agent {
         int start, goal;
@@ -44,19 +29,36 @@ class MultiAgentAStar : public AbsMAPF {
     typedef priority_queue<key, vector<key>, std::greater<key>> Queue;
     typedef vector<Node> Tree;
 
-    public:
-        AbsGraph* graph;
-        MultiAgentAStar(AbsGraph* graph);
+    class State {
+        public:
+            State(AbsGraph* graph, int node_id, Tree& tree, vector<int>& goal, int time, ReservationTable& rt);
 
-        vector<vector<int>> mapf(vector<int> starts, vector<int> goals);
-        vector<vector<int>> mapf(vector<int> starts, vector<int> goals, double max_time, const ReservationTable *rt);
+            pair<vector<int>, double> next();
+            bool allowed(vector<int>& positions, vector<int>& next_positions, bool edge_collision);
 
-    private:
-        SpaceTimeAStar st_a_star_;
-        vector<vector<int>> mapf_(vector<Agent> &agents, double max_time, ReservationTable &rt);
-        vector<vector<int>> reconstruct_paths(int node_id, Tree& tree);
-        void print_node(Node& node);
-        std::string positions_to_string(vector<int>& positions);
-        bool allowed(vector<int>& positions, vector<int>& new_positions, int time, ReservationTable &rt);
-        double heuristic(vector<int>& positions, vector<Agent> &agents);
-};
+        private:
+            vector<vector<pair<int, double>>> neighbors_;
+            vector<int> next_positions_;
+            vector<int> ids_;
+            bool update_indexes_();
+    };
+
+    class MultiAgentAStar : public AbsMAPF {
+
+        public:
+            AbsGraph* graph;
+            MultiAgentAStar(AbsGraph* graph);
+
+            vector<vector<int>> mapf(vector<int> starts, vector<int> goals);
+            vector<vector<int>> mapf(vector<int> starts, vector<int> goals, double max_time, const ReservationTable *rt);
+
+        private:
+            SpaceTimeAStar st_a_star_;
+            vector<vector<int>> mapf_(vector<Agent> &agents, double max_time, ReservationTable &rt);
+            vector<vector<int>> reconstruct_paths(int node_id, Tree& tree);
+            void print_node(Node& node);
+            std::string positions_to_string(vector<int>& positions);
+            double heuristic(vector<int>& positions, vector<Agent> &agents);
+    };
+
+}
