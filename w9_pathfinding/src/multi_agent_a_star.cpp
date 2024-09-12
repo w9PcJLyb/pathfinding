@@ -6,7 +6,7 @@ using std::chrono::duration;
 using std::chrono::high_resolution_clock;
 
 
-maas::State::State(AbsGraph* graph, int node_id, Tree& tree, vector<int>& goal, int time, ReservationTable &rt) {
+maas::MAState::MAState(AbsGraph* graph, int node_id, vector<StandardNode>& tree, vector<int>& goal, int time, ReservationTable &rt) {
     vector<int>& positions = tree[node_id].positions;
 
     neighbors_.resize(positions.size());
@@ -48,7 +48,7 @@ maas::State::State(AbsGraph* graph, int node_id, Tree& tree, vector<int>& goal, 
     }
 }
 
-bool maas::State::update_indexes_() {
+bool maas::MAState::update_indexes_() {
     int i = ids_.size() - 1;
     while (i >= 0) {
         if (ids_[i] < (int)neighbors_[i].size() - 1) {
@@ -64,7 +64,7 @@ bool maas::State::update_indexes_() {
     return false;
 }
 
-pair<vector<int>, double> maas::State::next() {
+pair<vector<int>, double> maas::MAState::next() {
     if (!update_indexes_())
         return {{}, 0};
 
@@ -78,7 +78,7 @@ pair<vector<int>, double> maas::State::next() {
     return {next_positions_, cost};
 }
 
-bool maas::State::allowed(vector<int>& positions, vector<int>& next_positions, bool edge_collision) {
+bool maas::MAState::allowed(vector<int>& positions, vector<int>& next_positions, bool edge_collision) {
     std::unordered_map<int, int> node_to_agent;
     for (size_t i = 0; i < next_positions.size(); i++) {
         int node_id = next_positions[i];
@@ -105,11 +105,11 @@ bool maas::State::allowed(vector<int>& positions, vector<int>& next_positions, b
 maas::MultiAgentAStar::MultiAgentAStar(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
 }
 
-vector<vector<int>> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 1.0, nullptr);
+vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals) {
+    return mapf(starts, goals, 1.0, true, nullptr);
 }
 
-vector<vector<int>> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals, double max_time, const ReservationTable *rt) {
+vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals, double max_time, bool operator_decomposition, const ReservationTable *rt) {
     assert(starts.size() == goals.size());
 
     if (starts.size() == 0)
@@ -128,7 +128,11 @@ vector<vector<int>> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> 
     if (rt)
         reservation_table = *rt;
 
-    auto paths = mapf_(agents, max_time, reservation_table);
+    vector<Path> paths;
+    if (!operator_decomposition)
+        paths = mapf_standard(agents, max_time, reservation_table);
+    else
+        paths = mapf_od(agents, max_time, reservation_table);
 
     if (paths.size() == agents.size()) {
         for (size_t i = 0; i < agents.size(); i++) {
@@ -145,23 +149,45 @@ vector<vector<int>> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> 
     return paths;
 }
 
-vector<vector<int>> maas::MultiAgentAStar::reconstruct_paths(int node_id, Tree& tree) {
-    vector<vector<int>> paths(tree[node_id].positions.size(), vector<int>(0));
+vector<Path> maas::MultiAgentAStar::reconstruct_paths(int node_id, vector<StandardNode>& tree) {
+    int num_agents = tree[node_id].positions.size();
+    vector<Path> paths(num_agents, vector<int>(0));
     while (node_id >= 0) {
-        Node& node = tree[node_id];
-        for (size_t i = 0; i < paths.size(); i++) {
+        StandardNode& node = tree[node_id];
+        for (size_t i = 0; i < paths.size(); i++)
             paths[i].push_back(node.positions[i]);
-        }
         node_id = node.parent;
     }
-    for (vector<int>& path : paths) {
+    for (Path& path : paths)
         std::reverse(path.begin(), path.end());
-    }
     return paths;
 }
 
-void maas::MultiAgentAStar::print_node(Node& node) {
+vector<Path> maas::MultiAgentAStar::reconstruct_paths(int node_id, vector<ODNode>& tree) {
+    int num_agents = tree[node_id].positions.size();
+    vector<Path> paths(num_agents);
+    while (node_id >= 0) {
+        ODNode& node = tree[node_id];
+        for (size_t i = 0; i < paths.size(); i++)
+            paths[i].push_back(node.positions[i]);
+        node_id = node.standard_parent;
+    }
+    for (Path& path : paths)
+        std::reverse(path.begin(), path.end());
+    return paths;
+}
+
+void maas::MultiAgentAStar::print_node(StandardNode& node) {
     cout << "Node: parent=" << node.parent << " distance=" << node.distance;
+    cout << " time=" << node.time << " positions=";
+    for (int x : node.positions) {
+        cout << x << " ";
+    }
+    cout << endl;
+}
+
+void maas::MultiAgentAStar::print_node(ODNode& node) {
+    cout << "Node: parent=" << node.standard_parent << "," <<  node.parent << " distance=" << node.distance;
     cout << " time=" << node.time << " positions=";
     for (int x : node.positions) {
         cout << x << " ";
@@ -187,11 +213,11 @@ double maas::MultiAgentAStar::heuristic(vector<int>& positions, vector<Agent> &a
     return h;
 }
 
-vector<vector<int>> maas::MultiAgentAStar::mapf_(vector<Agent> &agents, double max_time, ReservationTable &rt) {
+vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double max_time, ReservationTable &rt) {
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
-    Tree tree;
+    vector<StandardNode> tree;
     tree.reserve(graph->size());
     std::unordered_map<std::string, double> node_to_distance;
     vector<int> goal;
@@ -204,7 +230,7 @@ vector<vector<int>> maas::MultiAgentAStar::mapf_(vector<Agent> &agents, double m
             goal.push_back(agent.goal);
         }
 
-        Node root(-1, 0, 0, start);
+        StandardNode root(-1, 0, 0, start);
 
         tree.push_back(root);
         openset.push({0, tree.size() - 1});
@@ -215,12 +241,12 @@ vector<vector<int>> maas::MultiAgentAStar::mapf_(vector<Agent> &agents, double m
         auto [f, node_id] = openset.top();
         openset.pop();
  
-        Node node = tree[node_id];
+        StandardNode node = tree[node_id];
 
         if (node.positions == goal)
             return reconstruct_paths(node_id, tree);
 
-        State state(graph, node_id, tree, goal, node.time, rt);
+        MAState state(graph, node_id, tree, goal, node.time, rt);
 
         int counter = 0;
         while (true) {
@@ -246,11 +272,133 @@ vector<vector<int>> maas::MultiAgentAStar::mapf_(vector<Agent> &agents, double m
             if (h < 0)
                 continue;
 
-            Node new_node(node_id, node.time + 1, node.distance + cost, new_positions);
+            StandardNode new_node(node_id, node.time + 1, node.distance + cost, new_positions);
             tree.push_back(new_node);
             openset.push({new_node.distance + h, tree.size() - 1});
             node_to_distance[key] = new_node.distance;
+        }
+    }
 
+    return {};
+}
+
+
+vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_time, ReservationTable &rt) {
+    auto begin_time = high_resolution_clock::now();
+
+    Queue openset;
+    vector<ODNode> tree;
+    tree.reserve(graph->size());
+    std::unordered_map<std::string, double> node_to_distance;
+    vector<int> goal;
+    double pause_action_cost = graph->get_pause_action_cost();
+    bool edge_collision = graph->edge_collision();
+    int num_agents = agents.size();
+
+    {
+        vector<int> start;
+        for (Agent& agent : agents) {
+            start.push_back(agent.start);
+            goal.push_back(agent.goal);
+        }
+
+        ODNode root(-1, -1, 0, 0, start);
+
+        tree.push_back(root);
+        double h = heuristic(start, agents);
+        openset.push({h, tree.size() - 1});
+        node_to_distance[positions_to_string(root.positions)] = 0;
+    }
+
+    while (!openset.empty()) {
+        auto [f, node_id] = openset.top();
+        openset.pop();
+
+        ODNode node = tree[node_id];
+
+        if (node.positions == goal)
+            return reconstruct_paths(node_id, tree);
+
+        if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
+            throw timeout_exception("Timeout");
+
+        int agent_id = node.time % num_agents;
+        int position = node.positions[agent_id];
+        int standard_time = node.time / num_agents;
+
+        std::unordered_set<int> occupied_nodes;
+        if (agent_id == 0 || !edge_collision) {
+            for (int i = 0; i < agent_id; i++)
+                occupied_nodes.insert(node.positions[i]);
+        }
+        else {
+            int standard_node = node_id;
+            while (tree[standard_node].time % num_agents > 0)
+                standard_node = tree[standard_node].parent;
+
+            vector<int>& standard_positions = tree[standard_node].positions;
+            for (int i = 0; i < agent_id; i++) {
+                occupied_nodes.insert(node.positions[i]);
+                if (node.positions[i] == position) {
+                    occupied_nodes.insert(standard_positions[i]);
+                }
+            }
+        }
+
+        int standard_parent = agent_id == 0 ? node_id : node.standard_parent;
+
+        vector<pair<int, double>> movements;
+        if (position == goal[agent_id]) {
+            int waiting_time = 0;
+            int node_id_ = tree[standard_parent].standard_parent;
+            while (node_id_ >= 0 && tree[node_id_].positions[agent_id] == position) {
+                waiting_time++;
+                node_id_ = tree[node_id_].standard_parent;
+            }
+
+            if (!occupied_nodes.count(position))
+                movements.push_back({position, 0});
+
+            for (auto &[n, cost] : graph->get_neighbors(position)) {
+                if (!occupied_nodes.count(n))
+                    movements.push_back({n, cost + waiting_time * pause_action_cost});
+            }
+        }
+        else {
+            if (!occupied_nodes.count(position))
+                movements.push_back({position, pause_action_cost});
+
+            for (auto &[n, cost] : graph->get_neighbors(position)) {
+                if (!occupied_nodes.count(n))
+                    movements.push_back({n, cost});
+            }
+        }
+
+        auto reserved_edges = rt.get_reserved_edges(standard_time, position);
+        for (auto &[n, cost] : movements) {
+            if (rt.is_reserved(standard_time + 1, n) || reserved_edges.count(n))
+                continue;
+
+            vector<int> new_positions = node.positions;
+            new_positions[agent_id] = n;
+
+            double new_distance = node.distance + cost;
+
+            if (agent_id == num_agents - 1) {
+                std::string key = positions_to_string(new_positions);
+                if (node_to_distance.count(key) && new_distance >= node_to_distance[key])
+                    continue;
+
+                node_to_distance[key] = new_distance;
+            }
+
+            double h = heuristic(new_positions, agents);
+            if (h < 0)
+                continue;
+
+            ODNode new_node(node_id, standard_parent, node.time + 1, new_distance, new_positions);
+            tree.push_back(new_node);
+            openset.push({new_distance + h, tree.size() - 1});
         }
     }
 

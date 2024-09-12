@@ -1,9 +1,18 @@
 import unittest
 from collections import defaultdict
 import w9_pathfinding as pf
-from w9_pathfinding import CBS, Graph, Grid, ReservationTable
+from w9_pathfinding import Graph, Grid, ReservationTable
 
-MAPF_ALGORITHMS = [pf.HCAStar, pf.WHCAStar, pf.CBS, pf.MultiAgentAStar]
+COMPLETE_ALGORITHMS = [
+    {"name": "CBS", "class": pf.CBS},
+    {"name": "A*", "class": pf.MultiAgentAStar, "params": {"od": False}},
+    {"name": "A* (OD)", "class": pf.MultiAgentAStar, "params": {"od": True}},
+]
+
+MAPF_ALGORITHMS = [
+    {"name": "HCA*", "class": pf.HCAStar},
+    {"name": "WHCA*", "class": pf.WHCAStar},
+] + COMPLETE_ALGORITHMS
 
 
 def check_paths(graph, paths):
@@ -57,8 +66,8 @@ class TestMAPF(unittest.TestCase):
         goals = [3, 4]
 
         for a in MAPF_ALGORITHMS:
-            with self.subTest(a.__name__):
-                paths = a(graph).mapf(starts, goals)
+            with self.subTest(a["name"]):
+                paths = a["class"](graph).mapf(starts, goals, **a.get("params", {}))
 
                 self.assertTrue(check_paths(graph, paths))
                 for path, goal in zip(paths, goals):
@@ -78,8 +87,8 @@ class TestMAPF(unittest.TestCase):
         goals = [(2, 1), (1, 2)]
 
         for a in MAPF_ALGORITHMS:
-            with self.subTest(a.__name__):
-                paths = a(grid).mapf(starts, goals)
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(starts, goals, **a.get("params", {}))
 
                 self.assertTrue(check_paths(grid, paths))
                 for path, goal in zip(paths, goals):
@@ -98,8 +107,8 @@ class TestMAPF(unittest.TestCase):
         goals = [(2, 0), (1, 0)]
 
         for a in MAPF_ALGORITHMS:
-            with self.subTest(a.__name__):
-                paths = a(grid).mapf(starts, goals)
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(starts, goals, **a.get("params", {}))
 
                 self.assertTrue(check_paths(grid, paths))
                 for path, goal in zip(paths, goals):
@@ -122,17 +131,19 @@ class TestMAPF(unittest.TestCase):
         rt.add_path(reserved_path)
 
         for a in MAPF_ALGORITHMS:
-            with self.subTest(a.__name__):
-                paths = a(grid).mapf(starts, goals, reservation_table=rt)
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(
+                    starts, goals, reservation_table=rt, **a.get("params", {})
+                )
                 self.assertTrue(check_paths(grid, paths + [reserved_path]))
                 for path, goal in zip(paths, goals):
                     self.assertLessEqual(len(path), 6)
                     self.assertEqual(path[-1], goal)
 
 
-class TestCBS(unittest.TestCase):
+class TestComplete(unittest.TestCase):
     """
-    pytest tests/test_mapf.py::TestCBS
+    pytest tests/test_mapf.py::TestComplete
     """
 
     def test_edge_collision(self):
@@ -149,12 +160,15 @@ class TestCBS(unittest.TestCase):
         starts = [(0, 0), (6, 0)]
         goals = [(5, 0), (1, 0)]
 
-        paths = CBS(grid).mapf(starts, goals)
-        self.assertEqual(len(paths), 2)
-        self.assertTrue(check_paths(grid, paths))
-        for path, goal in zip(paths, goals):
-            self.assertLessEqual(len(path), 8)
-            self.assertEqual(path[-1], goal)
+        for a in COMPLETE_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(starts, goals, **a.get("params", {}))
+
+                self.assertEqual(len(paths), 2)
+                self.assertTrue(check_paths(grid, paths))
+                for path, goal in zip(paths, goals):
+                    self.assertLessEqual(len(path), 8)
+                    self.assertEqual(path[-1], goal)
 
     def test_edge_collision_2(self):
         """
@@ -170,12 +184,17 @@ class TestCBS(unittest.TestCase):
         starts = [(0, 0), (1, 0)]
         goals = [(3, 0), (2, 0)]
 
-        paths = CBS(grid).mapf(starts, goals, max_time=10)
-        self.assertEqual(len(paths), 2)
-        self.assertTrue(check_paths(grid, paths))
-        for path, goal in zip(paths, goals):
-            self.assertLessEqual(len(path), 8)
-            self.assertEqual(path[-1], goal)
+        for a in COMPLETE_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(
+                    starts, goals, max_time=10, **a.get("params", {})
+                )
+
+                self.assertEqual(len(paths), 2)
+                self.assertTrue(check_paths(grid, paths))
+                for path, goal in zip(paths, goals):
+                    self.assertLessEqual(len(path), 8)
+                    self.assertEqual(path[-1], goal)
 
     def test_edge_collision_3(self):
         """
@@ -191,12 +210,17 @@ class TestCBS(unittest.TestCase):
         starts = [(0, 0), (3, 0)]
         goals = [(2, 0), (1, 0)]
 
-        paths = CBS(grid).mapf(starts, goals, max_time=10)
-        self.assertEqual(len(paths), 2)
-        self.assertTrue(check_paths(grid, paths))
-        for path, goal in zip(paths, goals):
-            self.assertLessEqual(len(path), 9)
-            self.assertEqual(path[-1], goal)
+        for a in COMPLETE_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(
+                    starts, goals, max_time=10, **a.get("params", {})
+                )
+
+                self.assertEqual(len(paths), 2)
+                self.assertTrue(check_paths(grid, paths))
+                for path, goal in zip(paths, goals):
+                    self.assertLessEqual(len(path), 9)
+                    self.assertEqual(path[-1], goal)
 
     def test_with_three_agents(self):
         """
@@ -208,9 +232,51 @@ class TestCBS(unittest.TestCase):
         grid = Grid([[1, 1, 1], [-1, 1, 1]], edge_collision=True)
         starts, goals = ((2, 0), (0, 0), (1, 0)), ((0, 0), (2, 1), (1, 1))
 
-        paths = CBS(grid).mapf(starts, goals, max_time=10)
-        self.assertEqual(len(paths), 3)
-        self.assertTrue(check_paths(grid, paths))
-        for path, goal in zip(paths, goals):
-            self.assertLessEqual(len(path), 5)
-            self.assertEqual(path[-1], goal)
+        for a in COMPLETE_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(
+                    starts, goals, max_time=10, **a.get("params", {})
+                )
+
+                self.assertEqual(len(paths), 3)
+                self.assertTrue(check_paths(grid, paths))
+                for path, goal in zip(paths, goals):
+                    self.assertLessEqual(len(path), 5)
+                    self.assertEqual(path[-1], goal)
+
+    def test_optimality(self):
+        """
+        + - - - - +
+        |         |
+        |     #   |
+        |         |
+        | # #     |
+        + - - - - +
+        """
+        grid = Grid(
+            [
+                [1.0, 1.0, 1.0, 1.0],
+                [1.0, 1.0, -1.0, 1.0],
+                [1.0, 1.0, 1.0, 1.0],
+                [-1.0, -1.0, 1.0, 1.0],
+            ],
+            edge_collision=True,
+        )
+        starts, goals = ((3, 3), (1, 0), (1, 1)), ((3, 2), (1, 0), (3, 1))
+
+        for a in COMPLETE_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(
+                    starts, goals, max_time=10, **a.get("params", {})
+                )
+                self.assertEqual(len(paths), 3)
+                self.assertTrue(check_paths(grid, paths))
+
+                self.assertListEqual(
+                    paths,
+                    [
+                        [(3, 3), (3, 2)],
+                        [(1, 0), (0, 0), (1, 0)],
+                        [(1, 1), (1, 0), (2, 0), (3, 0), (3, 1)],
+                    ],
+                )

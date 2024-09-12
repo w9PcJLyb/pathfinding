@@ -1,7 +1,7 @@
 #include "include/core.h"
 
 
-double AbsGraph::calculate_cost(vector<int> &path) {
+double AbsGraph::calculate_cost(Path& path) {
     if (path.size() <= 1)
         return 0;
 

@@ -1225,11 +1225,13 @@ cdef class MultiAgentAStar(_AbsMAPF):
         vector[int] starts,
         vector[int] goals,
         double max_time=1,
+        bool od=True,  # Operator Decomposition
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
             starts,
             goals,
             max_time,
+            od,
             self._to_crt(reservation_table),
         )

@@ -8,7 +8,7 @@ Pathfinding is the problem of finding the best route between two points.
 
 There are several pathfinding algorithms available here. Some algorithms do not guarantee that they will find the shortest path. Some algorithms can find the shortest path only on an unweighted graph.
 
-| Algorithm   | Class name  | Finds the shortest path on an unweighted graph | Finds the shortest path on a weighted graph |
+| Algorithm   | Class name  | Shortest path in an unweighted graph | Shortest path in a weighted graph |
 | ----------- | ----------- |----------- | ----------- |
 | Depth-first search | DFS | False | False |
 | Best-first search | GBS | False | False |
@@ -51,9 +51,14 @@ Multi-Agent Path Finding (MAPF) is the problem of finding collision-free paths f
 
 Currently implemented:
 
-- HCAStar - Hierarchical Cooperative A*
-- WHCAStar - Windowed Hierarchical Cooperative A*
-- CBS - Conflict Based Search
+| Algorithm | Class name | Optimal | Complete |
+| ----------- | ----------- |----------- | ----------- |
+| Hierarchical Cooperative A* | HCAStar | False | False |
+| Windowed Hierarchical Cooperative A* | WHCAStar | False | False |
+| Conflict Based Search | CBS | True | True |
+| A* with Operator Decomposition | MultiAgentAStar | True | True |
+
+Here optimality means that the algorithm can find the optimal solution in terms of Sum-of-costs function.
 
 Example:
 

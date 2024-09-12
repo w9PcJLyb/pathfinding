@@ -15,6 +15,8 @@ using std::pair;
 using std::vector;
 using std::priority_queue;
 
+typedef vector<int> Path;
+
 
 class AbsGraph {
     public:
@@ -32,7 +34,7 @@ class AbsGraph {
 
         // returns a cost of moving along the path
         // returns -1 if the path is not possible
-        double calculate_cost(vector<int> &path);
+        double calculate_cost(Path& path);
 
         // returns connected components in an undirected graph
         virtual vector<vector<int>> find_components();
@@ -91,7 +93,7 @@ class AbsPathFinder {
     public:
         AbsPathFinder() {};
         virtual ~AbsPathFinder() {};
-        virtual vector<int> find_path(int start, int end) = 0;
+        virtual Path find_path(int start, int end) = 0;
 };
 
 
@@ -99,7 +101,7 @@ class AbsMAPF {
     public:
         AbsMAPF() {};
         virtual ~AbsMAPF() {};
-        virtual vector<vector<int>> mapf(vector<int> starts, vector<int> goals) = 0;
+        virtual vector<Path> mapf(vector<int> starts, vector<int> goals) = 0;
 };
 
 

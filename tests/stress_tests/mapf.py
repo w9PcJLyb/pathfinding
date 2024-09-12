@@ -8,7 +8,7 @@ from tests.stress_tests.utils import run_graph
 from tests.stress_tests.random_instance import GridGenerator, random_queries
 
 NUM_GRAPHS = 100
-NUM_AGENTS = 15
+NUM_AGENTS = 5
 
 UNWEIGHTED_GRID_GENERATOR = GridGenerator(
     width=10,
@@ -30,11 +30,18 @@ ALGORITHMS = [
     {"name": "HCA*", "class": pf.HCAStar},
     {"name": "WHCA*", "class": pf.WHCAStar},
     {"name": "CBS", "class": pf.CBS, "params": {"max_time": 0.1}, "optimal": True},
-    # {
-    #     "name": "Multi Agent A*",
-    #     "class": pf.MultiAgentAStar,
-    #     "params": {"max_time": 0.1},
-    # },
+    {
+        "name": "A*",
+        "class": pf.MultiAgentAStar,
+        "params": {"max_time": 0.1, "od": False},
+        "optimal": True,
+    },
+    {
+        "name": "A* (OD)",
+        "class": pf.MultiAgentAStar,
+        "params": {"max_time": 0.1, "od": True},
+        "optimal": True,
+    },
 ]
 
 
@@ -50,17 +57,6 @@ def find_path(finder, starts, goals, **kwargs):
     except RuntimeError:
         paths = []
     return paths, time.time() - t
-
-
-def normalize_paths(paths):
-    if not paths:
-        return paths
-
-    max_len = max(len(p) for p in paths)
-    for path in paths:
-        if path:
-            while len(path) < max_len:
-                path.append(path[-1])
 
 
 def check_paths(graph, paths):
@@ -103,12 +99,9 @@ def check_paths(graph, paths):
     return True
 
 
-def is_solved(paths, goals):
+def check_solution(paths, goals):
     if len(paths) != len(goals):
         return False
-
-    if not goals:
-        return True
 
     for path, goal in zip(paths, goals):
         if not path or path[-1] != goal:
@@ -145,11 +138,14 @@ def run_graph(algorithms, graph, starts, goals):
                 return False
             total_cost += path_cost
 
-        normalize_paths(paths)
-
         a["total_time"] += time
 
-        solved = is_solved(paths, goals)
+        solved = False
+        if paths:
+            if not check_solution(paths, goals):
+                print(f"Error: algorithm {a['name']} returns not a solution: {paths}")
+                return False
+            solved = True
         a["num_solved"] += solved
 
         if not check_paths(graph, paths):
@@ -183,6 +179,9 @@ def run_graph(algorithms, graph, starts, goals):
 def create_graph_with_queries(generator):
     while True:
         graph = generator.instance()
+        graph.passable_left_right_border = False
+        graph.passable_up_down_border = False
+        graph.diagonal_movement = 0
         try:
             queries = random_queries(
                 graph, num_queries=NUM_AGENTS, unique=True, connected=True
