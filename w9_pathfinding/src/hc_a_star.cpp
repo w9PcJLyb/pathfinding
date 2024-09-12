@@ -28,7 +28,7 @@ vector<vector<int>> HCAStar::mapf(
     vector<vector<int>> paths;
     for (size_t i = 0; i < starts.size(); i++) {
         vector<int> path = st_a_star_.find_path(starts[i], goals[i], search_depth, &reservation_table);
-        if (path.empty())
+        if (path.empty() || path.back() != goals[i])
             return {};
         paths.push_back(path);
         reservation_table.add_path(0, path, true, edge_collision);
