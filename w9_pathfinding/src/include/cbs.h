@@ -15,6 +15,7 @@ class CBS : public AbsMAPF {
         ResumableSearch *rrs;
 
         Agent(int start, int goal, ResumableSearch *rrs) : start(start), goal(goal), rrs(rrs) {};
+        ~Agent() {delete rrs;};
     };
 
     struct Conflict {

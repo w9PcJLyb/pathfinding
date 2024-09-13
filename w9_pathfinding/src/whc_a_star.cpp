@@ -25,17 +25,15 @@ vector<vector<int>> WHCAStar::mapf(
         reservation_table = *rt;
 
     vector<Agent> agents;
+    agents.reserve(starts.size());
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
         int goal = goals[agent_id];
-        agents.push_back({start, goal, st_a_star_.reverse_resumable_search(goal)});
+        agents.emplace_back(start, goal, st_a_star_.reverse_resumable_search(goal));
         reservation_table.add_vertex_constraint(0, start);
     }
 
     auto paths = mapf_(agents, search_depth, window_size, reservation_table);
-
-    for (auto &agent: agents)
-        delete agent.rrs;
 
     return paths;
 }

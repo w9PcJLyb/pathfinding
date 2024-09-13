@@ -116,10 +116,11 @@ vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals, 
         return {};
 
     vector<Agent> agents;
+    agents.reserve(starts.size());
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
         int goal = goals[agent_id];
-        agents.push_back({start, goal, st_a_star_.reverse_resumable_search(goal)});
+        agents.emplace_back(start, goal, st_a_star_.reverse_resumable_search(goal));
         if (agents.back().rrs->distance(start) == -1)
             return {};
     }
@@ -142,9 +143,6 @@ vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals, 
                 path.pop_back();
         }
     }
-
-    for (Agent &agent: agents)
-        delete agent.rrs;
 
     return paths;
 }

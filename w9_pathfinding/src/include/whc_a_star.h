@@ -19,6 +19,7 @@ class WHCAStar : public AbsMAPF {
         Agent(int start, int goal, ResumableSearch *rrs) : start(start), goal(goal), rrs(rrs) {
             full_path.push_back(start);
         }
+        ~Agent() {delete rrs;};
 
         bool is_moving(size_t time) {
             return time < full_path.size() - 1;
