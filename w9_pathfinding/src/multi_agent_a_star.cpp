@@ -6,7 +6,7 @@ using std::chrono::duration;
 using std::chrono::high_resolution_clock;
 
 
-maas::MAState::MAState(AbsGraph* graph, int node_id, vector<StandardNode>& tree, vector<int>& goal, int time, ReservationTable &rt) {
+maas::MAState::MAState(AbsGraph* graph, int node_id, Tree& tree, vector<int>& goal, int time, ReservationTable &rt) {
     vector<int>& positions = tree[node_id].positions;
 
     neighbors_.resize(positions.size());
@@ -147,11 +147,11 @@ vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals, 
     return paths;
 }
 
-vector<Path> maas::MultiAgentAStar::reconstruct_paths(int node_id, vector<StandardNode>& tree) {
+vector<Path> maas::MultiAgentAStar::reconstruct_paths(int node_id, Tree& tree) {
     int num_agents = tree[node_id].positions.size();
     vector<Path> paths(num_agents, vector<int>(0));
     while (node_id >= 0) {
-        StandardNode& node = tree[node_id];
+        Node& node = tree[node_id];
         for (size_t i = 0; i < paths.size(); i++)
             paths[i].push_back(node.positions[i]);
         node_id = node.parent;
@@ -161,21 +161,7 @@ vector<Path> maas::MultiAgentAStar::reconstruct_paths(int node_id, vector<Standa
     return paths;
 }
 
-vector<Path> maas::MultiAgentAStar::reconstruct_paths(int node_id, vector<ODNode>& tree) {
-    int num_agents = tree[node_id].positions.size();
-    vector<Path> paths(num_agents);
-    while (node_id >= 0) {
-        ODNode& node = tree[node_id];
-        for (size_t i = 0; i < paths.size(); i++)
-            paths[i].push_back(node.positions[i]);
-        node_id = node.standard_parent;
-    }
-    for (Path& path : paths)
-        std::reverse(path.begin(), path.end());
-    return paths;
-}
-
-void maas::MultiAgentAStar::print_node(StandardNode& node) {
+void maas::MultiAgentAStar::print_node(Node& node) {
     cout << "Node: parent=" << node.parent << " distance=" << node.distance;
     cout << " time=" << node.time << " positions=";
     for (int x : node.positions) {
@@ -184,19 +170,23 @@ void maas::MultiAgentAStar::print_node(StandardNode& node) {
     cout << endl;
 }
 
-void maas::MultiAgentAStar::print_node(ODNode& node) {
-    cout << "Node: parent=" << node.standard_parent << "," <<  node.parent << " distance=" << node.distance;
-    cout << " time=" << node.time << " positions=";
-    for (int x : node.positions) {
-        cout << x << " ";
-    }
-    cout << endl;
-}
-
-std::string maas::MultiAgentAStar::positions_to_string(vector<int>& positions) {
+std::string maas::MultiAgentAStar::positions_to_string(vector<int>& positions, vector<int>& goal, int node_id, Tree& tree) {
     std::string s;
-    for (int p : positions)
+    for (size_t i = 0; i < positions.size(); i++) {
+        int p = positions[i];
         s += std::to_string(p) + "_";
+        if (p == goal[i]) {
+            int waiting_time = 0;
+            while (node_id >= 0 && tree[node_id].positions[i] == p) {
+                waiting_time++;
+                node_id = tree[node_id].parent;
+            }
+            s += std::to_string(waiting_time) + "_";
+        }
+        else {
+            s += "__";
+        }
+    }
     return s;
 }
 
@@ -215,7 +205,7 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
-    vector<StandardNode> tree;
+    Tree tree;
     tree.reserve(graph->size());
     std::unordered_map<std::string, double> node_to_distance;
     vector<int> goal;
@@ -228,18 +218,18 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
             goal.push_back(agent.goal);
         }
 
-        StandardNode root(-1, 0, 0, start);
+        Node root(-1, 0, 0, start);
 
         tree.push_back(root);
         openset.push({0, tree.size() - 1});
-        node_to_distance[positions_to_string(root.positions)] = 0;
+        node_to_distance[positions_to_string(root.positions, goal, -1, tree)] = 0;
     }
 
     while (!openset.empty()) {
         auto [f, node_id] = openset.top();
         openset.pop();
  
-        StandardNode node = tree[node_id];
+        Node node = tree[node_id];
 
         if (node.positions == goal)
             return reconstruct_paths(node_id, tree);
@@ -259,7 +249,7 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
             if (new_positions.empty())
                 break;
 
-            std::string key = positions_to_string(new_positions);
+            std::string key = positions_to_string(new_positions, goal, node_id, tree);
             if (node_to_distance.count(key) && node.distance + cost >= node_to_distance[key])
                 continue;
 
@@ -270,7 +260,7 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
             if (h < 0)
                 continue;
 
-            StandardNode new_node(node_id, node.time + 1, node.distance + cost, new_positions);
+            Node new_node(node_id, node.time + 1, node.distance + cost, new_positions);
             tree.push_back(new_node);
             openset.push({new_node.distance + h, tree.size() - 1});
             node_to_distance[key] = new_node.distance;
@@ -285,7 +275,7 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
-    vector<ODNode> tree;
+    Tree tree;
     tree.reserve(graph->size());
     std::unordered_map<std::string, double> node_to_distance;
     vector<int> goal;
@@ -300,19 +290,19 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
             goal.push_back(agent.goal);
         }
 
-        ODNode root(-1, -1, 0, 0, start);
+        Node root(-1, 0, 0, start);
 
         tree.push_back(root);
         double h = heuristic(start, agents);
         openset.push({h, tree.size() - 1});
-        node_to_distance[positions_to_string(root.positions)] = 0;
+        node_to_distance[positions_to_string(root.positions, goal, -1, tree)] = 0;
     }
 
     while (!openset.empty()) {
         auto [f, node_id] = openset.top();
         openset.pop();
 
-        ODNode node = tree[node_id];
+        Node node = tree[node_id];
 
         if (node.positions == goal)
             return reconstruct_paths(node_id, tree);
@@ -343,15 +333,15 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
             }
         }
 
-        int standard_parent = agent_id == 0 ? node_id : node.standard_parent;
+        int parent = agent_id == 0 ? node_id : node.parent;
 
         vector<pair<int, double>> movements;
         if (position == goal[agent_id]) {
             int waiting_time = 0;
-            int node_id_ = tree[standard_parent].standard_parent;
+            int node_id_ = tree[parent].parent;
             while (node_id_ >= 0 && tree[node_id_].positions[agent_id] == position) {
                 waiting_time++;
-                node_id_ = tree[node_id_].standard_parent;
+                node_id_ = tree[node_id_].parent;
             }
 
             if (!occupied_nodes.count(position))
@@ -383,7 +373,7 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
             double new_distance = node.distance + cost;
 
             if (agent_id == num_agents - 1) {
-                std::string key = positions_to_string(new_positions);
+                std::string key = positions_to_string(new_positions, goal, parent, tree);
                 if (node_to_distance.count(key) && new_distance >= node_to_distance[key])
                     continue;
 
@@ -394,7 +384,7 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
             if (h < 0)
                 continue;
 
-            ODNode new_node(node_id, standard_parent, node.time + 1, new_distance, new_positions);
+            Node new_node(parent, node.time + 1, new_distance, new_positions);
             tree.push_back(new_node);
             openset.push({new_distance + h, tree.size() - 1});
         }

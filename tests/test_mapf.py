@@ -280,3 +280,43 @@ class TestComplete(unittest.TestCase):
                         [(1, 1), (1, 0), (2, 0), (3, 0), (3, 1)],
                     ],
                 )
+
+    def test_optimality_2(self):
+        """
+        + - - - - +
+        |         |
+        | #       |
+        |       # |
+        | #   # # |
+        + - - - - +
+        """
+
+        grid = Grid(
+            [
+                [1.0, 1.0, 1.0, 1.0],
+                [-1.0, 1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0, -1.0],
+                [-1.0, 1.0, -1.0, -1.0],
+            ],
+            edge_collision=True,
+        )
+        starts = ((0, 0), (2, 0), (2, 2), (3, 0))
+        goals = ((1, 0), (0, 2), (2, 1), (0, 0))
+
+        for a in COMPLETE_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(
+                    starts, goals, max_time=10, **a.get("params", {})
+                )
+                self.assertEqual(len(paths), 4)
+                self.assertTrue(check_paths(grid, paths))
+
+                self.assertListEqual(
+                    paths,
+                    [
+                        [(0, 0), (0, 0), (1, 0), (1, 1), (1, 0)],
+                        [(2, 0), (1, 0), (1, 1), (1, 2), (0, 2)],
+                        [(2, 2), (2, 1)],
+                        [(3, 0), (2, 0), (2, 0), (1, 0), (0, 0)],
+                    ],
+                )
