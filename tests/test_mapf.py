@@ -140,6 +140,21 @@ class TestMAPF(unittest.TestCase):
                     self.assertLessEqual(len(path), 6)
                     self.assertEqual(path[-1], goal)
 
+    def test_search_depth(self):
+        grid = Grid(width=10, height=10, edge_collision=True)
+        starts = [(0, 0)]
+        goals = [(0, 9)]
+
+        for a in [pf.CBS, pf.HCAStar, pf.WHCAStar]:
+            for d in (5, 100):
+                with self.subTest(f"{a.__name__}(search_depth={d})"):
+                    paths = a(grid).mapf(starts, goals, search_depth=d)
+                    if d < 9:
+                        self.assertEqual(len(paths), 0)
+                    else:
+                        self.assertEqual(len(paths), 1)
+                        self.assertEqual(paths[0][-1], goals[0])
+
 
 class TestComplete(unittest.TestCase):
     """

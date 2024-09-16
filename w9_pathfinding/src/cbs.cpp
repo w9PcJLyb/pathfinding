@@ -201,8 +201,10 @@ vector<vector<int>> CBS::mapf_(
         double total_cost = 0;
         for (size_t i = 0; i < agents.size(); i++) {
             auto [path, cost] = low_level(agents[i], rt, search_depth);
-            if (cost == -1)
+            if (path.empty() || path.back() != agents[i].goal) {
+                // there is no path from start to goal, or the path length is greater than search_depth
                 return {};
+            }
 
             root.solutions.push_back(path);
             root.costs.push_back(cost);
@@ -216,6 +218,7 @@ vector<vector<int>> CBS::mapf_(
     while (!openset.empty()) {
         auto [cost, node_id] = openset.top();
         openset.pop();
+
 
         vector<Conflict> conflicts = find_conflict(tree[node_id].solutions);
         if (conflicts.empty())
