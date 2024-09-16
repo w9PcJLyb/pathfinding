@@ -20,30 +20,15 @@ pair<vector<int>, double> CBS::low_level(Agent &agent, ReservationTable &rt, int
 }
 
 void CBS::print_node(CTNode &node) {
-    cout << "Node: parent=" << node.parent << " solution=";
-    size_t t = 0;
-    while (true) {
-        bool end = true;
-        std::string s;
-        for (auto &path : node.solutions) {
-            if (t < path.size()) {
-                s += std::to_string(path[t]) + " ";
-                end = false;
-            }
-            else
-                s += "- ";
-        }
-        if (end)
-            break;
-        s.pop_back();
-        cout << "(" << s << ") ";
-        t++;
-    }
-    cout << " costs=";
+    cout << "Node: parent=" << node.parent << ", costs=";
     for (auto x : node.costs) {
-        cout << x << " ";
+        cout << x << ",";
     }
-    cout << endl;
+    cout << " solutions:" << endl;
+    for (auto & path : node.solutions) {
+        cout << " - ";
+        graph->print_path(path);
+    }
 }
 
 void CBS::print_conflict(Conflict &r) {

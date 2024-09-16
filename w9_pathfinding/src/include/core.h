@@ -45,6 +45,9 @@ class AbsGraph {
         // returns true if there is a path of length 1 from vertex v1 to vertex v2
         virtual bool adjacent(int v1, int v2);
 
+        virtual std::string node_to_string(int v) const;
+        void print_path(Path& path) const;
+
     private:
         vector<int> find_component_(vector<bool> &visited, int start);
 

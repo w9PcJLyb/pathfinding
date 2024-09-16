@@ -20,8 +20,11 @@ class Grid3D : public AbsGrid {
             bool operator == (const Point& p) const {
                 return x == p.x && y == p.y && z == p.z;
             }
+            std::string to_string() const {
+                return "(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")";
+            }
             friend std::ostream& operator << (std::ostream& os, const Point& p) {
-                os << "(" << p.x << ", " << p.y << ", " << p.z << ")";
+                os << p.to_string();
                 return os;
             }
         };
@@ -39,6 +42,7 @@ class Grid3D : public AbsGrid {
         bool is_inside(const Point &p) const;
         vector<pair<int, double>> get_neighbors(int node, bool reversed=false);
         double estimate_distance(int v1, int v2) const;
+        std::string node_to_string(int v) const;
 
     private:
         const vector<Point> directions_ = {

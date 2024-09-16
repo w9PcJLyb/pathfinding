@@ -112,3 +112,7 @@ double Grid3D::estimate_distance(int v1, int v2) const {
 
     return min_weight_ * (dx + dy + dz);
 }
+
+std::string Grid3D::node_to_string(int v) const {
+    return get_coordinates(v).to_string();
+}

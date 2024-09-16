@@ -164,10 +164,7 @@ vector<Path> maas::MultiAgentAStar::reconstruct_paths(int node_id, Tree& tree) {
 void maas::MultiAgentAStar::print_node(Node& node) {
     cout << "Node: parent=" << node.parent << " distance=" << node.distance;
     cout << " time=" << node.time << " positions=";
-    for (int x : node.positions) {
-        cout << x << " ";
-    }
-    cout << endl;
+    graph->print_path(node.positions);
 }
 
 std::string maas::MultiAgentAStar::positions_to_string(vector<int>& positions, vector<int>& goal, int node_id, Tree& tree) {

@@ -111,3 +111,6 @@ double HexGrid::estimate_distance(int v1, int v2) const {
     return min_weight_ * std::max(dx, dy);  // not as tight as possible
 }
 
+std::string HexGrid::node_to_string(int v) const {
+    return get_coordinates(v).to_string();
+}

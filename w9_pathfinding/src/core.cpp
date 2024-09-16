@@ -169,6 +169,20 @@ bool AbsGraph::adjacent(int v1, int v2) {
     return false;
 }
 
+std::string AbsGraph::node_to_string(int v) const {
+    return std::to_string(v);
+}
+
+void AbsGraph::print_path(Path& path) const {
+    std::string s;
+    for (int node_id : path) {
+        if(!s.empty())
+            s += ", ";
+        s += node_to_string(node_id);
+    }
+    cout << "[" << s << "]" << endl;
+}
+
 void AbsGraph::set_pause_action_cost(double cost) {
     if (cost < 0)
         throw std::invalid_argument("Pause action cost must be non-negative");

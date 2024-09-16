@@ -8,7 +8,7 @@ class HexGrid : public AbsGrid {
     /*
     Hexagonal Grid
 
-    For example, 4x3 hex grid with “odd-r” layout:
+    Example of 4x3 hex grid with “odd-r” layout:
 
        / \     / \     / \     / \
      /     \ /     \ /     \ /     \
@@ -41,8 +41,11 @@ class HexGrid : public AbsGrid {
             bool operator == (const Point& p) const {
                 return x == p.x && y == p.y;
             }
+            std::string to_string() const {
+                return "(" + std::to_string(x) + ", " + std::to_string(y) + ")";
+            }
             friend std::ostream& operator << (std::ostream& os, const Point& p) {
-                os << "(" << p.x << ", " << p.y << ")";
+                os << p.to_string();
                 return os;
             }
         };
@@ -68,6 +71,7 @@ class HexGrid : public AbsGrid {
         int get_node_id(const Point &p) const;
         Point get_coordinates(int node) const;
         double estimate_distance(int v1, int v2) const;
+        std::string node_to_string(int v) const;
 
     private:
         // pointy top: odd-r or even-r

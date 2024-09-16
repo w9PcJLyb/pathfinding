@@ -168,3 +168,7 @@ double Grid::estimate_distance(int v1, int v2) const {
         return min_weight_ * (dy + dx * (diagonal_movement_cost_multiplier - 1));
     }
 }
+
+std::string Grid::node_to_string(int v) const {
+    return get_coordinates(v).to_string();
+}
