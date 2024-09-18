@@ -1,7 +1,6 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 
 from Cython.Build import cythonize
-from distutils.extension import Extension
 
 ext_modules = [
     Extension(
@@ -9,7 +8,7 @@ ext_modules = [
         sources=["w9_pathfinding/wrapper.pyx"],
         language="c++",
         extra_compile_args=["-std=c++17"],
-   )
+    )
 ]
 
 setup(
