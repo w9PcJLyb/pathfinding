@@ -27,20 +27,23 @@ WEIGHTED_GRID_GENERATOR = GridGenerator(
 )
 
 ALGORITHMS = [
-    {"name": "HCA*", "class": pf.HCAStar},
-    {"name": "WHCA*", "class": pf.WHCAStar},
-    {"name": "CBS", "class": pf.CBS, "params": {"max_time": 0.1}, "optimal": True},
+    {"name": "HCA*", "class": pf.HCAStar, "unw": 0, "w": 0},
+    {"name": "WHCA*", "class": pf.WHCAStar, "unw": 0, "w": 0},
+    {"name": "CBS", "class": pf.CBS, "params": {"max_time": 0.1}, "unw": 1, "w": 1},
+    {"name": "ICTS", "class": pf.ICTS, "params": {"max_time": 0.1}, "unw": 1, "w": 0},
     {
         "name": "A*",
         "class": pf.MultiAgentAStar,
         "params": {"max_time": 0.1, "od": False},
-        "optimal": True,
+        "unw": 1,
+        "w": 1,
     },
     {
         "name": "A* (OD)",
         "class": pf.MultiAgentAStar,
         "params": {"max_time": 0.1, "od": True},
-        "optimal": True,
+        "unw": 1,
+        "w": 1,
     },
 ]
 
@@ -200,11 +203,14 @@ def stress_test(weighted=False, edge_collision=True):
     if not weighted:
         print(f"\nStress test with unweighted grid...")
         generator = UNWEIGHTED_GRID_GENERATOR
+        optimal_flag = "unw"
     else:
         print(f"\nStress test with weighted grid...")
         generator = WEIGHTED_GRID_GENERATOR
+        optimal_flag = "w"
 
     for a in algorithms:
+        a["optimal"] = a[optimal_flag]
         a["total_time"] = 0
         a["total_cost"] = 0
         a["num_solved"] = 0

@@ -26,6 +26,7 @@ from w9_pathfinding.cdefs cimport (
     HCAStar as CHCAStar,
     WHCAStar as CWHCAStar,
     CBS as CCBS,
+    ICTS as CICTS,
     MultiAgentAStar as CMultiAgentAStar,
 )
 from w9_pathfinding.hex_layout import HexLayout
@@ -1185,6 +1186,35 @@ cdef class CBS(_AbsMAPF):
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
         self._obj = new CCBS(graph._baseobj)
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        del self._obj
+
+    @_mapf
+    def mapf(
+        self,
+        vector[int] starts,
+        vector[int] goals,
+        int search_depth=100,
+        double max_time=1,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.mapf(
+            starts,
+            goals,
+            search_depth,
+            max_time,
+            self._to_crt(reservation_table),
+        )
+
+
+cdef class ICTS(_AbsMAPF):
+    cdef CICTS* _obj
+
+    def __cinit__(self, _AbsGraph graph):
+        self.graph = graph
+        self._obj = new CICTS(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):

@@ -19,6 +19,7 @@ from .cpf import (
     HCAStar,
     WHCAStar,
     CBS,
+    ICTS,
     MultiAgentAStar,
 )
 from .diagonal_movement import DiagonalMovement

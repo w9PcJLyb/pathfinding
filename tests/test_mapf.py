@@ -5,6 +5,7 @@ from w9_pathfinding import Graph, Grid, ReservationTable
 
 COMPLETE_ALGORITHMS = [
     {"name": "CBS", "class": pf.CBS},
+    {"name": "ICTS", "class": pf.ICTS},
     {"name": "A*", "class": pf.MultiAgentAStar, "params": {"od": False}},
     {"name": "A* (OD)", "class": pf.MultiAgentAStar, "params": {"od": True}},
 ]

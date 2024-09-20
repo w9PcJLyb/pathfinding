@@ -56,6 +56,7 @@ Currently implemented:
 | Hierarchical Cooperative A* | HCAStar | False | False |
 | Windowed Hierarchical Cooperative A* | WHCAStar | False | False |
 | Conflict Based Search | CBS | True | True |
+| Increasing Cost Tree Search | ICTS | True (only in an unweighted graph) | True |
 | A* with Operator Decomposition | MultiAgentAStar | True | True |
 
 Here optimality means that the algorithm can find the optimal solution in terms of Sum-of-costs function.

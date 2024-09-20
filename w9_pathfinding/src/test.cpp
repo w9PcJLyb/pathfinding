@@ -15,21 +15,8 @@
 #include "include/cbs.h"
 #include "include/ida_star.h"
 #include "include/multi_agent_a_star.h"
+#include "include/icts.h"
 
-
-void print_path(vector<int> nodes) {
-    for (int node_id: nodes) {
-       cout << node_id << " ";
-    }
-    cout << endl;
-}
-
-void print_path(Grid &grid, vector<int> nodes) {
-    for (int node_id: nodes) {
-       cout << grid.get_coordinates(node_id) << " ";
-    }
-    cout << endl;
-}
 
 void test_graph() {
     cout << "\nTest graph" << endl;
@@ -73,7 +60,7 @@ void test_graph() {
     for (auto &[name, finder] : finders) {
         vector<int> path = finder->find_path(start_node, end_node);
         cout << name << ": ";
-        print_path(path);
+        graph.print_path(path);
     }
 }
 
@@ -137,26 +124,26 @@ void test_grid() {
     for (auto &[name, finder] : finders) {
         path = finder->find_path(start_node, end_node);
         cout << name << ": ";
-        print_path(grid, path);
+        grid.print_path(path);
     }
 
     cout << "\nSet passable_left_right_border = true" << endl;
     grid.passable_left_right_border = true;
     path = astar.find_path(start_node, end_node);
     cout << "A*: ";
-    print_path(grid, path);
+    grid.print_path(path);
 
     cout << "\nSet diagonal_movement = 3 (always)" << endl;
     grid.set_diagonal_movement(3);
     path = astar.find_path(start_node, end_node);
     cout << "A*: ";
-    print_path(grid, path);
+    grid.print_path(path);
 
     cout << "\nSet passable_up_down_border = true" << endl;
     grid.passable_up_down_border = true;
     path = astar.find_path(start_node, end_node);
     cout << "A*: ";
-    print_path(grid, path);
+    grid.print_path(path);
 }
 
 void test_mapf() {
@@ -175,12 +162,14 @@ void test_mapf() {
     HCAStar hc_astar(&graph);
     WHCAStar whc_astar(&graph);
     CBS cbs(&graph);
-    MultiAgentAStar maastar(&graph);
+    maas::MultiAgentAStar maastar(&graph);
+    icts::ICTS icts_alg(&graph);
 
     vector<pair<std::string, AbsMAPF*>> finders = {
         {"HCA*", &hc_astar},
         {"WHCA*", &whc_astar},
         {"CBS", &cbs},
+        {"ICTS", &icts_alg},
         {"Multi Agent A*", &maastar}
     };
 
@@ -189,7 +178,7 @@ void test_mapf() {
         paths = finder->mapf(starts, goals);
         cout << name << ":" << endl;
         for (auto &path : paths) {
-            print_path(path);
+            graph.print_path(path);
         }
     }
 }

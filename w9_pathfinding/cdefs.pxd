@@ -289,6 +289,17 @@ cdef extern from "src/include/cbs.h":
         vector[vector[int]] mapf(vector[int], vector[int], int, double, ReservationTable*) except +
 
 
+cdef extern from "src/icts.cpp":
+    pass
+
+
+cdef extern from "src/include/icts.h" namespace "icts":
+
+    cdef cppclass ICTS(AbsMAPF):
+        ICTS(AbsGraph*) except +
+        vector[vector[int]] mapf(vector[int], vector[int], int, double, ReservationTable*) except +
+
+
 cdef extern from "src/multi_agent_a_star.cpp":
     pass
 
