@@ -6,7 +6,7 @@ Pathfinding is the problem of finding the best route between two points.
     <img style="width:200px" src="images/pf_grid.png"/>
 </p>
 
-There are several pathfinding algorithms available here. Some algorithms do not guarantee that they will find the shortest path. Some algorithms can find the shortest path only on an unweighted graph.
+This repository includes several pathfinding algorithms:
 
 | Algorithm   | Class name  | Shortest path in an unweighted graph | Shortest path in a weighted graph |
 | ----------- | ----------- |----------- | ----------- |
@@ -49,7 +49,7 @@ Multi-Agent Path Finding (MAPF) is the problem of finding collision-free paths f
     <img src="images/mapf_hex.gif" width="300"/>
 </p>
 
-Currently implemented:
+Implemented algorithms:
 
 | Algorithm | Class name | Optimal | Complete |
 | ----------- | ----------- |----------- | ----------- |
@@ -82,6 +82,59 @@ whcastar = WHCAStar(grid)
 paths = whcastar.mapf(starts=[(0, 0), (1, 1)], goals=[(2, 0), (1, 0)])
 print(paths)  # [[(0, 0), (1, 0), (2, 0)], [(1, 1), (1, 1), (1, 0)]]
 ```
+
+# Pathfinding with dynamic obstacles
+
+To manage dynamic obstacles in pathfinding, a ReservationTable can be used. This data structure tracks the availability of each cell or edge over time, indicating whether it is free or reserved. In the case of the single-agent pathfinding problem with dynamic obstacles, there is a specialized version of the A* algorithm known as Space-Time A* (SpaceTimeAStar).
+
+Let's look at a simple example. We have three agents: Agent 0, Agent 1, and Agent 2. Agent 0 has a predetermined path that we cannot change, this agent acts as a dynamic obstacle. Agents 1 and 2 each have a starting point and a destination, and we want to find paths for both agents while ensuring they do not collide with each other or with Agent 0. We can achieve this by calling Space-Time A* twice, updating the ReservationTable between the calls:
+
+```python
+from w9_pathfinding import Grid, SpaceTimeAStar, ReservationTable
+
+grid = Grid(width=4, height=3, edge_collision=True)
+grid.add_obstacle((1, 1))  # static obstacle
+
+path0 = [(0, 1), (0, 0), (1, 0), (2, 0), (3, 0), (3, 1)]  # dynamic obstacle
+start1, goal1 = (0, 2), (2, 1)  # agent 1
+start2, goal2 = (0, 0), (3, 0)  # agent 2
+
+rt = ReservationTable(grid)
+rt.add_path(path0, reserve_destination=True)
+
+astar = SpaceTimeAStar(grid)
+
+path1 = astar.find_path(start1, goal1, reservation_table=rt)
+rt.add_path(path1, reserve_destination=True)
+
+path2 = astar.find_path(start2, goal2, reservation_table=rt)
+
+print(path1)  # [(0, 2), (1, 2), (2, 2), (2, 1)]
+print(path2)  # [(0, 0), (1, 0), (2, 0), (3, 0), (3, 1), (3, 2), (2, 2), (1, 2), (0, 2), (0, 1), (0, 0), (1, 0), (2, 0), (3, 0)]
+```
+
+<p align="left">
+    <img src="images/dynamic_obstacle_1.gif"/>
+</p>
+
+This approach works quickly and often finds reasonably good solutions. However, in some cases, it may find solutions that are far from optimal or may not find a solution at all, when one agent prevents any path for another agent. An alternative approach is to use Multi-Agent Pathfinding (MAPF) algorithms, which allow us to find paths for both agents simultaneously. Since all MAPF algorithms in this repository are designed to work with the ReservationTable, we can find an optimal solution while taking dynamic obstacles into account:
+
+```python
+from w9_pathfinding import CBS
+
+rt = ReservationTable(grid)
+rt.add_path(path0, reserve_destination=True)
+
+cbs = CBS(grid)
+paths = cbs.mapf([start1, start2], [goal1, goal2], reservation_table=rt)
+
+print(paths[0])  # [(0, 2), (1, 2), (2, 2), (2, 2), (2, 1)]
+print(paths[1])  # [(0, 0), (1, 0), (2, 0), (2, 1), (2, 0), (3, 0)]
+```
+
+<p align="left">
+    <img src="images/dynamic_obstacle_2.gif"/>
+</p>
 
 # Types of graphs
 
