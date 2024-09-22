@@ -92,12 +92,12 @@ Let's look at a simple example. We have three agents: Agent 0, Agent 1, and Agen
 ```python
 from w9_pathfinding import Grid, SpaceTimeAStar, ReservationTable
 
-grid = Grid(width=4, height=3, edge_collision=True)
+grid = Grid(width=5, height=4, edge_collision=True)
 grid.add_obstacle((1, 1))  # static obstacle
 
 path0 = [(0, 1), (0, 0), (1, 0), (2, 0), (3, 0), (3, 1)]  # dynamic obstacle
 start1, goal1 = (0, 2), (2, 1)  # agent 1
-start2, goal2 = (0, 0), (3, 0)  # agent 2
+start2, goal2 = (0, 0), (2, 0)  # agent 2
 
 rt = ReservationTable(grid)
 rt.add_path(path0, reserve_destination=True)
@@ -110,7 +110,7 @@ rt.add_path(path1, reserve_destination=True)
 path2 = astar.find_path(start2, goal2, reservation_table=rt)
 
 print(path1)  # [(0, 2), (1, 2), (2, 2), (2, 1)]
-print(path2)  # [(0, 0), (1, 0), (2, 0), (3, 0), (3, 1), (3, 2), (2, 2), (1, 2), (0, 2), (0, 1), (0, 0), (1, 0), (2, 0), (3, 0)]
+print(path2)  # [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (3, 0), (2, 0)]
 ```
 
 <p align="left">
@@ -129,7 +129,7 @@ cbs = CBS(grid)
 paths = cbs.mapf([start1, start2], [goal1, goal2], reservation_table=rt)
 
 print(paths[0])  # [(0, 2), (1, 2), (2, 2), (2, 2), (2, 1)]
-print(paths[1])  # [(0, 0), (1, 0), (2, 0), (2, 1), (2, 0), (3, 0)]
+print(paths[1])  # [(0, 0), (1, 0), (2, 0), (2, 1), (2, 0)]
 ```
 
 <p align="left">
