@@ -13,6 +13,7 @@ class GridVisualizer:
     goal_zorder = 2
     start_zorder = 3
     text_zorder = 4
+    fontsize = 10
 
     grid_color = "black"
     obstacle_color = "gray"
@@ -110,7 +111,7 @@ class GridVisualizer:
 
         text = None
         if label is not None:
-            text = ax.text(*xy, label, zorder=self.text_zorder)
+            text = ax.text(*xy, label, zorder=self.text_zorder, fontsize=self.fontsize)
             text.set_horizontalalignment("center")
             text.set_verticalalignment("center")
             ax.add_artist(text)
