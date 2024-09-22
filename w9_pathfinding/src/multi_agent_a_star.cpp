@@ -45,6 +45,13 @@ maas::MAState::MAState(AbsGraph* graph, int node_id, Tree& tree, vector<int>& go
                     neighbors_[i].push_back({n, cost});
             }
         }
+
+        if (neighbors_[i].empty()) {
+            // this node has no children
+            for (auto& n : neighbors_)
+                n.clear();
+            break;
+        }
     }
 }
 
@@ -129,11 +136,15 @@ vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals, 
     if (rt)
         reservation_table = *rt;
 
+    int min_search_depth = 0;
+    for (Agent& a : agents)
+        min_search_depth = std::max(min_search_depth, reservation_table.last_time_reserved(a.goal));
+
     vector<Path> paths;
     if (!operator_decomposition)
-        paths = mapf_standard(agents, max_time, reservation_table);
+        paths = mapf_standard(agents, max_time, min_search_depth, reservation_table);
     else
-        paths = mapf_od(agents, max_time, reservation_table);
+        paths = mapf_od(agents, max_time, min_search_depth, reservation_table);
 
     if (paths.size() == agents.size()) {
         for (size_t i = 0; i < agents.size(); i++) {
@@ -187,6 +198,13 @@ std::string maas::MultiAgentAStar::positions_to_string(vector<int>& positions, v
     return s;
 }
 
+std::string maas::MultiAgentAStar::positions_to_string(vector<int>& positions, vector<int>& goal, int node_id, Tree& tree, int time) {
+    // in case there are dynamic obstacles, we have to add time to the hash
+    std::string h = positions_to_string(positions, goal, node_id, tree);
+    h += "_" + std::to_string(time);
+    return h;
+}
+
 double maas::MultiAgentAStar::heuristic(vector<int>& positions, vector<Agent> &agents) {
     double h = 0;
     for (size_t i = 0; i < agents.size(); i++) {
@@ -198,7 +216,7 @@ double maas::MultiAgentAStar::heuristic(vector<int>& positions, vector<Agent> &a
     return h;
 }
 
-vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double max_time, ReservationTable &rt) {
+vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double max_time, int min_search_depth, ReservationTable &rt) {
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
@@ -207,6 +225,7 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
     std::unordered_map<std::string, double> node_to_distance;
     vector<int> goal;
     bool edge_collision = graph->edge_collision();
+    bool dynamic_obstacles = !rt.empty();
 
     {
         vector<int> start;
@@ -219,7 +238,9 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
 
         tree.push_back(root);
         openset.push({0, tree.size() - 1});
-        node_to_distance[positions_to_string(root.positions, goal, -1, tree)] = 0;
+
+        if (!dynamic_obstacles)
+            node_to_distance[positions_to_string(root.positions, goal, -1, tree)] = 0;
     }
 
     while (!openset.empty()) {
@@ -228,7 +249,7 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
  
         Node node = tree[node_id];
 
-        if (node.positions == goal)
+        if (node.positions == goal && node.time >= min_search_depth)
             return reconstruct_paths(node_id, tree);
 
         MAState state(graph, node_id, tree, goal, node.time, rt);
@@ -246,7 +267,12 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
             if (new_positions.empty())
                 break;
 
-            std::string key = positions_to_string(new_positions, goal, node_id, tree);
+            std::string key;
+            if (!dynamic_obstacles)
+                key = positions_to_string(new_positions, goal, node_id, tree);
+            else
+                key = positions_to_string(new_positions, goal, node_id, tree, node.time);
+
             if (node_to_distance.count(key) && node.distance + cost >= node_to_distance[key])
                 continue;
 
@@ -268,7 +294,7 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
 }
 
 
-vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_time, ReservationTable &rt) {
+vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_time, int min_search_depth, ReservationTable &rt) {
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
@@ -278,6 +304,7 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
     vector<int> goal;
     double pause_action_cost = graph->get_pause_action_cost();
     bool edge_collision = graph->edge_collision();
+    bool dynamic_obstacles = !rt.empty();
     int num_agents = agents.size();
 
     {
@@ -292,7 +319,8 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
         tree.push_back(root);
         double h = heuristic(start, agents);
         openset.push({h, tree.size() - 1});
-        node_to_distance[positions_to_string(root.positions, goal, -1, tree)] = 0;
+        if (!dynamic_obstacles)
+            node_to_distance[positions_to_string(root.positions, goal, -1, tree)] = 0;
     }
 
     while (!openset.empty()) {
@@ -301,15 +329,15 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
 
         Node node = tree[node_id];
 
-        if (node.positions == goal)
+        int agent_id = node.time % num_agents;
+        int position = node.positions[agent_id];
+        int standard_time = node.time / num_agents;
+
+        if (node.positions == goal && standard_time >= min_search_depth)
             return reconstruct_paths(node_id, tree);
 
         if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
             throw timeout_exception("Timeout");
-
-        int agent_id = node.time % num_agents;
-        int position = node.positions[agent_id];
-        int standard_time = node.time / num_agents;
 
         std::unordered_set<int> occupied_nodes;
         if (agent_id == 0 || !edge_collision) {
@@ -370,7 +398,12 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
             double new_distance = node.distance + cost;
 
             if (agent_id == num_agents - 1) {
-                std::string key = positions_to_string(new_positions, goal, parent, tree);
+                std::string key;
+                if (!dynamic_obstacles)
+                    key = positions_to_string(new_positions, goal, node_id, tree);
+                else
+                    key = positions_to_string(new_positions, goal, node_id, tree, node.time);
+
                 if (node_to_distance.count(key) && new_distance >= node_to_distance[key])
                     continue;
 

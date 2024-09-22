@@ -27,6 +27,7 @@ class ReservationTable {
         void add_path(int start_time, vector<int> &path, bool reserve_destination, bool add_edge_constraints);
         int last_time_reserved(int node_id) const;
         void print() const;
+        bool empty() const;
 
     private:
         int max_time_ = 0;

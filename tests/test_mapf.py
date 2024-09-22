@@ -116,7 +116,7 @@ class TestMAPF(unittest.TestCase):
                     self.assertLessEqual(len(path), 5)
                     self.assertEqual(path[-1], goal)
 
-    def test_grid_with_reservations(self):
+    def test_grid_with_dynamic_obstacles(self):
         """
         + -  -  -  - +
         | s1       g1|
@@ -140,6 +140,23 @@ class TestMAPF(unittest.TestCase):
                 for path, goal in zip(paths, goals):
                     self.assertLessEqual(len(path), 6)
                     self.assertEqual(path[-1], goal)
+
+    def test_grid_with_dynamic_obstacles_that_block_the_path(self):
+        grid = Grid(width=4, height=2, edge_collision=True)
+        starts = [(0, 0), (3, 1)]
+        goals = [(3, 0), (0, 1)]
+        reserved_paths = [[(1, 0), (2, 0), (3, 0)], [(1, 1), (2, 1), (3, 1)]]
+
+        rt = ReservationTable(grid)
+        for path in reserved_paths:
+            rt.add_path(path)
+
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(
+                    starts, goals, reservation_table=rt, **a.get("params", {})
+                )
+                self.assertEqual(paths, [])
 
     def test_search_depth(self):
         grid = Grid(width=10, height=10, edge_collision=True)

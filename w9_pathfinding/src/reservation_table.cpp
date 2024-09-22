@@ -98,7 +98,7 @@ int ReservationTable::last_time_reserved(int node_id) const {
 }
 
 void ReservationTable::print() const {
-    if (vertex_constraints_.empty() && edge_constraints_.empty() && semi_static_constraints_.empty()) {
+    if (empty()) {
         cout << "No constraints" << endl;
         return;
     }
@@ -129,4 +129,8 @@ void ReservationTable::print() const {
             cout << "- time=" << time << ", node=" << node_id << endl;
         }
     }
+}
+
+bool ReservationTable::empty() const {
+    return vertex_constraints_.empty() && edge_constraints_.empty() && semi_static_constraints_.empty();
 }

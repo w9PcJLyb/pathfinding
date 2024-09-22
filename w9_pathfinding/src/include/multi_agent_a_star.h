@@ -58,11 +58,12 @@ namespace maas {
 
         private:
             SpaceTimeAStar st_a_star_;
-            vector<Path> mapf_standard(vector<Agent> &agents, double max_time, ReservationTable &rt);
-            vector<Path> mapf_od(vector<Agent> &agents, double max_time, ReservationTable &rt);
+            vector<Path> mapf_standard(vector<Agent> &agents, double max_time, int min_search_depth, ReservationTable &rt);
+            vector<Path> mapf_od(vector<Agent> &agents, double max_time, int min_search_depth, ReservationTable &rt);
             vector<Path> reconstruct_paths(int node_id, Tree& tree);
             void print_node(Node& node);
             std::string positions_to_string(vector<int>& positions, vector<int>& goal, int node_id, Tree& tree);
+            std::string positions_to_string(vector<int>& positions, vector<int>& goal, int node_id, Tree& tree, int time);
             double heuristic(vector<int>& positions, vector<Agent> &agents);
     };
 
