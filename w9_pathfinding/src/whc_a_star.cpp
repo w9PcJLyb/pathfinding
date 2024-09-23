@@ -46,20 +46,26 @@ vector<vector<int>> WHCAStar::mapf_(
 ) {
     bool edge_collision = graph->edge_collision();
 
+    int min_search_depth = 0;
+    for (auto &agent: agents)
+        min_search_depth = std::max(min_search_depth, rt.last_time_reserved(agent.goal));
+
     int time = 0;
     bool solved = false;
     while (time <= search_depth) {
 
-        solved = true;
-        for (auto &agent: agents) {
-            if (agent.position(time) != agent.goal) {
-                solved = false;
-                break;
+        if (time >= min_search_depth) {
+            solved = true;
+            for (auto &agent: agents) {
+                if (agent.position(time) != agent.goal) {
+                    solved = false;
+                    break;
+                }
             }
-        }
 
-        if (solved)
-            break;
+            if (solved)
+                break;
+        }
 
         int w = std::min(window_size, search_depth - time);
         if (w == 0)

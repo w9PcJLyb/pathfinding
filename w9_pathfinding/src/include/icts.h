@@ -60,7 +60,7 @@ namespace icts {
             vector<MDD> mdd_list_;
             vector<vector<int>> solution_;
 
-            bool explore(vector<int>& positions, int depth);
+            bool explore(vector<int>& positions, int depth, int target_depth);
             vector<Path> get_paths();
             bool has_collision(vector<int>& positions, vector<int>& next_positions);
     };

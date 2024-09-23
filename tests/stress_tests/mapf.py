@@ -66,13 +66,14 @@ def check_paths(graph, paths):
     if not paths:
         return True
 
+    longest_path = max(len(path) for path in paths)
+
     time = 0
-    while True:
+    while time < longest_path:
         positions = defaultdict(list)
         for agent_id, path in enumerate(paths):
-            if time < len(path):
-                p = path[time]
-                positions[p].append(agent_id)
+            p = path[time] if time < len(path) else path[-1]
+            positions[p].append(agent_id)
 
         if not positions:
             break

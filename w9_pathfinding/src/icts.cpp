@@ -122,10 +122,13 @@ vector<Path> icts::LowLevel::search(vector<int>& costs) {
     solution_.clear();
     solution_.push_back(starts_);
 
-    for (int i = 0; i < num_agents_; i++)
+    int max_depth = 0;
+    for (int i = 0; i < num_agents_; i++) {
         mdd_list_[i].set_depth(costs[i]);
+        max_depth = std::max(max_depth, costs[i]);
+    }
 
-    if (explore(starts_, 0))
+    if (explore(starts_, 0, max_depth))
         return get_paths();
 
     return {};
@@ -148,9 +151,9 @@ vector<Path> icts::LowLevel::get_paths() {
     return paths;
 }
 
-bool icts::LowLevel::explore(vector<int>& positions, int depth) {
-    if (positions == goals_)
-        return true;
+bool icts::LowLevel::explore(vector<int>& positions, int depth, int target_depth) {
+    if (depth >= target_depth)
+        return positions == goals_;
 
     vector<vector<int>> neighbors(num_agents_);
     vector<int> num_neighbors(num_agents_);
@@ -205,7 +208,7 @@ bool icts::LowLevel::explore(vector<int>& positions, int depth) {
 
         solution_.push_back(next_positions);
 
-        if (explore(next_positions, depth + 1))
+        if (explore(next_positions, depth + 1, target_depth))
             return true;
 
         solution_.pop_back();

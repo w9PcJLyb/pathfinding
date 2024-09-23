@@ -20,13 +20,14 @@ def check_paths(graph, paths):
     if not paths:
         return True
 
+    longest_path = max(len(path) for path in paths)
+
     time = 0
-    while True:
+    while time < longest_path:
         positions = defaultdict(list)
         for agent_id, path in enumerate(paths):
-            if time < len(path):
-                p = path[time]
-                positions[p].append(agent_id)
+            p = path[time] if time < len(path) else path[-1]
+            positions[p].append(agent_id)
 
         if not positions:
             break
@@ -60,6 +61,14 @@ class TestMAPF(unittest.TestCase):
     """
     pytest tests/test_mapf.py::TestMAPF
     """
+
+    def test_without_agents(self):
+        grid = Grid(width=5, height=5)
+
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf([], [], **a.get("params", {}))
+                self.assertEqual(paths, [])
 
     def test_with_directed_graph(self):
         graph = Graph(5, edges=[[0, 2], [1, 2], [2, 3], [2, 4]])
@@ -157,6 +166,23 @@ class TestMAPF(unittest.TestCase):
                     starts, goals, reservation_table=rt, **a.get("params", {})
                 )
                 self.assertEqual(paths, [])
+
+    def test_grid_with_dynamic_obstacles_that_moves_through(self):
+        grid = Grid(width=4, height=4, edge_collision=True)
+        start = (2, 1)
+        goal = start
+        reserved_path = [(0, 1), (1, 1), (2, 1), (3, 1)]
+
+        rt = ReservationTable(grid)
+        rt.add_path(reserved_path)
+
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(
+                    [start], [goal], reservation_table=rt, **a.get("params", {})
+                )
+                self.assertGreater(len(paths[0]), 2)
+                self.assertTrue(check_paths(grid, paths + [reserved_path]))
 
     def test_search_depth(self):
         grid = Grid(width=10, height=10, edge_collision=True)
