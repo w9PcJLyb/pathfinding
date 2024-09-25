@@ -200,6 +200,16 @@ class TestMAPF(unittest.TestCase):
                         self.assertEqual(len(paths[0]), 5)
                         self.assertEqual(paths[0][-1], goals[0])
 
+    def test_two_agents_with_the_same_goal(self):
+        grid = Grid([[1, -1, 1], [1, 1, 1], [-1, 1, -1]])
+        starts = [(0, 0), (2, 0)]
+        goals = [(1, 1), (1, 1)]
+
+        for a in MAPF_ALGORITHMS:
+            with self.subTest(a["name"]):
+                paths = a["class"](grid).mapf(starts, goals, **a.get("params", {}))
+                self.assertEqual(paths, [])
+
 
 class TestComplete(unittest.TestCase):
     """

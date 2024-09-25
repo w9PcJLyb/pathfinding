@@ -122,6 +122,13 @@ vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals, 
     if (starts.size() == 0)
         return {};
 
+    std::unordered_set<int> goals_set;
+    for (int g: goals) {
+        if (goals_set.count(g))
+            return {};
+        goals_set.insert(g);
+    }
+
     vector<Agent> agents;
     agents.reserve(starts.size());
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
