@@ -13,28 +13,23 @@ class WHCAStar : public AbsMAPF {
     struct Agent {
         int start, goal;
         ResumableSearch *rrs;
-
-        vector<int> full_path;
+        vector<int> path;
 
         Agent(int start, int goal, ResumableSearch *rrs) : start(start), goal(goal), rrs(rrs) {
-            full_path.push_back(start);
+            path.push_back(start);
         }
         ~Agent() {delete rrs;};
 
-        bool is_moving(size_t time) {
-            return time < full_path.size() - 1;
-        }
-
         int position() {
-            return full_path.back();
+            return path.back();
         }
 
         int position(int time) {
-            return full_path[time];
+            return path[time];
         }
 
-        void add_path(vector<int> &path) {
-            full_path.insert(full_path.end(), path.begin(), path.end());
+        void add_path(vector<int> &path_) {
+            path.insert(path.end(), path_.begin(), path_.end());
         }
     };
 
@@ -42,8 +37,8 @@ class WHCAStar : public AbsMAPF {
         AbsGraph* graph;
         WHCAStar(AbsGraph* graph);
 
-        vector<vector<int>> mapf(vector<int> starts, vector<int> goals);
-        vector<vector<int>> mapf(
+        vector<Path> mapf(vector<int> starts, vector<int> goals);
+        vector<Path> mapf(
             vector<int> starts,
             vector<int> goals,
             int search_depth,
@@ -53,7 +48,7 @@ class WHCAStar : public AbsMAPF {
 
     private:
         SpaceTimeAStar st_a_star_;
-        vector<vector<int>> mapf_(
+        vector<Path> mapf_(
             vector<Agent> &agents,
             int search_depth,
             int window_size,

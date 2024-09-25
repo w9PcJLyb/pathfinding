@@ -1,14 +1,16 @@
+#include "unordered_map"
+
 #include "include/whc_a_star.h"
 
 
 WHCAStar::WHCAStar(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
 }
 
-vector<vector<int>> WHCAStar::mapf(vector<int> starts, vector<int> goals) {
+vector<Path> WHCAStar::mapf(vector<int> starts, vector<int> goals) {
     return mapf(starts, goals, 100, 16, nullptr);
 }
 
-vector<vector<int>> WHCAStar::mapf(
+vector<Path> WHCAStar::mapf(
     vector<int> starts,
     vector<int> goals,
     int search_depth,
@@ -30,15 +32,12 @@ vector<vector<int>> WHCAStar::mapf(
         int start = starts[agent_id];
         int goal = goals[agent_id];
         agents.emplace_back(start, goal, st_a_star_.reverse_resumable_search(goal));
-        reservation_table.add_vertex_constraint(0, start);
     }
 
-    auto paths = mapf_(agents, search_depth, window_size, reservation_table);
-
-    return paths;
+    return mapf_(agents, search_depth, window_size, reservation_table);
 }
 
-vector<vector<int>> WHCAStar::mapf_(
+vector<Path> WHCAStar::mapf_(
     vector<Agent> &agents,
     int search_depth,
     int window_size,
@@ -46,72 +45,81 @@ vector<vector<int>> WHCAStar::mapf_(
 ) {
     bool edge_collision = graph->edge_collision();
 
-    int min_search_depth = 0;
-    for (auto &agent: agents)
-        min_search_depth = std::max(min_search_depth, rt.last_time_reserved(agent.goal));
+    priority_queue<pair<int, int>, vector<pair<int, int>>, std::greater<pair<int, int>>> agent_queue;
+    for (size_t agent_id = 0; agent_id < agents.size(); agent_id++)
+        agent_queue.push({0, agent_id});
 
-    int time = 0;
-    bool solved = false;
-    while (time <= search_depth) {
+    std::unordered_map<int, int> destinations;
+    destinations.reserve(agents.size());
 
-        if (time >= min_search_depth) {
-            solved = true;
-            for (auto &agent: agents) {
-                if (agent.position(time) != agent.goal) {
-                    solved = false;
-                    break;
+    while (!agent_queue.empty()) {
+        auto [time, agent_id] = agent_queue.top();
+        agent_queue.pop();
+
+        int active_window = std::min(window_size, search_depth - time);
+        if (active_window <= 0)
+            break;
+
+        Agent& agent = agents[agent_id];
+
+        vector<int> path = st_a_star_.find_path(
+            time,
+            agent.position(),
+            agent.goal,
+            active_window,
+            agent.rrs,
+            &rt
+        ).first;
+        if (path.empty())
+            return {};
+
+        if (path.size() == 1) {
+            // the agent is at his destination and does not need to move
+            agent.add_path(path);
+            rt.add_path(time + 1, path, false, edge_collision);
+            destinations[agent.goal] = agent_id;
+        }
+        else {
+            for (int p : path) {
+                if (!destinations.count(p))
+                    continue;
+                // the path disturbed another agent that was at the destination,
+                // so we need to add the another agent to the queue to avoid any collisions
+                int other_agent_id = destinations[p];
+                destinations.erase(p);
+
+                Agent& other_agent = agents[other_agent_id];
+                int last_action_time = other_agent.path.size() - 1;
+                if (last_action_time > time) {
+                    agent_queue.push({last_action_time, other_agent_id});
+                }
+                else {
+                    if (time > last_action_time) {
+                        vector<int> rest(time - last_action_time, other_agent.goal);
+                        other_agent.add_path(rest);
+                    }
+                    agent_queue.push({time, other_agent_id});
                 }
             }
 
-            if (solved)
-                break;
+            agent.path.pop_back();
+            agent.add_path(path);
+            rt.add_path(time, path, false, edge_collision);
+            agent_queue.push({time + path.size() - 1, agent_id});
         }
-
-        int w = std::min(window_size, search_depth - time);
-        if (w == 0)
-            break;
-
-        for (size_t agent_id = 0; agent_id < agents.size(); agent_id++) {
-            Agent &agent = agents[agent_id];
-
-            if (agent.is_moving(time)) {
-                continue;
-            }
-
-            vector<int> path = st_a_star_.find_path(
-                time,
-                agent.position(),
-                agent.goal,
-                w,
-                agent.rrs,
-                &rt
-            ).first;
-            if (path.empty())
-                return {};
-
-            if (path.size() == 1) {
-                // pause action
-                agent.add_path(path);
-                rt.add_path(time + 1, path, false, edge_collision);
-            }
-            else {
-                agent.full_path.pop_back();
-                agent.add_path(path);
-                rt.add_path(time, path, false, edge_collision);
-            }
-        }
-
-        time++;
     }
 
+    if (destinations.size() != agents.size())
+        return {};
+
     vector<vector<int>> paths;
-    if (solved) {
-        for (auto &agent: agents) {
-            vector<int> path = agent.full_path;
-            while (path.size() > 1 && path.back() == agent.goal && path[path.size() - 2] == agent.goal)
-                path.pop_back();
-            paths.push_back(path);
-        }
+    paths.reserve(agents.size());
+    for (auto &agent: agents) {
+        vector<int>& path = agent.path;
+        while (path.size() > 1 && path.back() == agent.goal && path[path.size() - 2] == agent.goal)
+            path.pop_back();
+
+        paths.push_back(path);
     }
 
     return paths;
