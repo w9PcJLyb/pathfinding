@@ -8,17 +8,17 @@ Pathfinding is the problem of finding the best route between two points.
 
 This repository includes several pathfinding algorithms:
 
-| Algorithm   | Class name  | Shortest path in an unweighted graph | Shortest path in a weighted graph |
-| ----------- | ----------- |----------- | ----------- |
-| Depth-first search | DFS | False | False |
-| Best-first search | GBS | False | False |
-| Breadth-first search | BFS | True | False |
-| Bidirectional Breadth-first search | BiBFS | True | False |
-| Dijkstra | Dijkstra | True | True |
-| Bidirectional Dijkstra | BiDijkstra | True | True |
-| A* | AStar | True | True |
-| Bidirectional A* | BiAStar | True | True |
-| Iterative deepening A* | IDAStar | True | True |
+| Algorithm   | Class name  | Optimal |
+| ----------- | ----------- |----------- |
+| Depth-first search | DFS | False |
+| Best-first search | GBS | False |
+| Breadth-first search | BFS | True (only in an unweighted graph) |
+| Bidirectional Breadth-first search | BiBFS | True (only in an unweighted graph) |
+| Dijkstra | Dijkstra | True |
+| Bidirectional Dijkstra | BiDijkstra | True |
+| A* | AStar | True |
+| Bidirectional A* | BiAStar | True |
+| Iterative deepening A* | IDAStar | True |
 
 Example:
 
