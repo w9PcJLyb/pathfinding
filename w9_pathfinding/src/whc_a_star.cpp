@@ -23,7 +23,7 @@ vector<Path> WHCAStar::mapf(
         return {};
 
     ReservationTable reservation_table(graph->size());
-    if (rt) 
+    if (rt)
         reservation_table = *rt;
 
     vector<Agent> agents;
@@ -56,13 +56,18 @@ vector<Path> WHCAStar::mapf_(
         auto [time, agent_id] = agent_queue.top();
         agent_queue.pop();
 
-        int active_window = std::min(window_size, search_depth - time);
-        if (active_window <= 0)
-            break;
-
         Agent& agent = agents[agent_id];
 
-        vector<int> path = st_a_star_.find_path(
+        int active_window = std::min(window_size, search_depth - time);
+        if (active_window <= 0) {
+            if (agent.position() == agent.goal) {
+                destinations[agent.goal] = agent_id;
+                continue;
+            }
+            break;
+        }
+
+        Path path = st_a_star_.find_path(
             time,
             agent.position(),
             agent.goal,
@@ -80,25 +85,27 @@ vector<Path> WHCAStar::mapf_(
             destinations[agent.goal] = agent_id;
         }
         else {
-            for (int p : path) {
-                if (!destinations.count(p))
-                    continue;
-                // the path disturbed another agent that was at the destination,
-                // so we need to add the another agent to the queue to avoid any collisions
-                int other_agent_id = destinations[p];
-                destinations.erase(p);
+            if (!destinations.empty()) {
+                for (int p : path) {
+                    if (!destinations.count(p))
+                        continue;
+                    // the path disturbed another agent that was at the destination,
+                    // so we need to add the another agent to the queue to avoid any collisions
+                    int other_agent_id = destinations[p];
+                    destinations.erase(p);
 
-                Agent& other_agent = agents[other_agent_id];
-                int last_action_time = other_agent.path.size() - 1;
-                if (last_action_time > time) {
-                    agent_queue.push({last_action_time, other_agent_id});
-                }
-                else {
-                    if (time > last_action_time) {
-                        vector<int> rest(time - last_action_time, other_agent.goal);
-                        other_agent.add_path(rest);
+                    Agent& other_agent = agents[other_agent_id];
+                    int last_action_time = other_agent.path.size() - 1;
+                    if (last_action_time > time) {
+                        agent_queue.push({last_action_time, other_agent_id});
                     }
-                    agent_queue.push({time, other_agent_id});
+                    else {
+                        if (time > last_action_time) {
+                            Path rest(time - last_action_time, other_agent.goal);
+                            other_agent.add_path(rest);
+                        }
+                        agent_queue.push({time, other_agent_id});
+                    }
                 }
             }
 
@@ -112,10 +119,10 @@ vector<Path> WHCAStar::mapf_(
     if (destinations.size() != agents.size())
         return {};
 
-    vector<vector<int>> paths;
+    vector<Path> paths;
     paths.reserve(agents.size());
     for (auto &agent: agents) {
-        vector<int>& path = agent.path;
+        Path& path = agent.path;
         while (path.size() > 1 && path.back() == agent.goal && path[path.size() - 2] == agent.goal)
             path.pop_back();
 

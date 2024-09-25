@@ -185,18 +185,19 @@ class TestMAPF(unittest.TestCase):
                 self.assertTrue(check_paths(grid, paths + [reserved_path]))
 
     def test_search_depth(self):
-        grid = Grid(width=10, height=10, edge_collision=True)
+        grid = Grid(width=5, height=5, edge_collision=True)
         starts = [(0, 0)]
-        goals = [(0, 9)]
+        goals = [(4, 0)]
 
-        for a in [pf.CBS, pf.HCAStar, pf.WHCAStar]:
-            for d in (5, 100):
+        for a in [pf.CBS, pf.ICTS, pf.HCAStar, pf.WHCAStar]:
+            for d in range(8):
                 with self.subTest(f"{a.__name__}(search_depth={d})"):
                     paths = a(grid).mapf(starts, goals, search_depth=d)
-                    if d < 9:
+                    if d < 4:
                         self.assertEqual(len(paths), 0)
                     else:
                         self.assertEqual(len(paths), 1)
+                        self.assertEqual(len(paths[0]), 5)
                         self.assertEqual(paths[0][-1], goals[0])
 
 

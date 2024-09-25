@@ -13,7 +13,7 @@ class WHCAStar : public AbsMAPF {
     struct Agent {
         int start, goal;
         ResumableSearch *rrs;
-        vector<int> path;
+        Path path;
 
         Agent(int start, int goal, ResumableSearch *rrs) : start(start), goal(goal), rrs(rrs) {
             path.push_back(start);
@@ -28,7 +28,7 @@ class WHCAStar : public AbsMAPF {
             return path[time];
         }
 
-        void add_path(vector<int> &path_) {
+        void add_path(Path& path_) {
             path.insert(path.end(), path_.begin(), path_.end());
         }
     };

@@ -68,7 +68,18 @@ class TestSpaceTimeAStar(unittest.TestCase):
         path2 = a.find_path((0, 0), (2, 2), reservation_table=rt)
         self.assertListEqual(path2, [(0, 0), (0, 0), (0, 1), (0, 2), (1, 2), (2, 2)])
 
-    def test_max_steps(self):
+    def test_search_depth(self):
+        grid = Grid(width=5, height=5)
+        start, end = (0, 0), (4, 0)
+
+        a = SpaceTimeAStar(grid)
+        for d in range(8):
+            with self.subTest(f"search_depth={d}"):
+                path = a.find_path(start, end, search_depth=d)
+                path = path[1:]  # ignore start
+                self.assertEqual(len(path), min(d, 4))
+
+    def test_search_depth_2(self):
         """
         + - - - - - - +
         | s x         |
