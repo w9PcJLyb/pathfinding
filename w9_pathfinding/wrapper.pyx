@@ -50,7 +50,12 @@ cdef class _AbsGraph:
         return self._baseobj.size()
 
     def calculate_cost(self, vector[int] path):
+        if not self._baseobj.is_valid_path(path):
+            return -1
         return self._baseobj.calculate_cost(path)
+
+    def is_valid_path(self, vector[int] path):
+        return self._baseobj.is_valid_path(path)
 
     def get_neighbors(self, int node_id):
         # return [[neighbour_id, cost], ...]
@@ -240,7 +245,14 @@ cdef class _AbsGrid(_AbsGraph):
     def calculate_cost(self, path):
         cdef vector[int] nodes
         nodes = [self.get_node_id(x) for x in path]
+        if not self._baseobj.is_valid_path(nodes):
+            return -1
         return self._baseobj.calculate_cost(nodes)
+
+    def is_valid_path(self, path):
+        cdef vector[int] nodes
+        nodes = [self.get_node_id(x) for x in path]
+        return self._baseobj.is_valid_path(nodes)
 
     def find_components(self):
         return [

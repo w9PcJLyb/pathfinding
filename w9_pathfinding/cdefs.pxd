@@ -13,6 +13,7 @@ cdef extern from "src/include/core.h":
         AbsGraph() except +
         size_t size()
         double calculate_cost(vector[int])
+        bool is_valid_path(vector[int])
         void reverse_inplace()
         vector[pair[int, double]] get_neighbors(int)
         vector[vector[int]] find_components()

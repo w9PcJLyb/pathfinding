@@ -32,9 +32,8 @@ class AbsGraph {
 
         virtual bool is_directed_graph() const = 0;
 
-        // returns a cost of moving along the path
-        // returns -1 if the path is not possible
-        double calculate_cost(Path& path);
+        virtual double calculate_cost(Path& path);
+        bool is_valid_path(Path& path);
 
         // returns connected components in an undirected graph
         virtual vector<vector<int>> find_components();

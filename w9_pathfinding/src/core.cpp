@@ -40,6 +40,33 @@ double AbsGraph::calculate_cost(Path& path) {
     return total_cost;
 }
 
+bool AbsGraph::is_valid_path(Path& path) {
+    if (path.size() == 0)
+        return true;
+
+    int graph_size = size();
+    int node_id = path[0];
+
+    if (node_id < 0 || node_id >= graph_size)
+        return false;
+
+    for (size_t i = 1; i < path.size(); i++) {
+        int next_node_id = path[i];
+
+        if (next_node_id == node_id) {
+            // pause action
+            continue;
+        }
+
+        if (next_node_id < 0 || next_node_id >= graph_size || !adjacent(node_id, next_node_id))
+            return false;
+
+        node_id = next_node_id;
+    }
+
+    return true;
+}
+
 vector<int> AbsGraph::find_component_(vector<bool> &visited, int start) {
     visited[start] = true;
     vector<int> component = {start};

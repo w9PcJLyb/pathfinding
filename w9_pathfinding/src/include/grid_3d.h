@@ -43,6 +43,7 @@ class Grid3D : public AbsGrid {
         vector<pair<int, double>> get_neighbors(int node, bool reversed=false);
         double estimate_distance(int v1, int v2) const;
         std::string node_to_string(int v) const;
+        double calculate_cost(Path& path);
 
     private:
         const vector<Point> directions_ = {

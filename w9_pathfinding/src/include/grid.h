@@ -46,6 +46,7 @@ class Grid : public AbsGrid {
         Point get_coordinates(int node) const;
         double estimate_distance(int v1, int v2) const;
         std::string node_to_string(int v) const;
+        double calculate_cost(Path& path);
 
     private:
         // 0 - without diagonal movements

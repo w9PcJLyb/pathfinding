@@ -46,6 +46,20 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(graph.calculate_cost([1, 2]), 3)
         self.assertEqual(graph.calculate_cost([0, 1, 2]), 2 + 3)
 
+    def test_is_valid_path(self):
+        graph = Graph(5, edges=[[0, 1, 2], [1, 2, 4]])
+
+        self.assertTrue(graph.is_valid_path([0, 1, 2]))
+        self.assertFalse(graph.is_valid_path([2, 1, 0]))
+        self.assertFalse(graph.is_valid_path([0, 2]))
+
+    def test_is_valid_path_with_undirected_graph(self):
+        graph = Graph(5, directed=False, edges=[[0, 1, 2], [1, 2, 4]])
+
+        self.assertTrue(graph.is_valid_path([0, 1, 2]))
+        self.assertTrue(graph.is_valid_path([2, 1, 0]))
+        self.assertFalse(graph.is_valid_path([0, 2]))
+
     def test_calc_cost_with_pause_action(self):
         graph = Graph(5)
         graph.pause_action_cost = 5

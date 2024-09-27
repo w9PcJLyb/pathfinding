@@ -114,3 +114,11 @@ class TestGrid(unittest.TestCase):
         self.assertEqual(new_grid.weights, weights)
         self.assertEqual(new_grid.passable_left_right_border, True)
         self.assertEqual(new_grid.passable_up_down_border, False)
+
+    def test_is_valid_path(self):
+        grid = Grid(width=3, height=3)
+        grid.add_obstacle((1, 1))
+
+        self.assertTrue(grid.is_valid_path([(0, 0), (1, 0), (2, 0)]))
+        self.assertFalse(grid.is_valid_path([(0, 0), (2, 0)]))
+        self.assertFalse(grid.is_valid_path([(0, 1), (1, 1), (2, 1)]))

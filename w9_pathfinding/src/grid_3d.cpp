@@ -116,3 +116,25 @@ double Grid3D::estimate_distance(int v1, int v2) const {
 std::string Grid3D::node_to_string(int v) const {
     return get_coordinates(v).to_string();
 }
+
+double Grid3D::calculate_cost(Path& path) {
+    if (path.size() <= 1)
+        return 0;
+
+    double total_cost = 0;
+
+    Point point = get_coordinates(path[0]);
+
+    for (size_t i = 1; i < path.size(); i++) {
+        Point next_point = get_coordinates(path[i]);
+
+        if (point == next_point)
+            total_cost += get_pause_action_cost();
+        else {
+            total_cost += weights_.at(path[i]);
+            point = next_point;
+        }
+    }
+
+    return total_cost;
+}
