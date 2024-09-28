@@ -283,7 +283,17 @@ vector<Path> icts::ICTS::mapf(
         for (size_t i = 0; i < starts.size(); i++) {
             int start = starts[i];
             int goal = goals[i];
-            Path path = st_a_star_.find_path(start, goal, search_depth, rt);
+            int min_length = 0;
+            if (rt)
+                min_length = rt->last_time_reserved(goal);
+            Path path = st_a_star_.find_path_with_depth_limit(
+                start,
+                goal,
+                search_depth,
+                rt,
+                nullptr,
+                min_length
+            );
             if (path.empty() || path.back() !=  goal) {
                 // there is no path from start to goal, or the path length is greater than search_depth
                 return {};

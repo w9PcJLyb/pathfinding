@@ -35,9 +35,9 @@ double ResumableBFS::distance(int node_id) {
     return node.distance;
 }
 
-vector<int> ResumableBFS::reconstruct_path(int node_id) {
+Path ResumableBFS::reconstruct_path(int node_id) {
     int p = node_id;
-    vector<int> path;
+    Path path;
     while (p >= 0) {
         path.push_back(p);
         p = nodes_[p].parent;
@@ -46,7 +46,7 @@ vector<int> ResumableBFS::reconstruct_path(int node_id) {
     return path;
 }
 
-vector<int> ResumableBFS::find_path(int node_id) {
+Path ResumableBFS::find_path(int node_id) {
     Node& node = nodes_[node_id];
     if (node.distance < 0)
         search(node_id);
@@ -88,13 +88,14 @@ ResumableAStar::ResumableAStar(AbsGraph *graph, int start, bool reverse) : Resum
 
 void ResumableAStar::clear() {
     openset_ = Queue();
-    for (Node &node : nodes_)
+    for (Node& node : nodes_)
         node.clear();
 }
 
 void ResumableAStar::set_start_node(int start) {
     if (start_ != start) {
         start_ = start;
+        end_ = -1;
         clear();
 
         openset_.push({0, start});
@@ -109,6 +110,28 @@ double ResumableAStar::distance(int node_id) {
         search(node_id);
 
     return node.distance;
+}
+
+Path ResumableAStar::reconstruct_path(int node_id) {
+    int p = node_id;
+    Path path;
+    while (p >= 0) {
+        path.push_back(p);
+        p = nodes_[p].parent;
+    }
+    std::reverse(path.begin(), path.end());
+    return path;
+}
+
+Path ResumableAStar::find_path(int node_id) {
+    Node& node = nodes_[node_id];
+    if (!node.closed)
+        search(node_id);
+
+    if (node.distance >= 0)
+        return reconstruct_path(node_id);
+
+    return {};
 }
 
 void ResumableAStar::search(int node_id) {
@@ -133,11 +156,13 @@ void ResumableAStar::search(int node_id) {
             if (node.distance < 0) {
                 node.f = new_distance + graph->estimate_distance(n, end_);
                 node.distance = new_distance;
+                node.parent = current_id;
                 openset_.push({node.f, n});
             }
             else if (node.distance > new_distance) {
                 node.f = node.f - node.distance + new_distance;
                 node.distance = new_distance;
+                node.parent = current_id;
                 openset_.push({node.f, n});
             }
         }
@@ -183,9 +208,9 @@ double ResumableDijkstra::distance(int node_id) {
     return node.distance;
 }
 
-vector<int> ResumableDijkstra::reconstruct_path(int node_id) {
+Path ResumableDijkstra::reconstruct_path(int node_id) {
     int p = node_id;
-    vector<int> path;
+    Path path;
     while (p >= 0) {
         path.push_back(p);
         p = nodes_[p].parent;
@@ -194,7 +219,7 @@ vector<int> ResumableDijkstra::reconstruct_path(int node_id) {
     return path;
 }
 
-vector<int> ResumableDijkstra::find_path(int node_id) {
+Path ResumableDijkstra::find_path(int node_id) {
     Node& node = nodes_[node_id];
     if (!node.closed)
         search(node_id);

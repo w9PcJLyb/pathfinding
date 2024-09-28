@@ -1040,7 +1040,7 @@ cdef class SpaceTimeAStar(_AbsPathFinder):
             assert(reservation_table.graph == self.graph)
             crt = reservation_table._obj
 
-        return self._obj.find_path(start, goal, search_depth, crt)
+        return self._obj.find_path_with_depth_limit(start, goal, search_depth, crt)
 
 
 cdef class ReservationTable:

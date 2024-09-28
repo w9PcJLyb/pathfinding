@@ -15,8 +15,15 @@ vector<vector<int>> CBS::mapf(vector<int> starts, vector<int> goals) {
     return mapf(starts, goals, 100, 1.0, nullptr);
 }
 
-pair<vector<int>, double> CBS::low_level(Agent &agent, ReservationTable &rt, int search_depth) {
-    return st_a_star_.find_path(0, agent.start, agent.goal, search_depth, agent.rrs, &rt);
+Path CBS::low_level(Agent &agent, ReservationTable &rt, int search_depth) {
+    return st_a_star_.find_path_with_depth_limit(
+        agent.start,
+        agent.goal,
+        search_depth,
+        &rt,
+        agent.rrs,
+        rt.last_time_reserved(agent.goal)
+    );
 }
 
 void CBS::print_node(CTNode &node) {
@@ -134,12 +141,12 @@ bool CBS::resolve_conflict(
         node_id = tree[node_id].parent;
     }
 
-    auto [path, cost] = low_level(agent, rt, search_depth);
+    Path path = low_level(agent, rt, search_depth);
     if (path.empty() || path.back() != agent.goal)
         return false;
 
     node.solutions[agent_id] = path;
-    node.costs[agent_id] = cost;
+    node.costs[agent_id] = graph->calculate_cost(path);
     return true;
 }
 
@@ -200,13 +207,14 @@ vector<vector<int>> CBS::mapf_(
         CTNode root;
         double total_cost = 0;
         for (size_t i = 0; i < agents.size(); i++) {
-            auto [path, cost] = low_level(agents[i], rt, search_depth);
+            Path path = low_level(agents[i], rt, search_depth);
             if (path.empty() || path.back() != agents[i].goal) {
                 // there is no path from start to goal, or the path length is greater than search_depth
                 return {};
             }
 
             root.solutions.push_back(path);
+            double cost = graph->calculate_cost(path);
             root.costs.push_back(cost);
             total_cost += cost;
         }

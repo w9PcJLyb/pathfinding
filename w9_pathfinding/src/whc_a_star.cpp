@@ -67,14 +67,15 @@ vector<Path> WHCAStar::mapf_(
             break;
         }
 
-        Path path = st_a_star_.find_path(
-            time,
+        Path path = st_a_star_.find_path_with_depth_limit(
             agent.position(),
             agent.goal,
             active_window,
+            &rt,
             agent.rrs,
-            &rt
-        ).first;
+            rt.last_time_reserved(agent.goal),
+            time
+        );
         if (path.empty())
             return {};
 

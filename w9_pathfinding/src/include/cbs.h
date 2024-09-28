@@ -66,7 +66,7 @@ class CBS : public AbsMAPF {
         SpaceTimeAStar st_a_star_;
 
         vector<Conflict> find_conflict(vector<vector<int>> &paths);
-        pair<vector<int>, double> low_level(Agent &agent, ReservationTable &rt, int search_depth);
+        Path low_level(Agent &agent, ReservationTable &rt, int search_depth);
         bool resolve_conflict(CTNode &ct_node, ConstraintTree &tree, Agent &agent, ReservationTable rt, int search_depth);
         void print_node(CTNode &ct_node);
         void print_conflict(Conflict &conflict);

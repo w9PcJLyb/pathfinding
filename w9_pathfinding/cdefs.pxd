@@ -254,7 +254,7 @@ cdef extern from "src/include/space_time_a_star.h":
 
     cdef cppclass SpaceTimeAStar(AbsPathFinder):
         SpaceTimeAStar(AbsGraph*) except +
-        vector[int] find_path(int, int, int, ReservationTable*)
+        vector[int] find_path_with_depth_limit(int, int, int, ReservationTable*)
 
 
 cdef extern from "src/hc_a_star.cpp":
