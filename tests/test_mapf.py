@@ -4,7 +4,16 @@ import w9_pathfinding as pf
 from w9_pathfinding import Graph, Grid, ReservationTable
 
 COMPLETE_ALGORITHMS = [
-    {"name": "CBS", "class": pf.CBS},
+    {
+        "name": "CBS (disjoint_splitting=False)",
+        "class": pf.CBS,
+        "params": {"disjoint_splitting": False},
+    },
+    {
+        "name": "CBS (disjoint_splitting=True)",
+        "class": pf.CBS,
+        "params": {"disjoint_splitting": True},
+    },
     {"name": "ICTS", "class": pf.ICTS},
     {"name": "A*", "class": pf.MultiAgentAStar, "params": {"od": False}},
     {"name": "A* (OD)", "class": pf.MultiAgentAStar, "params": {"od": True}},

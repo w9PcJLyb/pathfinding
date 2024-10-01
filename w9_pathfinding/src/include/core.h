@@ -3,6 +3,8 @@
 #include <cmath>
 #include <queue>
 #include <vector>
+#include <random>
+#include <numeric>
 #include <ostream>
 #include <cassert>
 #include <iostream>
@@ -47,6 +49,14 @@ class AbsGraph {
         virtual std::string node_to_string(int v) const;
         void print_path(Path& path) const;
 
+        double min_weight() const {
+            return min_weight_;
+        }
+
+    protected:
+        // the minimum value in weights, used in the heuristic function (estimate_distance)
+        double min_weight_ = 1.0;
+
     private:
         vector<int> find_component_(vector<bool> &visited, int start);
 
@@ -85,9 +95,6 @@ class AbsGrid : public AbsGraph {
         // if weight == -1 - there is an impassable obstacle, the node is unreachable
         // if weight >= 0 - weight is the cost of entering this node
         vector<double> weights_;
-
-        // the minimum value in weights, used in the heuristic function (estimate_distance)
-        double min_weight_;
 };
 
 
@@ -111,3 +118,6 @@ class timeout_exception : public std::runtime_error {
     public:
         using std::runtime_error::runtime_error;
 };
+
+
+void ensure_path_length(Path& path, int length);

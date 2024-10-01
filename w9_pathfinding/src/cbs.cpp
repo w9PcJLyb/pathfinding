@@ -8,51 +8,58 @@ using std::chrono::duration;
 using std::chrono::high_resolution_clock;
 
 
-CBS::CBS(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
+CBS::CBS(AbsGraph *graph) : graph(graph), st_a_star_(graph), generator_(std::random_device{}()) {
 }
 
-vector<vector<int>> CBS::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 100, 1.0, nullptr);
-}
-
-Path CBS::low_level(Agent &agent, ReservationTable &rt, int search_depth) {
-    return st_a_star_.find_path_with_depth_limit(
-        agent.start,
-        agent.goal,
-        search_depth,
-        &rt,
-        agent.rrs,
-        rt.last_time_reserved(agent.goal)
-    );
+vector<Path> CBS::mapf(vector<int> starts, vector<int> goals) {
+    return mapf(starts, goals, 100, 1.0, true, nullptr);
 }
 
 void CBS::print_node(CTNode &node) {
     cout << "Node: parent=" << node.parent << ", costs=";
-    for (auto x : node.costs) {
-        cout << x << ",";
-    }
-    cout << " solutions:" << endl;
+    for (auto x : node.costs)
+        cout << x << ", ";
+    cout << "total=" << node.total_cost() << ", solutions:" << endl;
     for (auto & path : node.solutions) {
         cout << " - ";
         graph->print_path(path);
     }
 }
 
-void CBS::print_conflict(Conflict &r) {
-    cout << "Conflict: agent_id=" << r.agent_id << ", time=" << r.time;
-    if (r.is_edge_conflict())
-        cout << ", edge=" << r.node1 << "->" << r.node2 << endl;
+void CBS::print_constraint(Constraint &constraint) {
+    Conflict& conflict = constraint.conflict;
+    std::string type = "Negative constraint";
+    if (constraint.is_positive)
+        type = "Positive constraint";
+    cout << type << ": agent_id=" << constraint.agent_id;
+    cout << ", time=" << conflict.time;
+    if (conflict.is_vertex_conflict()) {
+        cout << ", edge=" << graph->node_to_string(conflict.node1);
+        cout << "->" << graph->node_to_string(conflict.node2) << endl;
+    }
     else
-        cout << ", node=" << r.node1 << endl;
+        cout << ", node=" << graph->node_to_string(conflict.node1) << endl;
 }
 
-vector<CBS::Conflict> CBS::find_conflict(vector<vector<int>> &paths) {
-    int num_agents = paths.size();
+int CBS::random_int(int max_value) {
+    std::uniform_int_distribution<> distribution(0, max_value - 1);
+    return distribution(generator_);
+}
 
+bool CBS::is_point_at_time(Path& path, int point, int time) {
+    if ((int)path.size() > time)
+        return path[time] == point;
+    return path.back() == point;
+}
+
+vector<CBS::Constraint> CBS::find_conflict(vector<Path> &paths, bool find_random, bool disjoint_splitting) {
+    int num_agents = paths.size();
     size_t time = 0;
     std::unordered_map<int, vector<int>> node_to_agents;
     bool edge_collision = graph->edge_collision();
     bool end = false;
+
+    vector<pair<vector<int>, Conflict>> conflicts;  // [{conflicting agents, Conflict}, ...]
 
     while (true) {
         if (edge_collision && time > 0) {
@@ -65,6 +72,9 @@ vector<CBS::Conflict> CBS::find_conflict(vector<vector<int>> &paths) {
                     continue;
 
                 int p1 = paths[agent_id][time - 1];
+                if (p1 == p2)
+                    continue;
+
                 for (int other_agent_id : node_to_agents[p2]) {
                     if (other_agent_id == agent_id)
                         continue;
@@ -74,10 +84,13 @@ vector<CBS::Conflict> CBS::find_conflict(vector<vector<int>> &paths) {
 
                     if (p1 == paths[other_agent_id][time]) {
                         // edge conflict
-                        return {
-                            Conflict(agent_id, time - 1, p1, p2),
-                            Conflict(other_agent_id, time - 1, p2, p1)
-                        };
+                        Conflict conflict(time - 1, p1, p2);
+                        vector<int> agent_ids = {agent_id, other_agent_id};
+
+                        if (!find_random)
+                            return split_conflict(paths, agent_ids, conflict, disjoint_splitting);
+
+                        conflicts.emplace_back(agent_ids, conflict);
                     }
                 }
             }
@@ -102,46 +115,153 @@ vector<CBS::Conflict> CBS::find_conflict(vector<vector<int>> &paths) {
         for (auto &[node_id, agent_ids] : node_to_agents) {
             if (agent_ids.size() > 1) {
                 // vertex conflict
-                vector<Conflict> conflicts;
-                for (int agent_id : agent_ids)
-                    conflicts.push_back({agent_id, int(time), node_id});
-                return conflicts;
+                Conflict conflict(int(time), node_id);
+
+                if (!find_random)
+                    return split_conflict(paths, agent_ids, conflict, disjoint_splitting);
+
+                conflicts.emplace_back(agent_ids, conflict);
             }
         }
 
         time++;
     }
 
-    // there are no conflicts
-    return {};
+    if (conflicts.empty())
+        return {};
+
+    auto& [agent_ids, random_conflict] = conflicts[random_int(conflicts.size())];
+
+    return split_conflict(paths, agent_ids, random_conflict, disjoint_splitting);
 }
 
-bool CBS::resolve_conflict(
-    CTNode &node, ConstraintTree &tree, Agent &agent, ReservationTable rt, int search_depth
+vector<CBS::Constraint> CBS::split_conflict(
+    vector<Path> &paths,
+    vector<int> &agent_ids,
+    Conflict& conflict,
+    bool disjoint_splitting
 ) {
-    {
-        Conflict &c = node.conflict;
+    vector<Constraint> constraints;
+
+    if (!disjoint_splitting) {
+        constraints.reserve(agent_ids.size());
+
+        if (conflict.is_edge_conflict()) {
+            Conflict reversed_conflict(conflict.time, conflict.node2, conflict.node1);
+            constraints.emplace_back(agent_ids[0], conflict);
+            constraints.emplace_back(agent_ids[1], reversed_conflict);
+        }
+        else {
+            for (int agent_id : agent_ids)
+                constraints.emplace_back(agent_id, conflict);
+        }
+    }
+    else {
+        int i = random_int(agent_ids.size());
+        int agent_id = agent_ids[i];
+        if (i == 1 && conflict.is_edge_conflict())
+            std::swap(conflict.node1, conflict.node2);
+
+        vector<int> conflicting_agents; // this is necessary in case of a positive constraint
+        if (conflict.is_vertex_conflict()) {
+            for (int a : agent_ids) {
+                if (a != agent_id)
+                    conflicting_agents.push_back(a);
+            }
+        }
+        else {
+            conflicting_agents.push_back(agent_ids[1 - i]);
+
+            // we should find all agents that have a conflict with node1 or node2
+            for (int a = 0; a < (int)paths.size(); a++) {
+                if (a == agent_id)
+                    continue;
+
+                if (
+                    is_point_at_time(paths[a], conflict.node1, conflict.time)
+                    || is_point_at_time(paths[a], conflict.node2, conflict.time + 1)
+                )
+                    conflicting_agents.push_back(a);
+            }
+        }
+
+        // negative constraint
+        constraints.emplace_back(agent_id, conflict, false);
+
+        // positive constraint
+        constraints.emplace_back(agent_id, conflict, true);
+        constraints.back().conflicting_agents = conflicting_agents;
+    }
+
+    return constraints;
+}
+
+void CBS::add_constraint(ReservationTable& rt, Conflict& c, bool reverse) {
+    if (!reverse) {
         if (c.is_edge_conflict())
             rt.add_edge_constraint(c.time, c.node1, c.node2);
         else
             rt.add_vertex_constraint(c.time, c.node1);
     }
-
-    int agent_id = node.conflict.agent_id;
-    int node_id = node.parent;
-
-    while (node_id > 0) {
-        Conflict &c = tree[node_id].conflict;
-        if (c.agent_id == agent_id) {
-            if (c.is_edge_conflict())
-                rt.add_edge_constraint(c.time, c.node1, c.node2);
-            else
-                rt.add_vertex_constraint(c.time, c.node1);
+    else {
+        if (c.is_edge_conflict()) {
+            rt.add_vertex_constraint(c.time, c.node1);
+            rt.add_vertex_constraint(c.time + 1, c.node2);
+            rt.add_edge_constraint(c.time, c.node2, c.node1);
         }
+        else
+            rt.add_vertex_constraint(c.time, c.node1);
+    }
+}
+
+vector<int> CBS::populate_reservation_table(
+    ReservationTable& rt,
+    CTNode& node,
+    ConstraintTree& tree,
+    int agent_id
+) {
+    add_constraint(rt, node.constraint.conflict, node.constraint.is_positive);
+
+    vector<int> landmarks;  // list of times with positive constraint
+    int node_id = node.parent;
+    while (node_id > 0) {
+        Constraint& constraint = tree[node_id].constraint;
+        Conflict& conf = constraint.conflict;
+
+        if (constraint.agent_id == agent_id && constraint.is_positive) {
+            landmarks.push_back(conf.time);
+            if (conf.is_edge_conflict())
+                landmarks.push_back(conf.time + 1);
+        }
+        else if (constraint.agent_id == agent_id || constraint.is_positive)
+            add_constraint(rt, conf, constraint.is_positive);
+
         node_id = tree[node_id].parent;
     }
 
-    Path path = low_level(agent, rt, search_depth);
+    return landmarks;
+}
+
+bool CBS::low_level(
+    CTNode& node,
+    ConstraintTree& tree,
+    Agent& agent,
+    ReservationTable& rt,
+    int search_depth
+) {
+    int agent_id = node.constraint.agent_id;
+
+    ReservationTable rt_ = rt;
+    populate_reservation_table(rt_, node, tree, agent_id);
+
+    Path path = st_a_star_.find_path_with_depth_limit(
+        agent.start,
+        agent.goal,
+        search_depth,
+        &rt_,
+        agent.rrs,
+        rt_.last_time_reserved(agent.goal)
+    );
     if (path.empty() || path.back() != agent.goal)
         return false;
 
@@ -150,13 +270,158 @@ bool CBS::resolve_conflict(
     return true;
 }
 
-vector<vector<int>> CBS::mapf(
+bool CBS::low_level_with_disjoint_splitting(
+    CTNode& node,
+    ConstraintTree& tree,
+    vector<Agent>& agents,
+    ReservationTable& rt,
+    int search_depth
+) {
+    int agent_id = node.constraint.agent_id;
+    Constraint& constraint = node.constraint;
+
+    if (!constraint.is_positive) {
+        Path path = find_new_path(node, tree, agent_id, agents[agent_id], rt, search_depth);
+        if (path.empty())
+            return false;
+        node.solutions[agent_id] = path;
+        node.costs[agent_id] = graph->calculate_cost(path);
+    }
+    else {
+        // a positive constraint, we run the low-level search for every agent
+        // whose path violates its corresponding negative constraint
+        for (int other_agent : node.constraint.conflicting_agents) {
+            Path path = find_new_path(node, tree, other_agent, agents[other_agent], rt, search_depth);
+            if (path.empty())
+                return false;
+            node.solutions[other_agent] = path;
+            node.costs[other_agent] = graph->calculate_cost(path);
+        }
+    }
+
+    return true;
+}
+
+Path CBS::find_new_path(
+    CTNode& node,
+    ConstraintTree& tree,
+    int agent_id,
+    Agent& agent,
+    ReservationTable& rt,
+    int search_depth
+) {
+    ReservationTable rt_ = rt;
+    vector<int> landmarks = populate_reservation_table(rt_, node, tree, agent_id);
+
+    int conflict_time = node.constraint.conflict.time;
+    int left_landmark = -1, right_landmark = -1;
+    for (int time : landmarks) {
+        if (time <= conflict_time)
+            left_landmark = std::max(time, left_landmark);
+        else
+            right_landmark = right_landmark == -1 ? time : std::min(time, right_landmark);
+    }
+
+    if (node.constraint.conflict.is_vertex_conflict())
+        assert(conflict_time != left_landmark);
+
+    Path path = node.solutions[agent_id];
+
+    if (right_landmark >= (int)path.size() - 1) {
+        // right_landmark is located at the agent's goal position,
+        // need to update the last part of the path with a length restriction
+        left_landmark = std::max(0, left_landmark);
+        ensure_path_length(path, left_landmark);
+
+        Path part = st_a_star_.find_path_with_length_limit(
+            path[left_landmark],
+            agent.goal,
+            right_landmark - left_landmark,
+            &rt_,
+            agent.rrs,
+            rt_.last_time_reserved(agent.goal),
+            left_landmark
+        );
+        if (part.empty())
+            return {};
+
+        path.resize(left_landmark);
+        path.insert(path.end(), part.begin(), part.end());
+
+        return path;
+    }
+
+    ensure_path_length(path, std::max(left_landmark, right_landmark));
+
+    if (left_landmark == -1 && right_landmark == -1) {
+        // there are no landmarks, need to find a completely new path
+        path = st_a_star_.find_path_with_depth_limit(
+            agent.start,
+            agent.goal,
+            search_depth,
+            &rt_,
+            agent.rrs,
+            rt_.last_time_reserved(agent.goal)
+        );
+        if (path.empty() || path.back() != agent.goal)
+            return {};
+    }
+    else if (left_landmark == -1 && right_landmark >= 0) {
+        // need to update the first part of the path
+        Path part = st_a_star_.find_path_with_exact_length(
+            agent.start, path[right_landmark], right_landmark, &rt_
+        );
+        if (part.empty())
+            return {};
+        std::copy(part.begin(), part.end(), path.begin());
+    }
+    else if (left_landmark >= 0 && right_landmark == -1) {
+        // need to update the last part of the path
+        Path part = st_a_star_.find_path_with_depth_limit(
+            path[left_landmark],
+            agent.goal,
+            search_depth - left_landmark,
+            &rt_,
+            agent.rrs,
+            rt_.last_time_reserved(agent.goal),
+            left_landmark
+        );
+        if (part.empty() || part.back() != agent.goal)
+            return {};
+        path.resize(left_landmark);
+        path.insert(path.end(), part.begin(), part.end());
+    }
+    else {
+        // need to update the middle part of the path
+        Path part = st_a_star_.find_path_with_exact_length(
+            path[left_landmark],
+            path[right_landmark],
+            right_landmark - left_landmark,
+            &rt_,
+            left_landmark
+        );
+        if (part.empty())
+            return {};
+        std::copy(part.begin(), part.end(), path.begin() + left_landmark);
+    }
+
+    while (path.size() > 1 && path.back() == path.at(path.size() - 2))
+        path.pop_back();
+
+    return path;
+}
+
+vector<Path> CBS::mapf(
     vector<int> starts,
     vector<int> goals,
     int search_depth,
     double max_time,
+    bool disjoint_splitting,
     const ReservationTable *rt
 ) {
+    num_closed_nodes = 0;
+    num_generated_nodes = 0;
+
     assert(starts.size() == goals.size());
 
     if (starts.size() == 0)
@@ -185,16 +450,18 @@ vector<vector<int>> CBS::mapf(
         agents,
         search_depth,
         max_time,
+        disjoint_splitting,
         reservation_table
     );
 
     return paths;
 }
 
-vector<vector<int>> CBS::mapf_(
+vector<Path> CBS::mapf_(
     vector<Agent> &agents,
     int search_depth,
     double max_time,
+    bool disjoint_splitting,
     ReservationTable &rt
 ) {
     auto begin_time = high_resolution_clock::now();
@@ -205,47 +472,63 @@ vector<vector<int>> CBS::mapf_(
 
     {
         CTNode root;
-        double total_cost = 0;
         for (size_t i = 0; i < agents.size(); i++) {
-            Path path = low_level(agents[i], rt, search_depth);
+            Agent& agent = agents[i];
+            Path path = st_a_star_.find_path_with_depth_limit(
+                agent.start,
+                agent.goal,
+                search_depth,
+                &rt,
+                agent.rrs,
+                rt.last_time_reserved(agent.goal)
+            );
             if (path.empty() || path.back() != agents[i].goal) {
                 // there is no path from start to goal, or the path length is greater than search_depth
+                num_closed_nodes++;
+                num_generated_nodes++;
                 return {};
             }
 
             root.solutions.push_back(path);
             double cost = graph->calculate_cost(path);
             root.costs.push_back(cost);
-            total_cost += cost;
         }
 
         tree.push_back(root);
-        openset.push({total_cost, tree.size() - 1});
+        openset.push({root.total_cost(), tree.size() - 1});
     }
 
     while (!openset.empty()) {
         auto [cost, node_id] = openset.top();
         openset.pop();
+        num_closed_nodes++;
 
-
-        vector<Conflict> conflicts = find_conflict(tree[node_id].solutions);
-        if (conflicts.empty())
+        vector<Constraint> constraints = find_conflict(
+            tree[node_id].solutions, disjoint_splitting, disjoint_splitting
+        );
+        if (constraints.empty())
             return tree[node_id].solutions;
 
         if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
             throw timeout_exception("Timeout");
 
-        for (Conflict& conflict : conflicts) {
-            int agent_id = conflict.agent_id;
+        for (Constraint& constraint : constraints) {
+            int agent_id = constraint.agent_id;
 
-            CTNode new_node(node_id, conflict);
+            CTNode new_node(node_id, constraint);
             new_node.costs = tree[node_id].costs;
             new_node.solutions = tree[node_id].solutions;
 
-            if (resolve_conflict(new_node, tree, agents[agent_id], rt, search_depth)) {
-                double new_cost = cost - tree[node_id].costs[agent_id] + new_node.costs[agent_id];
+            bool resolved;
+            if (!disjoint_splitting)
+                resolved = low_level(new_node, tree, agents[agent_id], rt, search_depth);
+            else
+                resolved = low_level_with_disjoint_splitting(new_node, tree, agents, rt, search_depth);
+
+            if (resolved) {
                 tree.push_back(new_node);
-                openset.push({new_cost, tree.size() - 1});
+                num_generated_nodes++;
+                openset.push({new_node.total_cost(), tree.size() - 1});
             }
         }
 

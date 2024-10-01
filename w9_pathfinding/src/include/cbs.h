@@ -7,42 +7,75 @@
 
 
 class CBS : public AbsMAPF {
-    // Conflict Based Search
-    // Sharon et al. 2012 Conflict-Based Search For Optimal Multi-Agent Path Finding
+    /*
+    Conflict Based Search
+    Sharon et al. 2012 Conflict-Based Search For Optimal Multi-Agent Path Finding
+    Li et al. 2019 Disjoint Splitting for Multi-Agent Path Finding with Conflict-Based Search
+    */
 
     struct Agent {
         int start, goal;
         ResumableSearch *rrs;
 
         Agent(int start, int goal, ResumableSearch *rrs) : start(start), goal(goal), rrs(rrs) {};
-        ~Agent() {delete rrs;};
+        ~Agent() {
+            delete rrs;
+        };
     };
 
     struct Conflict {
-        int agent_id, time, node1, node2 = -1;
+        int time, node1, node2 = -1;
+
+        Conflict() : time(-1), node1(-1), node2(-1) {}
 
         // vertex conflict
-        Conflict(int agent_id, int time, int node_id) :
-            agent_id(agent_id), time(time), node1(node_id) {}
+        Conflict(int time, int node_id) :
+            time(time), node1(node_id) {}
 
         // edge conflict
-        Conflict(int agent_id, int time, int node1, int node2) :
-            agent_id(agent_id), time(time), node1(node1), node2(node2) {}
+        Conflict(int time, int node1, int node2) :
+            time(time), node1(node1), node2(node2) {}
 
         bool is_edge_conflict() {
             return node2 >= 0;
         };
+
+        bool is_vertex_conflict() {
+            return node2 < 0;
+        };
+
+        bool operator == (const Conflict& c) const {
+            return time == c.time && node1 == c.node1 && node2 == c.node2;
+        }
+    };
+
+    struct Constraint {
+        int agent_id;
+        Conflict conflict;
+        vector<int> conflicting_agents;
+
+        // a positive constraint requires the agent to be at the conflict
+        // a negative constraint compels the agent to avoid it
+        bool is_positive;
+
+        Constraint() : agent_id(-1), conflict(), is_positive(false) {}
+        Constraint(int agent_id, Conflict& conflict, bool is_positive = false) :
+            agent_id(agent_id), conflict(conflict), is_positive(is_positive) {}
     };
 
     struct CTNode {
         // Constraint Tree Node
         int parent;
-        vector<vector<int>> solutions;
+        vector<Path> solutions;
         vector<double> costs;
-        Conflict conflict;
+        Constraint constraint;
 
-        CTNode() : parent(-1), conflict(Conflict(-1, -1, -1)) {};
-        CTNode(int parent, Conflict conflict) : parent(parent), conflict(conflict) {};
+        CTNode() : parent(-1), constraint() {};
+        CTNode(int parent, Constraint constraint) : parent(parent), constraint(constraint) {};
+
+        double total_cost() {
+            return std::accumulate(costs.begin(), costs.end(), 0.);
+        }
     };
 
     typedef pair<double, int> key;
@@ -52,28 +85,39 @@ class CBS : public AbsMAPF {
     public:
         AbsGraph* graph;
         CBS(AbsGraph* graph);
+        int num_generated_nodes = 0;
+        int num_closed_nodes = 0;
 
-        vector<vector<int>> mapf(vector<int> starts, vector<int> goals);
-        vector<vector<int>> mapf(
+        vector<Path> mapf(vector<int> starts, vector<int> goals);
+        vector<Path> mapf(
             vector<int> starts,
             vector<int> goals,
             int search_depth,
             double max_time,
+            bool disjoint_splitting,
             const ReservationTable *rt
         );
 
     private:
         SpaceTimeAStar st_a_star_;
+        std::mt19937 generator_;
 
-        vector<Conflict> find_conflict(vector<vector<int>> &paths);
-        Path low_level(Agent &agent, ReservationTable &rt, int search_depth);
-        bool resolve_conflict(CTNode &ct_node, ConstraintTree &tree, Agent &agent, ReservationTable rt, int search_depth);
+        vector<Constraint> find_conflict(vector<Path> &paths, bool find_random, bool disjoint_splitting);
+        vector<Constraint> split_conflict(vector<Path> &paths, vector<int>& agent_ids, Conflict& conflict, bool disjoint_splitting);
+        void add_constraint(ReservationTable& rt, Conflict& c, bool reverse = false);
+        vector<int> populate_reservation_table(ReservationTable& rt, CTNode& node, ConstraintTree& tree, int agent_id);
+        bool low_level(CTNode &ct_node, ConstraintTree &tree, Agent &agent, ReservationTable& rt, int search_depth);
+        bool low_level_with_disjoint_splitting(CTNode &ct_node, ConstraintTree &tree, vector<Agent>& agents, ReservationTable& rt, int search_depth);
+        Path find_new_path(CTNode &ct_node, ConstraintTree &tree, int node_id, Agent &agent, ReservationTable& rt, int search_depth);
         void print_node(CTNode &ct_node);
-        void print_conflict(Conflict &conflict);
-        vector<vector<int>> mapf_(
+        void print_constraint(Constraint &constraint);
+        int random_int(int max_value);
+        bool is_point_at_time(Path& path, int point, int time);
+        vector<Path> mapf_(
             vector<Agent> &agents,
             int search_depth,
             double max_time,
+            bool disjoint_splitting,
             ReservationTable &rt
         );
 };

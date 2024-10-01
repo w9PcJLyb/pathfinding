@@ -29,7 +29,20 @@ WEIGHTED_GRID_GENERATOR = GridGenerator(
 ALGORITHMS = [
     {"name": "HCA*", "class": pf.HCAStar, "unw": 0, "w": 0},
     {"name": "WHCA*", "class": pf.WHCAStar, "unw": 0, "w": 0},
-    {"name": "CBS", "class": pf.CBS, "params": {"max_time": 0.1}, "unw": 1, "w": 1},
+    {
+        "name": "CBS (disjoint_splitting=False)",
+        "class": pf.CBS,
+        "params": {"max_time": 0.1, "disjoint_splitting": False},
+        "unw": 1,
+        "w": 1,
+    },
+    {
+        "name": "CBS (disjoint_splitting=True)",
+        "class": pf.CBS,
+        "params": {"max_time": 0.1, "disjoint_splitting": True},
+        "unw": 1,
+        "w": 1,
+    },
     {"name": "ICTS", "class": pf.ICTS, "params": {"max_time": 0.1}, "unw": 1, "w": 0},
     {
         "name": "A*",
@@ -183,9 +196,6 @@ def run_graph(algorithms, graph, starts, goals):
 def create_graph_with_queries(generator):
     while True:
         graph = generator.instance()
-        graph.passable_left_right_border = False
-        graph.passable_up_down_border = False
-        graph.diagonal_movement = 0
         try:
             queries = random_queries(
                 graph, num_queries=NUM_AGENTS, unique=True, connected=True

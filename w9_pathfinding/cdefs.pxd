@@ -255,6 +255,8 @@ cdef extern from "src/include/space_time_a_star.h":
     cdef cppclass SpaceTimeAStar(AbsPathFinder):
         SpaceTimeAStar(AbsGraph*) except +
         vector[int] find_path_with_depth_limit(int, int, int, ReservationTable*)
+        vector[int] find_path_with_exact_length(int, int, int, ReservationTable*)
+        vector[int] find_path_with_length_limit(int, int, int, ReservationTable*)
 
 
 cdef extern from "src/hc_a_star.cpp":
@@ -286,8 +288,9 @@ cdef extern from "src/cbs.cpp":
 cdef extern from "src/include/cbs.h":
 
     cdef cppclass CBS(AbsMAPF):
+        int num_generated_nodes, num_closed_nodes
         CBS(AbsGraph*) except +
-        vector[vector[int]] mapf(vector[int], vector[int], int, double, ReservationTable*) except +
+        vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
 
 
 cdef extern from "src/icts.cpp":

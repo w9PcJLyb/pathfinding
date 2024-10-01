@@ -14,12 +14,9 @@ class SpaceTimeAStar : public AbsPathFinder {
         double distance;
         double f;
 
-        Node(Node *parent, int node_id, int time, double distance, double f) : 
+        Node(Node* parent, int node_id, int time, double distance, double f) :
             parent(parent), node_id(node_id), time(time), distance(distance), f(f) {}
     };
-
-    typedef pair<double, Node*> key;
-    typedef priority_queue<key, vector<key>, std::greater<key>> Queue;
 
     public:
         AbsGraph* graph;
@@ -30,8 +27,7 @@ class SpaceTimeAStar : public AbsPathFinder {
         Path find_path(int start, int end);
 
         /*
-        find_path_with_depth_limit finds a path from the starting point to the goal
-        taking into account the reservation table. search_depth is an early stopping
+        finds a path from the starting point to the goal. search_depth is an early stopping
         condition, for quick responses when the entire path is not necessary.
         Thus if the shortest path is longer than search_depth, the function returns
         only the first search_depth elements of the path.
@@ -46,9 +42,35 @@ class SpaceTimeAStar : public AbsPathFinder {
             int start_time = 0   // the time of the first step
         );
 
+        /*
+        finds a path from the starting point to the goal with a specific length
+        */
+        Path find_path_with_exact_length(
+            int start,
+            int goal,
+            int length,
+            const ReservationTable *rt,
+            int start_time = 0
+        );
+
+        /*
+        finds the optimal path from the starting point to the goal with a
+        length less than max_length
+        */
+        Path find_path_with_length_limit(
+            int start,
+            int goal,
+            int max_length,
+            const ReservationTable *rt,
+            ResumableSearch* rrs = nullptr,
+            int min_terminal_time = 0,
+            int start_time = 0
+        );
+
     private:
         ResumableSearch* rrs_;
 
         ResumableSearch* ensure_rrs(ResumableSearch* rrs, int goal);
         Path reconstruct_path(int start, Node* node);
+        Path find_path_with_length_limit__static(int start, int goal, int max_length);
 };

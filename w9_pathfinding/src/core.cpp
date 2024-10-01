@@ -290,3 +290,11 @@ vector<vector<int>> AbsGrid::find_components() {
     }
     return components_without_walls;
 }
+
+void ensure_path_length(Path& path, int length) {
+    if ((int)path.size() >= length + 1)
+        return;
+
+    Path rest(length + 1 - path.size(), path.back());
+    path.insert(path.end(), rest.begin(), rest.end());
+}

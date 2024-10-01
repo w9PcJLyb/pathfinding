@@ -44,6 +44,8 @@ size_t Graph::num_edges() const {
 }
 
 void Graph::add_edge(int start, int end, double cost) {
+    if (cost < min_weight_)
+        min_weight_ = cost;
     edges_[start].push_back(Edge(end, cost));
     if (!directed_)
         edges_[end].push_back(Edge(start, cost));

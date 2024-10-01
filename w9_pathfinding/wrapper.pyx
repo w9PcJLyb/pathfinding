@@ -1025,6 +1025,15 @@ cdef class SpaceTimeAStar(_AbsPathFinder):
     def __dealloc__(self):
         del self._obj
 
+    cdef CReservationTable* _to_crt(self, ReservationTable reservation_table):
+        cdef CReservationTable* crt
+        if reservation_table is None:
+            crt = NULL
+        else:
+            assert(reservation_table.graph == self.graph)
+            crt = reservation_table._obj
+        return crt
+
     @_pathfinding
     def find_path(
         self,
@@ -1033,14 +1042,57 @@ cdef class SpaceTimeAStar(_AbsPathFinder):
         int search_depth=100,
         ReservationTable reservation_table=None,
     ):
-        cdef CReservationTable* crt
-        if reservation_table is None:
-            crt = NULL
-        else:
-            assert(reservation_table.graph == self.graph)
-            crt = reservation_table._obj
+        return self._obj.find_path_with_depth_limit(
+            start,
+            goal,
+            search_depth,
+            self._to_crt(reservation_table),
+        )
 
-        return self._obj.find_path_with_depth_limit(start, goal, search_depth, crt)
+    @_pathfinding
+    def find_path_with_depth_limit(
+        self,
+        int start,
+        int goal,
+        int search_depth=100,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.find_path_with_depth_limit(
+            start,
+            goal,
+            search_depth,
+            self._to_crt(reservation_table),
+        )
+
+    @_pathfinding
+    def find_path_with_exact_length(
+        self,
+        int start,
+        int goal,
+        int length,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.find_path_with_exact_length(
+            start,
+            goal,
+            length,
+            self._to_crt(reservation_table),
+        )
+
+    @_pathfinding
+    def find_path_with_length_limit(
+        self,
+        int start,
+        int goal,
+        int max_length,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.find_path_with_length_limit(
+            start,
+            goal,
+            max_length,
+            self._to_crt(reservation_table),
+        )
 
 
 cdef class ReservationTable:
@@ -1203,6 +1255,14 @@ cdef class CBS(_AbsMAPF):
     def __dealloc__(self):
         del self._obj
 
+    @property
+    def num_generated_nodes(self):
+        return self._obj.num_generated_nodes
+
+    @property
+    def num_closed_nodes(self):
+        return self._obj.num_closed_nodes
+
     @_mapf
     def mapf(
         self,
@@ -1210,6 +1270,7 @@ cdef class CBS(_AbsMAPF):
         vector[int] goals,
         int search_depth=100,
         double max_time=1,
+        bool disjoint_splitting=True,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
@@ -1217,6 +1278,7 @@ cdef class CBS(_AbsMAPF):
             goals,
             search_depth,
             max_time,
+            disjoint_splitting,
             self._to_crt(reservation_table),
         )
 
