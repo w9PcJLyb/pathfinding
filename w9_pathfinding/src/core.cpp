@@ -210,74 +210,32 @@ void AbsGraph::print_path(Path& path) const {
     cout << "[" << s << "]" << endl;
 }
 
-void AbsGraph::set_pause_action_cost(double cost) {
-    if (cost < 0)
-        throw std::invalid_argument("Pause action cost must be non-negative");
-    pause_action_cost_ = cost;
-}
+void AbsGrid::update_weight(int node, double w) {
+    if (w < 0 && w != -1) {
+        throw std::invalid_argument("Weight must be either non-negative or equal to -1");
+    }
 
-double AbsGraph::get_pause_action_cost() const {
-    return pause_action_cost_;
-}
+    if (w != -1) {
+        if (min_weight_ == -1 || min_weight_ > w)
+            min_weight_ = w;
+    }
 
-void AbsGraph::set_edge_collision(bool b) {
-    edge_collision_ = b;
-}
-
-bool AbsGraph::edge_collision() const {
-    return edge_collision_;
-}
-
-size_t AbsGrid::size() const {
-    return weights_.size();
-}
-
-bool AbsGrid::has_coordinates() const {
-    return true;
-}
-
-bool AbsGrid::is_directed_graph() const {
-    return false;
+    weights_.at(node) = w;
 }
 
 void AbsGrid::set_weights(vector<double> &weights) {
     if (weights.size() != size())
         throw std::invalid_argument("Wrong shape");
 
-    if (!weights.empty()) {
-        min_weight_ = -1;
-        for (double w : weights) {
-            if (w < 0 && w != -1) {
-                throw std::invalid_argument("Weight must be either non-negative or equal to -1");
-            }
-            if (w != -1) {
-                if (min_weight_ == -1 || min_weight_ > w)
-                    min_weight_ = w;
-            }
-        }
-    }
+    if (weights.empty())
+        return;
 
-    weights_ = weights;
-}
+    if (weights_.empty())
+        weights_.resize(size(), 1);
 
-vector<double> AbsGrid::get_weights() const {
-    return weights_;
-}
-
-bool AbsGrid::has_obstacle(int node) const {
-    return weights_.at(node) == -1;
-}
-
-void AbsGrid::add_obstacle(int node) {
-    weights_.at(node) = -1;
-}
-
-void AbsGrid::remove_obstacle(int node) {
-    weights_.at(node) = 1;
-}
-
-void AbsGrid::clear_weights() {
-    std::fill(weights_.begin(), weights_.end(), 1);
+    min_weight_ = weights[0];
+    for (size_t node = 0; node < weights.size(); node++)
+        update_weight(node, weights[node]);
 }
 
 vector<vector<int>> AbsGrid::find_components() {

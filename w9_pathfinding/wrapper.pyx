@@ -336,16 +336,19 @@ cdef class Grid(_AbsGrid):
         return node_id % self.width, node_id // self.width
 
     def has_obstacle(self, point):
-        self.assert_in(point)
         return self._obj.has_obstacle(self.get_node_id(point))
 
     def add_obstacle(self, point):
-        self.assert_in(point)
         self._obj.add_obstacle(self.get_node_id(point))
 
     def remove_obstacle(self, point):
-        self.assert_in(point)
         self._obj.remove_obstacle(self.get_node_id(point))
+
+    def update_weight(self, point, new_value):
+        self._obj.update_weight(self.get_node_id(point), new_value)
+
+    def get_weight(self, point):
+        return self._obj.get_weight(self.get_node_id(point))
 
     @property
     def diagonal_movement(self):
@@ -547,6 +550,12 @@ cdef class Grid3D(_AbsGrid):
     def remove_obstacle(self, point):
         self._obj.remove_obstacle(self.get_node_id(point))
 
+    def update_weight(self, point, new_value):
+        self._obj.update_weight(self.get_node_id(point), new_value)
+
+    def get_weight(self, point):
+        return self._obj.get_weight(self.get_node_id(point))
+
     @property
     def obstacle_map(self):
         weights = self.weights
@@ -661,16 +670,19 @@ cdef class HexGrid(_AbsGrid):
         return node_id % self.width, node_id // self.width
 
     def has_obstacle(self, point):
-        self.assert_in(point)
         return self._obj.has_obstacle(self.get_node_id(point))
 
     def add_obstacle(self, point):
-        self.assert_in(point)
         self._obj.add_obstacle(self.get_node_id(point))
 
     def remove_obstacle(self, point):
-        self.assert_in(point)
         self._obj.remove_obstacle(self.get_node_id(point))
+
+    def update_weight(self, point, new_value):
+        self._obj.update_weight(self.get_node_id(point), new_value)
+
+    def get_weight(self, point):
+        return self._obj.get_weight(self.get_node_id(point))
 
     @property
     def layout(self):

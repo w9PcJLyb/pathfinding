@@ -70,25 +70,67 @@ class AbsGraph {
         bool edge_collision_ = false;
 
     public:
-        void set_pause_action_cost(double cost);
-        double get_pause_action_cost() const;
-        virtual void set_edge_collision(bool b);
-        bool edge_collision() const;
+        void set_pause_action_cost(double cost) {
+            if (cost < 0)
+                throw std::invalid_argument("Pause action cost must be non-negative");
+            pause_action_cost_ = cost;
+        }
+
+        double get_pause_action_cost() const {
+            return pause_action_cost_;
+        }
+
+        virtual void set_edge_collision(bool b) {
+            edge_collision_ = b;
+        }
+
+        bool edge_collision() const {
+            return edge_collision_;
+        }
 };
 
 
 class AbsGrid : public AbsGraph {
 
     public:
-        size_t size() const;
-        bool has_coordinates() const;
-        bool is_directed_graph() const;
+        size_t size() const {
+            return weights_.size();
+        }
+
+        bool has_coordinates() const {
+            return true;
+        }
+
+        bool is_directed_graph() const {
+            return false;
+        }
+
+        double get_weight(int node) const {
+            return weights_.at(node);
+        }
+
+        vector<double> get_weights() const {
+            return weights_;
+        }
+
+        bool has_obstacle(int node) const {
+            return get_weight(node) == -1;
+        }
+
+        void add_obstacle(int node) {
+            update_weight(node, -1);
+        }
+
+        void remove_obstacle(int node) {
+            update_weight(node, 1);
+        }
+
+        void clear_weights() {
+            std::fill(weights_.begin(), weights_.end(), 1);
+        }
+
+        void update_weight(int node, double w);
         void set_weights(vector<double> &weights);
-        vector<double> get_weights() const;
-        bool has_obstacle(int node) const;
-        void add_obstacle(int node);
-        void remove_obstacle(int node);
-        void clear_weights();
         vector<vector<int>> find_components() override;
 
     protected:

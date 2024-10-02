@@ -122,3 +122,17 @@ class TestGrid(unittest.TestCase):
         self.assertTrue(grid.is_valid_path([(0, 0), (1, 0), (2, 0)]))
         self.assertFalse(grid.is_valid_path([(0, 0), (2, 0)]))
         self.assertFalse(grid.is_valid_path([(0, 1), (1, 1), (2, 1)]))
+
+    def test_update_weight(self):
+        grid = Grid(width=3, height=3)
+        self.assertEqual(grid.get_weight((1, 1)), 1)
+
+        grid.update_weight((1, 1), 10.9)
+        self.assertEqual(grid.get_weight((1, 1)), 10.9)
+
+        with self.assertRaises(ValueError):
+            grid.update_weight((1, 1), -2)
+        self.assertEqual(grid.get_weight((1, 1)), 10.9)
+
+        with self.assertRaises(ValueError):
+            grid.update_weight((9, 9), 10.9)

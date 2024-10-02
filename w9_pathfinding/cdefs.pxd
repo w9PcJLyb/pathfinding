@@ -30,6 +30,8 @@ cdef extern from "src/include/core.h":
         void remove_obstacle(int)
         void clear_weights()
         void set_weights(vector[double]&)
+        void update_weight(int, double) except +
+        double get_weight(int) except +
         vector[double] get_weights()
 
     cdef cppclass AbsPathFinder:
