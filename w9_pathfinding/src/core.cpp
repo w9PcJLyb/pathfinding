@@ -211,31 +211,34 @@ void AbsGraph::print_path(Path& path) const {
 }
 
 void AbsGrid::update_weight(int node, double w) {
-    if (w < 0 && w != -1) {
+    if (w < 0 && w != -1)
         throw std::invalid_argument("Weight must be either non-negative or equal to -1");
-    }
 
-    if (w != -1) {
-        if (min_weight_ == -1 || min_weight_ > w)
-            min_weight_ = w;
-    }
+    if (node < 0 || node >= int(size()))
+        throw std::invalid_argument("Node " + std::to_string(node) + " is out of the grid");
+
+    if (w >= 0 && (min_weight_ == -1 || min_weight_ > w))
+        min_weight_ = w;
 
     weights_.at(node) = w;
 }
 
 void AbsGrid::set_weights(vector<double> &weights) {
     if (weights.size() != size())
-        throw std::invalid_argument("Wrong shape");
+        throw std::invalid_argument(
+            "Weights must have exactly " + std::to_string(size()) + " elements"
+        );
 
-    if (weights.empty())
-        return;
+    double min_weight = -1;
+    for (double w : weights) {
+        if (w < 0 && w != -1)
+            throw std::invalid_argument("Weight must be either non-negative or equal to -1");
+        if (w >= 0 && (min_weight == -1 || min_weight > w))
+            min_weight = w;
+    }
 
-    if (weights_.empty())
-        weights_.resize(size(), 1);
-
-    min_weight_ = weights[0];
-    for (size_t node = 0; node < weights.size(); node++)
-        update_weight(node, weights[node]);
+    min_weight_ = min_weight;
+    weights_ = weights;
 }
 
 vector<vector<int>> AbsGrid::find_components() {

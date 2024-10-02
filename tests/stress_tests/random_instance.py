@@ -279,7 +279,7 @@ def random_queries(graph, num_queries, connected=False, unique=False):
     is_grid = isinstance(graph, (Grid, Grid3D, HexGrid))
 
     free_nodes = []
-    for node_id in range(graph.size()):
+    for node_id in range(graph.size):
         if is_grid and graph.has_obstacle(graph.get_coordinates(node_id)):
             continue
         free_nodes.append(node_id)

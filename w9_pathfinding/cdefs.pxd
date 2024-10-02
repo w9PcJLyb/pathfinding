@@ -29,7 +29,7 @@ cdef extern from "src/include/core.h":
         void add_obstacle(int)
         void remove_obstacle(int)
         void clear_weights()
-        void set_weights(vector[double]&)
+        void set_weights(vector[double]&) except +
         void update_weight(int, double) except +
         double get_weight(int) except +
         vector[double] get_weights()
@@ -41,14 +41,6 @@ cdef extern from "src/include/core.h":
     cdef cppclass AbsMAPF:
         AbsMAPF() except +
         vector[vector[int]] mapf(vector[int], vector[int])
-
-
-cdef extern from "src/resumable_search.cpp":
-    pass
-
-
-cdef extern from "src/include/resumable_search.h":
-    pass
 
 
 cdef extern from "src/reservation_table.cpp":
@@ -95,7 +87,7 @@ cdef extern from "src/include/grid.h":
         double diagonal_movement_cost_multiplier
 
         Grid(int, int) except +
-        Grid(vector[vector[double]]) except +
+        Grid(int, int, vector[double]) except +
         unsigned int get_diagonal_movement()
         void set_diagonal_movement(int)
 
@@ -110,7 +102,7 @@ cdef extern from "src/include/grid_3d.h":
         bool passable_borders
 
         Grid3D(int, int, int) except +
-        Grid3D(vector[vector[vector[double]]]) except +
+        Grid3D(int, int, int, vector[double]) except +
 
 
 cdef extern from "src/hex_grid.cpp":
@@ -124,7 +116,7 @@ cdef extern from "src/include/hex_grid.h":
         int layout
 
         HexGrid(int, int, int) except +
-        HexGrid(int, vector[vector[double]]) except +
+        HexGrid(int, int, int, vector[double]) except +
 
 
 cdef extern from "src/dfs.cpp":

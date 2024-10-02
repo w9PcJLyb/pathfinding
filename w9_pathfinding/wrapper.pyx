@@ -20,6 +20,7 @@ cdef class _AbsGraph:
         if edge_collision:
             self.edge_collision = edge_collision
 
+    @property
     def size(self):
         return self._baseobj.size()
 
@@ -200,6 +201,8 @@ cdef class Graph(_AbsGraph):
 
 
 cdef class _AbsGrid(_AbsGraph):
+    cdef cdefs.AbsGrid* _basegridobj
+
     def assert_in(self, point):
         raise NotImplementedError()
 
@@ -208,6 +211,29 @@ cdef class _AbsGrid(_AbsGraph):
 
     def get_coordinates(self, int node_id):
         raise NotImplementedError()
+
+    @property
+    def shape(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        shape_str = "x".join([str(x) for x in self.shape])
+        return f"{self.__class__.__name__}({shape_str})"
+
+    def has_obstacle(self, point):
+        return self._basegridobj.has_obstacle(self.get_node_id(point))
+
+    def add_obstacle(self, point):
+        self._basegridobj.add_obstacle(self.get_node_id(point))
+
+    def remove_obstacle(self, point):
+        self._basegridobj.remove_obstacle(self.get_node_id(point))
+
+    def update_weight(self, point, new_value):
+        self._basegridobj.update_weight(self.get_node_id(point), new_value)
+
+    def get_weight(self, point):
+        return self._basegridobj.get_weight(self.get_node_id(point))
 
     def get_neighbors(self, point):
         node_id = self.get_node_id(point)
@@ -237,6 +263,96 @@ cdef class _AbsGrid(_AbsGraph):
     def adjacent(self, p1, p2):
         return self._baseobj.adjacent(self.get_node_id(p1), self.get_node_id(p2))
 
+    @property
+    def weights(self):
+        return self._convert(self._basegridobj.get_weights(), self.shape)
+
+    @weights.setter
+    def weights(self, data):
+        if self._get_shape(data) != self.shape:
+            shape_str = "x".join([str(x) for x in self.shape])
+            raise ValueError(f"Weights must have shape {shape_str}")
+
+        vector = self._convert(data)
+        if len(vector) != self.size:
+            raise ValueError("Weights have an inhomogeneous shape")
+
+        self._basegridobj.set_weights(vector)
+
+    @property
+    def obstacle_map(self):
+        weights = self._basegridobj.get_weights()
+        weights = [int(w == -1) for w in weights]
+        return self._convert(weights, self.shape)
+
+    @staticmethod
+    def _get_shape(data):
+        shape = []
+        d = data
+        while hasattr(d, "__len__"):
+            shape.append(len(d))
+            if len(d) == 0:
+                break
+            d = d[0]
+
+        def check_shape(arr, shape):
+            if len(arr) != shape[0]:
+                return False
+
+            if len(shape) == 1:
+                return True
+
+            shape_ = shape[1:]
+            for x in arr:
+                if not check_shape(x, shape_):
+                    return False
+
+            return True
+
+        if not check_shape(data, shape):
+            raise ValueError("Data has an inhomogeneous shape")
+
+        return tuple(shape)
+
+    @staticmethod
+    def _convert(data, shape=None):
+        if shape is None:
+            # matrix -> vector
+            vector = []
+
+            def flatten(arr):
+                if len(arr) == 0:
+                    return
+                if hasattr(arr[0], "__len__"):
+                    for x in arr:
+                        flatten(x)
+                else:
+                    vector.extend(arr)
+
+            flatten(data)
+            return vector
+
+        # vector -> matrix
+        num_elements = 1
+        for s in shape:
+            num_elements *= s
+
+        if len(data) != num_elements:
+            raise ValueError("The total number of elements must match the shape")
+
+        def create_matrix(arr, shape):
+            if len(shape) == 1:
+                return arr
+            else:
+                size = int(len(arr) / shape[0])
+                shape_ = shape[1:]
+                return [
+                    create_matrix(arr[i * size:(i + 1) * size], shape_)
+                    for i in range(shape[0])
+                ]
+
+        return create_matrix(data, shape)
+
 
 cdef class Grid(_AbsGrid):
     cdef cdefs.Grid* _obj
@@ -259,7 +375,7 @@ cdef class Grid(_AbsGrid):
             if not isinstance(width, int) or not isinstance(height, int):
                 raise ValueError("Either weights or height and width must be provided.")
         else:
-            height, width = len(weights), len(weights[0])
+            height, width = self._get_shape(weights)
 
         if width <= 0:
             raise ValueError("Width must be greater than zero.")
@@ -273,10 +389,10 @@ cdef class Grid(_AbsGrid):
         if weights is None:
             self._obj = new cdefs.Grid(width, height)
         else:
-            self._check_weights(weights)
-            self._obj = new cdefs.Grid(weights)
+            self._obj = new cdefs.Grid(width, height, self._convert(weights))
 
         self._baseobj = self._obj
+        self._basegridobj = self._obj
 
         if diagonal_movement:
             self.diagonal_movement = diagonal_movement
@@ -295,9 +411,6 @@ cdef class Grid(_AbsGrid):
     def __dealloc__(self):
         del self._obj
 
-    def __repr__(self):
-        return f"Grid({self.width}x{self.height})"
-
     def assert_in(self, point):
         if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height:
             raise ValueError(f"Point {point} is out of the {self}")
@@ -309,20 +422,9 @@ cdef class Grid(_AbsGrid):
     def get_coordinates(self, int node_id):
         return node_id % self.width, node_id // self.width
 
-    def has_obstacle(self, point):
-        return self._obj.has_obstacle(self.get_node_id(point))
-
-    def add_obstacle(self, point):
-        self._obj.add_obstacle(self.get_node_id(point))
-
-    def remove_obstacle(self, point):
-        self._obj.remove_obstacle(self.get_node_id(point))
-
-    def update_weight(self, point, new_value):
-        self._obj.update_weight(self.get_node_id(point), new_value)
-
-    def get_weight(self, point):
-        return self._obj.get_weight(self.get_node_id(point))
+    @property
+    def shape(self):
+        return self.height, self.width
 
     @property
     def diagonal_movement(self):
@@ -358,38 +460,6 @@ cdef class Grid(_AbsGrid):
         if not 1 <= m <= 2:
             raise ValueError("diagonal_movement_cost_multiplier must be in range [1, 2].")
         self._obj.diagonal_movement_cost_multiplier = m
-
-    @property
-    def obstacle_map(self):
-        weights = self._obj.get_weights()
-        map = []
-        for y in range(self.height):
-            row = [int(weights[self.get_node_id((x, y))] == -1) for x in range(self.width)]
-            map.append(row)
-        return map
-
-    def _check_weights(self, weights):
-        height, width = len(weights), len(weights[0])
-        if height != self.height or width != self.width:
-            raise ValueError(f"weights.shape must be {self.width}x{self.height}")
-        for row in weights:
-            for w in row:
-                if w < 0 and w != -1:
-                    raise ValueError("Weight must be either non-negative or equal to -1")
-
-    @property
-    def weights(self):
-        weights = self._obj.get_weights()
-        matrix = []
-        for y in range(self.height):
-            row = [weights[self.get_node_id((x, y))] for x in range(self.width)]
-            matrix.append(row)
-        return matrix
-
-    @weights.setter
-    def weights(self, matrix):
-        self._check_weights(matrix)
-        self._obj.set_weights(sum(matrix, []))
 
     def show_path(self, path):
         if path:
@@ -456,8 +526,7 @@ cdef class Grid3D(_AbsGrid):
             if not isinstance(width, int) or not isinstance(height, int) or not isinstance(depth, int):
                 raise ValueError("Either weights or height and width and depth must be provided.")
         else:
-            cut = weights[0]
-            depth, height, width = len(weights), len(cut), len(cut[0])
+            depth, height, width = self._get_shape(weights)
 
         if width <= 0:
             raise ValueError("Width must be greater than zero.")
@@ -475,10 +544,10 @@ cdef class Grid3D(_AbsGrid):
         if weights is None:
             self._obj = new cdefs.Grid3D(width, height, depth)
         else:
-            self._check_weights(weights)
-            self._obj = new cdefs.Grid3D(weights)
+            self._obj = new cdefs.Grid3D(width, height, depth, self._convert(weights))
 
         self._baseobj = self._obj
+        self._basegridobj = self._obj
 
         if passable_borders:
             self.passable_borders = passable_borders
@@ -487,9 +556,6 @@ cdef class Grid3D(_AbsGrid):
 
     def __dealloc__(self):
         del self._obj
-
-    def __repr__(self):
-        return f"Grid3D({self.width}x{self.height}x{self.depth})"
 
     @property
     def diagonal_movement(self):
@@ -515,55 +581,9 @@ cdef class Grid3D(_AbsGrid):
         xy = node_id % (self.width * self.height)
         return xy % self.width, xy // self.width, node_id // (self.width * self.height)
 
-    def has_obstacle(self, point):
-        return self._obj.has_obstacle(self.get_node_id(point))
-
-    def add_obstacle(self, point):
-        self._obj.add_obstacle(self.get_node_id(point))
-
-    def remove_obstacle(self, point):
-        self._obj.remove_obstacle(self.get_node_id(point))
-
-    def update_weight(self, point, new_value):
-        self._obj.update_weight(self.get_node_id(point), new_value)
-
-    def get_weight(self, point):
-        return self._obj.get_weight(self.get_node_id(point))
-
     @property
-    def obstacle_map(self):
-        weights = self.weights
-        for i in range(self.depth):
-            for j in range(self.height):
-                weights[i][j] = [int(x < 0) for x in weights[i][j]]
-        return map
-
-    def _check_weights(self, weights):
-        cut = weights[0]
-        depth, height, width = len(weights), len(cut), len(cut[0])
-        if depth != self.depth or height != self.height or width != self.width:
-            raise ValueError(f"weights.shape must be {self.width}x{self.height}x{self.depth}")
-        for cut in weights:
-            for row in cut:
-                for w in row:
-                    if w < 0 and w != -1:
-                        raise ValueError("Weight must be positive or equal to -1")
-
-    @property
-    def weights(self):
-        weights = self._obj.get_weights()
-        matrix = []
-        for z in range(self.depth):
-            matrix.append([])
-            for y in range(self.height):
-                row = [weights[self.get_node_id((x, y, z))] for x in range(self.width)]
-                matrix[-1].append(row)
-        return matrix
-
-    @weights.setter
-    def weights(self, matrix):
-        self._check_weights(matrix)
-        self._obj.set_weights(sum(sum(matrix, []), []))
+    def shape(self):
+        return self.depth, self.height, self.width
 
     def to_dict(self):
         return {
@@ -598,7 +618,7 @@ cdef class HexGrid(_AbsGrid):
             if not isinstance(width, int) or not isinstance(height, int):
                 raise ValueError("Either weights or height and width must be provided.")
         else:
-            height, width = len(weights), len(weights[0])
+            height, width = self._get_shape(weights)
 
         if width <= 0:
             raise ValueError("Width must be greater than zero.")
@@ -613,10 +633,10 @@ cdef class HexGrid(_AbsGrid):
         if weights is None:
             self._obj = new cdefs.HexGrid(width, height, layout)
         else:
-            self._check_weights(weights)
-            self._obj = new cdefs.HexGrid(layout, weights)
+            self._obj = new cdefs.HexGrid(width, height, layout, self._convert(weights))
 
         self._baseobj = self._obj
+        self._basegridobj = self._obj
 
         if passable_left_right_border:
             self.passable_left_right_border = passable_left_right_border
@@ -629,9 +649,6 @@ cdef class HexGrid(_AbsGrid):
     def __dealloc__(self):
         del self._obj
 
-    def __repr__(self):
-        return f"HexGrid({self.width}x{self.height})"
-
     def assert_in(self, point):
         if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height:
             raise ValueError(f"Point {point} is out of the {self}")
@@ -643,20 +660,9 @@ cdef class HexGrid(_AbsGrid):
     def get_coordinates(self, int node_id):
         return node_id % self.width, node_id // self.width
 
-    def has_obstacle(self, point):
-        return self._obj.has_obstacle(self.get_node_id(point))
-
-    def add_obstacle(self, point):
-        self._obj.add_obstacle(self.get_node_id(point))
-
-    def remove_obstacle(self, point):
-        self._obj.remove_obstacle(self.get_node_id(point))
-
-    def update_weight(self, point, new_value):
-        self._obj.update_weight(self.get_node_id(point), new_value)
-
-    def get_weight(self, point):
-        return self._obj.get_weight(self.get_node_id(point))
+    @property
+    def shape(self):
+        return self.height, self.width
 
     @property
     def layout(self):
@@ -693,38 +699,6 @@ cdef class HexGrid(_AbsGrid):
                 "if the height is even"
             )
         self._obj.passable_up_down_border = _b
-
-    @property
-    def obstacle_map(self):
-        weights = self._obj.get_weights()
-        map = []
-        for y in range(self.height):
-            row = [int(weights[self.get_node_id((x, y))] == -1) for x in range(self.width)]
-            map.append(row)
-        return map
-
-    def _check_weights(self, weights):
-        height, width = len(weights), len(weights[0])
-        if height != self.height or width != self.width:
-            raise ValueError(f"weights.shape must be {self.width}x{self.height}")
-        for row in weights:
-            for w in row:
-                if w < 0 and w != -1:
-                    raise ValueError("Weight must be either non-negative or equal to -1")
-
-    @property
-    def weights(self):
-        weights = self._obj.get_weights()
-        matrix = []
-        for y in range(self.height):
-            row = [weights[self.get_node_id((x, y))] for x in range(self.width)]
-            matrix.append(row)
-        return matrix
-
-    @weights.setter
-    def weights(self, matrix):
-        self._check_weights(matrix)
-        self._obj.set_weights(sum(matrix, []))
 
     def to_dict(self):
         return {
@@ -1087,7 +1061,7 @@ cdef class ReservationTable:
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new cdefs.ReservationTable(graph.size())
+        self._obj = new cdefs.ReservationTable(graph.size)
 
     def __dealloc__(self):
         del self._obj
