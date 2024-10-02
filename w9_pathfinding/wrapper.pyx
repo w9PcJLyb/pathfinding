@@ -2,39 +2,13 @@
 
 from libcpp cimport bool
 from libcpp.vector cimport vector
-from w9_pathfinding.cdefs cimport (
-    AbsGraph as CAbsGraph,
-    AbsPathFinder as CAbsPathFinder,
-    Graph as CGraph,
-    Grid as CGrid,
-    Grid3D as CGrid3D,
-    HexGrid as CHexGrid,
-    DFS as CDFS,
-    BFS as CBFS,
-    BiBFS as CBiBFS,
-    Dijkstra as CDijkstra,
-    BiDijkstra as CBiDijkstra,
-    AStar as CAStar,
-    BiAStar as CBiAStar,
-    GBS as CGBS,
-    IDAStar as CIDAStar,
-    ResumableBFS as CResumableBFS,
-    ResumableDijkstra as CResumableDijkstra,
-    SpaceTimeAStar as CSpaceTimeAStar,
-    ReservationTable as CReservationTable,
-    AbsMAPF as CAbsMAPF,
-    HCAStar as CHCAStar,
-    WHCAStar as CWHCAStar,
-    CBS as CCBS,
-    ICTS as CICTS,
-    MultiAgentAStar as CMultiAgentAStar,
-)
+from w9_pathfinding cimport cdefs
 from w9_pathfinding.hex_layout import HexLayout
 from w9_pathfinding.diagonal_movement import DiagonalMovement
 
 
 cdef class _AbsGraph:
-    cdef CAbsGraph* _baseobj
+    cdef cdefs.AbsGraph* _baseobj
 
     def __cinit__(self):
         pass
@@ -87,7 +61,7 @@ cdef class _AbsGraph:
 
 
 cdef class Graph(_AbsGraph):
-    cdef CGraph* _obj
+    cdef cdefs.Graph* _obj
     cdef readonly int num_vertices
     cdef readonly bool directed
 
@@ -100,7 +74,7 @@ cdef class Graph(_AbsGraph):
         edges=None,
         **kwargs,
     ):
-        self._obj = new CGraph(num_vertices, directed)
+        self._obj = new cdefs.Graph(num_vertices, directed)
         self._baseobj = self._obj
         self.num_vertices = num_vertices
         self.directed = directed
@@ -265,7 +239,7 @@ cdef class _AbsGrid(_AbsGraph):
 
 
 cdef class Grid(_AbsGrid):
-    cdef CGrid* _obj
+    cdef cdefs.Grid* _obj
     cdef readonly int width, height
 
     def __cinit__(
@@ -297,10 +271,10 @@ cdef class Grid(_AbsGrid):
         self.height = height
 
         if weights is None:
-            self._obj = new CGrid(width, height)
+            self._obj = new cdefs.Grid(width, height)
         else:
             self._check_weights(weights)
-            self._obj = new CGrid(weights)
+            self._obj = new cdefs.Grid(weights)
 
         self._baseobj = self._obj
 
@@ -464,7 +438,7 @@ cdef class Grid(_AbsGrid):
 
 
 cdef class Grid3D(_AbsGrid):
-    cdef CGrid3D* _obj
+    cdef cdefs.Grid3D* _obj
     cdef readonly int width, height, depth
 
     def __cinit__(
@@ -499,10 +473,10 @@ cdef class Grid3D(_AbsGrid):
         self.depth = depth
 
         if weights is None:
-            self._obj = new CGrid3D(width, height, depth)
+            self._obj = new cdefs.Grid3D(width, height, depth)
         else:
             self._check_weights(weights)
-            self._obj = new CGrid3D(weights)
+            self._obj = new cdefs.Grid3D(weights)
 
         self._baseobj = self._obj
 
@@ -605,7 +579,7 @@ cdef class Grid3D(_AbsGrid):
 cdef class HexGrid(_AbsGrid):
     # Hexagonal Grid
 
-    cdef CHexGrid* _obj
+    cdef cdefs.HexGrid* _obj
     cdef readonly int width, height
 
     def __cinit__(
@@ -637,10 +611,10 @@ cdef class HexGrid(_AbsGrid):
         layout = HexLayout(layout)
 
         if weights is None:
-            self._obj = new CHexGrid(width, height, layout)
+            self._obj = new cdefs.HexGrid(width, height, layout)
         else:
             self._check_weights(weights)
-            self._obj = new CHexGrid(layout, weights)
+            self._obj = new cdefs.HexGrid(layout, weights)
 
         self._baseobj = self._obj
 
@@ -808,7 +782,7 @@ def _pathfinding(func):
 
 
 cdef class _AbsPathFinder():
-    cdef CAbsPathFinder* _baseobj
+    cdef cdefs.AbsPathFinder* _baseobj
     cdef public _AbsGraph graph
 
     def __cinit__(self):
@@ -823,11 +797,11 @@ cdef class _AbsPathFinder():
 
 
 cdef class DFS(_AbsPathFinder):
-    cdef CDFS* _obj
+    cdef cdefs.DFS* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CDFS(graph._baseobj)
+        self._obj = new cdefs.DFS(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -835,11 +809,11 @@ cdef class DFS(_AbsPathFinder):
 
 
 cdef class BFS(_AbsPathFinder):
-    cdef CBFS* _obj
+    cdef cdefs.BFS* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CBFS(graph._baseobj)
+        self._obj = new cdefs.BFS(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -847,11 +821,11 @@ cdef class BFS(_AbsPathFinder):
 
 
 cdef class BiBFS(_AbsPathFinder):
-    cdef CBiBFS* _obj
+    cdef cdefs.BiBFS* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CBiBFS(graph._baseobj)
+        self._obj = new cdefs.BiBFS(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -859,11 +833,11 @@ cdef class BiBFS(_AbsPathFinder):
 
 
 cdef class Dijkstra(_AbsPathFinder):
-    cdef CDijkstra* _obj
+    cdef cdefs.Dijkstra* _obj
     
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CDijkstra(graph._baseobj)
+        self._obj = new cdefs.Dijkstra(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -871,11 +845,11 @@ cdef class Dijkstra(_AbsPathFinder):
 
 
 cdef class BiDijkstra(_AbsPathFinder):
-    cdef CBiDijkstra* _obj
+    cdef cdefs.BiDijkstra* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CBiDijkstra(graph._baseobj)
+        self._obj = new cdefs.BiDijkstra(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -883,7 +857,7 @@ cdef class BiDijkstra(_AbsPathFinder):
 
 
 cdef class AStar(_AbsPathFinder):
-    cdef CAStar* _obj
+    cdef cdefs.AStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
         if isinstance(graph, Graph) and not graph.has_coordinates():
@@ -893,7 +867,7 @@ cdef class AStar(_AbsPathFinder):
                 "or choose some non-heuristic algorithm."
             )
         self.graph = graph
-        self._obj = new CAStar(graph._baseobj)
+        self._obj = new cdefs.AStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -901,7 +875,7 @@ cdef class AStar(_AbsPathFinder):
 
 
 cdef class BiAStar(_AbsPathFinder):
-    cdef CBiAStar* _obj
+    cdef cdefs.BiAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
         if isinstance(graph, Graph) and not graph.has_coordinates():
@@ -911,7 +885,7 @@ cdef class BiAStar(_AbsPathFinder):
                 "or choose some non-heuristic algorithm."
             )
         self.graph = graph
-        self._obj = new CBiAStar(graph._baseobj)
+        self._obj = new cdefs.BiAStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -921,7 +895,7 @@ cdef class BiAStar(_AbsPathFinder):
 cdef class GBS(_AbsPathFinder):
     # Greedy Best-first Search
 
-    cdef CGBS* _obj
+    cdef cdefs.GBS* _obj
 
     def __cinit__(self, _AbsGraph graph):
         if isinstance(graph, Graph) and not graph.has_coordinates():
@@ -931,7 +905,7 @@ cdef class GBS(_AbsPathFinder):
                 "or choose some non-heuristic algorithm."
             )
         self.graph = graph
-        self._obj = new CGBS(graph._baseobj)
+        self._obj = new cdefs.GBS(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -941,7 +915,7 @@ cdef class GBS(_AbsPathFinder):
 cdef class IDAStar(_AbsPathFinder):
     # Iterative deepening A*
 
-    cdef CIDAStar* _obj
+    cdef cdefs.IDAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
         if isinstance(graph, Graph) and not graph.has_coordinates():
@@ -951,7 +925,7 @@ cdef class IDAStar(_AbsPathFinder):
                 "or choose some non-heuristic algorithm."
             )
         self.graph = graph
-        self._obj = new CIDAStar(graph._baseobj)
+        self._obj = new cdefs.IDAStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -963,12 +937,12 @@ cdef class IDAStar(_AbsPathFinder):
 
 
 cdef class ResumableBFS:
-    cdef CResumableBFS* _obj
+    cdef cdefs.ResumableBFS* _obj
     cdef public _AbsGraph graph
 
     def __cinit__(self, _AbsGraph graph, start_node):
         self.graph = graph
-        self._obj = new CResumableBFS(graph._baseobj, to_node_id(graph, start_node))
+        self._obj = new cdefs.ResumableBFS(graph._baseobj, to_node_id(graph, start_node))
 
     def __repr__(self):
         return f"{self.__class__.__name__}(graph={self.graph}, start_node={self.start_node})"
@@ -995,12 +969,12 @@ cdef class ResumableBFS:
 
 
 cdef class ResumableDijkstra:
-    cdef CResumableDijkstra* _obj
+    cdef cdefs.ResumableDijkstra* _obj
     cdef public _AbsGraph graph
 
     def __cinit__(self, _AbsGraph graph, start_node):
         self.graph = graph
-        self._obj = new CResumableDijkstra(graph._baseobj, to_node_id(graph, start_node))
+        self._obj = new cdefs.ResumableDijkstra(graph._baseobj, to_node_id(graph, start_node))
 
     def __repr__(self):
         return f"{self.__class__.__name__}(graph={self.graph}, start_node={self.start_node})"
@@ -1027,18 +1001,18 @@ cdef class ResumableDijkstra:
 
 
 cdef class SpaceTimeAStar(_AbsPathFinder):
-    cdef CSpaceTimeAStar* _obj
+    cdef cdefs.SpaceTimeAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CSpaceTimeAStar(graph._baseobj)
+        self._obj = new cdefs.SpaceTimeAStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
         del self._obj
 
-    cdef CReservationTable* _to_crt(self, ReservationTable reservation_table):
-        cdef CReservationTable* crt
+    cdef cdefs.ReservationTable* _to_crt(self, ReservationTable reservation_table):
+        cdef cdefs.ReservationTable* crt
         if reservation_table is None:
             crt = NULL
         else:
@@ -1108,12 +1082,12 @@ cdef class SpaceTimeAStar(_AbsPathFinder):
 
 
 cdef class ReservationTable:
-    cdef CReservationTable* _obj
+    cdef cdefs.ReservationTable* _obj
     cdef public _AbsGraph graph
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CReservationTable(graph.size())
+        self._obj = new cdefs.ReservationTable(graph.size())
 
     def __dealloc__(self):
         del self._obj
@@ -1177,7 +1151,7 @@ def _mapf(func):
 
 
 cdef class _AbsMAPF():
-    cdef CAbsMAPF* _baseobj
+    cdef cdefs.AbsMAPF* _baseobj
     cdef public _AbsGraph graph
 
     def __cinit__(self):
@@ -1186,8 +1160,8 @@ cdef class _AbsMAPF():
     def __repr__(self):
         return f"{self.__class__.__name__}(graph={self.graph})"
 
-    cdef CReservationTable* _to_crt(self, ReservationTable reservation_table):
-        cdef CReservationTable* crt
+    cdef cdefs.ReservationTable* _to_crt(self, ReservationTable reservation_table):
+        cdef cdefs.ReservationTable* crt
         if reservation_table is None:
             crt = NULL
         else:
@@ -1201,11 +1175,11 @@ cdef class _AbsMAPF():
 
 
 cdef class HCAStar(_AbsMAPF):
-    cdef CHCAStar* _obj
+    cdef cdefs.HCAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CHCAStar(graph._baseobj)
+        self._obj = new cdefs.HCAStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -1228,11 +1202,11 @@ cdef class HCAStar(_AbsMAPF):
 
 
 cdef class WHCAStar(_AbsMAPF):
-    cdef CWHCAStar* _obj
+    cdef cdefs.WHCAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CWHCAStar(graph._baseobj)
+        self._obj = new cdefs.WHCAStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -1257,11 +1231,11 @@ cdef class WHCAStar(_AbsMAPF):
 
 
 cdef class CBS(_AbsMAPF):
-    cdef CCBS* _obj
+    cdef cdefs.CBS* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CCBS(graph._baseobj)
+        self._obj = new cdefs.CBS(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -1296,11 +1270,11 @@ cdef class CBS(_AbsMAPF):
 
 
 cdef class ICTS(_AbsMAPF):
-    cdef CICTS* _obj
+    cdef cdefs.ICTS* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CICTS(graph._baseobj)
+        self._obj = new cdefs.ICTS(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -1325,11 +1299,11 @@ cdef class ICTS(_AbsMAPF):
 
 
 cdef class MultiAgentAStar(_AbsMAPF):
-    cdef CMultiAgentAStar* _obj
+    cdef cdefs.MultiAgentAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
-        self._obj = new CMultiAgentAStar(graph._baseobj)
+        self._obj = new cdefs.MultiAgentAStar(graph._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
