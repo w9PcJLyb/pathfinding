@@ -18,7 +18,7 @@ class HCAStar : public AbsMAPF {
         vector<vector<int>> mapf(
             vector<int> starts,
             vector<int> goals,
-            int search_depth,
+            int max_length,
             const ReservationTable *rt
         );
 

@@ -255,7 +255,7 @@ vector<Path> icts::ICTS::mapf(vector<int> starts, vector<int> goals) {
 vector<Path> icts::ICTS::mapf(
     vector<int> starts,
     vector<int> goals,
-    int search_depth,
+    int max_length,
     double max_time,
     const ReservationTable *rt
 ) {
@@ -286,18 +286,16 @@ vector<Path> icts::ICTS::mapf(
             int min_length = 0;
             if (rt)
                 min_length = rt->last_time_reserved(goal);
-            Path path = st_a_star_.find_path_with_depth_limit(
+            Path path = st_a_star_.find_path_with_length_limit(
                 start,
                 goal,
-                search_depth,
+                max_length,
                 rt,
                 nullptr,
                 min_length
             );
-            if (path.empty() || path.back() !=  goal) {
-                // there is no path from start to goal, or the path length is greater than search_depth
+            if (path.empty())
                 return {};
-            }
 
             min_depths[i] = path.size() - 1;
         }
@@ -319,7 +317,7 @@ vector<Path> icts::ICTS::mapf(
             throw timeout_exception("Timeout");
 
         for (int i = 0; i < num_agents; i++) {
-            if (node.costs[i] + 1 > search_depth)
+            if (node.costs[i] + 1 > max_length)
                 continue;
 
             ICTNode new_node(node.costs);

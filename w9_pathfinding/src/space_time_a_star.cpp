@@ -203,7 +203,6 @@ Path SpaceTimeAStar::find_path_with_exact_length(
             n.parent = current;
             openset.push({n.f, &n});
         }
-        return true;
     };
 
     while (!openset.empty()) {
@@ -250,6 +249,9 @@ Path SpaceTimeAStar::find_path_with_length_limit(
             return {};
 
         Path path = find_path_with_length_limit__static(start, goal, max_length);
+        if (path.empty())
+            return path;
+
         ensure_path_length(path, min_terminal_time - start_time);
         return path;
     }
@@ -290,7 +292,6 @@ Path SpaceTimeAStar::find_path_with_length_limit(
             n.parent = current;
             openset.push({n.f, &n});
         }
-        return true;
     };
 
     while (!openset.empty()) {
@@ -346,7 +347,10 @@ Path SpaceTimeAStar::find_path_with_length_limit__static(int start, int goal, in
 
         int time = current->time + 1;
         for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {
-            double h = graph->estimate_distance(node_id, goal);
+            double h = 0;
+            if (graph->has_coordinates())
+                h = graph->estimate_distance(node_id, goal);
+
             double distance = current->distance + cost;
 
             if (!nodes.count(node_id)) {

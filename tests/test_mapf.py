@@ -193,15 +193,15 @@ class TestMAPF(unittest.TestCase):
                 self.assertGreater(len(paths[0]), 2)
                 self.assertTrue(check_paths(grid, paths + [reserved_path]))
 
-    def test_search_depth(self):
+    def test_max_length(self):
         grid = Grid(width=5, height=5, edge_collision=True)
         starts = [(0, 0)]
         goals = [(4, 0)]
 
         for a in [pf.CBS, pf.ICTS, pf.HCAStar, pf.WHCAStar]:
             for d in range(8):
-                with self.subTest(f"{a.__name__}(search_depth={d})"):
-                    paths = a(grid).mapf(starts, goals, search_depth=d)
+                with self.subTest(f"{a.__name__}(max_length={d})"):
+                    paths = a(grid).mapf(starts, goals, max_length=d)
                     if d < 4:
                         self.assertEqual(len(paths), 0)
                     else:

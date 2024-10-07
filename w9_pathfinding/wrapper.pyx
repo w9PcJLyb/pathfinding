@@ -1164,13 +1164,13 @@ cdef class HCAStar(_AbsMAPF):
         self,
         vector[int] starts,
         vector[int] goals,
-        int search_depth=100,
+        int max_length=100,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
             starts,
             goals,
-            search_depth,
+            max_length,
             self._to_crt(reservation_table),
         )
 
@@ -1191,14 +1191,14 @@ cdef class WHCAStar(_AbsMAPF):
         self,
         vector[int] starts,
         vector[int] goals,
-        int search_depth=100,
+        int max_length=100,
         int window_size=16,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
             starts,
             goals,
-            search_depth,
+            max_length,
             window_size,
             self._to_crt(reservation_table),
         )
@@ -1228,7 +1228,7 @@ cdef class CBS(_AbsMAPF):
         self,
         vector[int] starts,
         vector[int] goals,
-        int search_depth=100,
+        int max_length=100,
         double max_time=1,
         bool disjoint_splitting=True,
         ReservationTable reservation_table=None,
@@ -1236,7 +1236,7 @@ cdef class CBS(_AbsMAPF):
         return self._obj.mapf(
             starts,
             goals,
-            search_depth,
+            max_length,
             max_time,
             disjoint_splitting,
             self._to_crt(reservation_table),
@@ -1259,14 +1259,14 @@ cdef class ICTS(_AbsMAPF):
         self,
         vector[int] starts,
         vector[int] goals,
-        int search_depth=100,
+        int max_length=100,
         double max_time=1,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
             starts,
             goals,
-            search_depth,
+            max_length,
             max_time,
             self._to_crt(reservation_table),
         )

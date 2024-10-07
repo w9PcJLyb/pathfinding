@@ -103,6 +103,8 @@ bool Graph::has_coordinates() const {
 }
 
 double Graph::estimate_distance(int v1, int v2) const {
+    assert(has_coordinates());
+
     const vector<double> &c1 = coordinates_[v1];
     const vector<double> &c2 = coordinates_[v2];
 

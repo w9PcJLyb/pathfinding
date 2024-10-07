@@ -78,7 +78,7 @@ namespace icts {
             vector<Path> mapf(
                 vector<int> starts,
                 vector<int> goals,
-                int search_depth,
+                int max_length,
                 double max_time,
                 const ReservationTable *rt
             );

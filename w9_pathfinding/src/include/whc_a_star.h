@@ -41,7 +41,7 @@ class WHCAStar : public AbsMAPF {
         vector<Path> mapf(
             vector<int> starts,
             vector<int> goals,
-            int search_depth,
+            int max_length,
             int window_size,
             const ReservationTable *rt
         );
@@ -50,7 +50,7 @@ class WHCAStar : public AbsMAPF {
         SpaceTimeAStar st_a_star_;
         vector<Path> mapf_(
             vector<Agent> &agents,
-            int search_depth,
+            int max_length,
             int window_size,
             ReservationTable &rt
         );

@@ -92,7 +92,7 @@ class CBS : public AbsMAPF {
         vector<Path> mapf(
             vector<int> starts,
             vector<int> goals,
-            int search_depth,
+            int max_length,
             double max_time,
             bool disjoint_splitting,
             const ReservationTable *rt
@@ -106,16 +106,16 @@ class CBS : public AbsMAPF {
         vector<Constraint> split_conflict(vector<Path> &paths, vector<int>& agent_ids, Conflict& conflict, bool disjoint_splitting);
         void add_constraint(ReservationTable& rt, Conflict& c, bool reverse = false);
         vector<int> populate_reservation_table(ReservationTable& rt, CTNode& node, ConstraintTree& tree, int agent_id);
-        bool low_level(CTNode &ct_node, ConstraintTree &tree, Agent &agent, ReservationTable& rt, int search_depth);
-        bool low_level_with_disjoint_splitting(CTNode &ct_node, ConstraintTree &tree, vector<Agent>& agents, ReservationTable& rt, int search_depth);
-        Path find_new_path(CTNode &ct_node, ConstraintTree &tree, int node_id, Agent &agent, ReservationTable& rt, int search_depth);
+        bool low_level(CTNode &ct_node, ConstraintTree &tree, Agent &agent, ReservationTable& rt, int max_length);
+        bool low_level_with_disjoint_splitting(CTNode &ct_node, ConstraintTree &tree, vector<Agent>& agents, ReservationTable& rt, int max_length);
+        Path find_new_path(CTNode &ct_node, ConstraintTree &tree, int node_id, Agent &agent, ReservationTable& rt, int max_length);
         void print_node(CTNode &ct_node);
         void print_constraint(Constraint &constraint);
         int random_int(int max_value);
         bool is_point_at_time(Path& path, int point, int time);
         vector<Path> mapf_(
             vector<Agent> &agents,
-            int search_depth,
+            int max_length,
             double max_time,
             bool disjoint_splitting,
             ReservationTable &rt
