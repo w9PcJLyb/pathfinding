@@ -47,13 +47,8 @@ void Graph::add_edge(int start, int end, double cost) {
     if (cost < min_weight_)
         min_weight_ = cost;
     edges_[start].push_back(Edge(end, cost));
-    if (!directed_)
-        edges_[end].push_back(Edge(start, cost));
-    else if (!reversed_edges_.empty()) {
+    if (!reversed_edges_.empty())
         reversed_edges_[end].push_back(Edge(start, cost));
-        if (!directed_)
-            reversed_edges_[start].push_back(Edge(end, cost));
-    }
 }
 
 void Graph::add_edges(vector<int> starts, vector<int> ends, vector<double> costs) {
@@ -78,23 +73,31 @@ vector<vector<double>> Graph::get_coordinates() const {
 
 vector<pair<int, double>> Graph::get_neighbors(int node, bool reversed) {
     vector<pair<int, double>> nb;
-    if (reversed && directed_) {
-        if (reversed_edges_.empty()) {
-            reversed_edges_.resize(num_vertices_, vector<Edge>(0));
-            for (int i = 0; i < num_vertices_; i++) {
-                for (const Edge &e: edges_[i]) {
-                    reversed_edges_[e.node_id].push_back(Edge(i, e.cost));
-                }
-            }
+
+    if (directed_) {
+        if (!reversed) {
+            for (const Edge &e : edges_[node])
+                nb.push_back({e.node_id, e.cost});
         }
+        else {
+            if (reversed_edges_.empty())
+                update_reversed_edges();
+
+            for (const Edge &e : reversed_edges_[node])
+                nb.push_back({e.node_id, e.cost});
+        }
+    }
+    else {
+        if (reversed_edges_.empty())
+            update_reversed_edges();
+
+        for (const Edge &e : edges_[node])
+            nb.push_back({e.node_id, e.cost});
 
         for (const Edge &e : reversed_edges_[node])
             nb.push_back({e.node_id, e.cost});
     }
-    else {
-        for (const Edge &e : edges_[node])
-            nb.push_back({e.node_id, e.cost});
-    }
+
     return nb;
 }
 
@@ -132,6 +135,9 @@ AbsGraph* Graph::reverse() const {
 }
 
 void Graph::reverse_inplace() {
+    if (!directed_)
+        return;
+
     vector<int> new_starts, new_ends;
     vector<double> new_costs;
     for (int i = 0; i < num_vertices_; i++) {
@@ -160,4 +166,15 @@ void Graph::set_edge_collision(bool b) {
         throw std::invalid_argument("An undirected graph does not support edge collisions");
     }
     AbsGraph::set_edge_collision(b);
+}
+
+void Graph::update_reversed_edges() {
+    reversed_edges_.clear();
+
+    reversed_edges_.resize(num_vertices_, vector<Edge>(0));
+    for (int i = 0; i < num_vertices_; i++) {
+        for (const Edge &e: edges_[i]) {
+            reversed_edges_[e.node_id].push_back(Edge(i, e.cost));
+        }
+    }
 }

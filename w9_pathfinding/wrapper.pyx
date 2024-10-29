@@ -60,6 +60,13 @@ cdef class _AbsGraph:
     def to_dict(self):
         return {"edge_collision": self.edge_collision, "pause_action_cost": self.pause_action_cost}
 
+    def __reduce__(self):
+        return _construct, (self.__class__, self.to_dict())
+
+
+def _construct(cls, kw):
+    return cls(**kw)
+
 
 cdef class Graph(_AbsGraph):
     cdef cdefs.Graph* _obj

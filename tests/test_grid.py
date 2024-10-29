@@ -1,3 +1,4 @@
+import copy
 import unittest
 import numpy as np
 from w9_pathfinding import Grid, DiagonalMovement
@@ -136,3 +137,21 @@ class TestGrid(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             grid.update_weight((9, 9), 10.9)
+
+    def test_copy(self):
+        weights = [[1, 2], [3, 4]]
+        grid = Grid(
+            weights, passable_left_right_border=True, passable_up_down_border=True
+        )
+
+        grid_copy = copy.copy(grid)
+        grid_copy.passable_left_right_border = False
+        grid_copy.update_weight((0, 0), 10)
+
+        self.assertEqual(grid_copy.passable_left_right_border, False)
+        self.assertEqual(grid_copy.passable_up_down_border, True)
+        self.assertEqual(grid_copy.weights, [[10, 2], [3, 4]])
+
+        self.assertEqual(grid.passable_left_right_border, True)
+        self.assertEqual(grid.passable_up_down_border, True)
+        self.assertEqual(grid.weights, weights)

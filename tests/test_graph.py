@@ -1,3 +1,4 @@
+import copy
 import unittest
 from w9_pathfinding import Graph
 
@@ -6,6 +7,34 @@ class TestGraph(unittest.TestCase):
     """
     pytest tests/test_graph.py::TestGraph
     """
+
+    def test_get_neighbors_with_directed_graph(self):
+        graph = Graph(5, directed=True)
+        self.assertEqual(graph.get_neighbors(0), [])
+
+        graph.add_edges([(0, 1, 5), (0, 2, 6)])
+        self.assertEqual(graph.get_neighbors(0), [(1, 5), (2, 6)])
+        self.assertEqual(graph.get_neighbors(1), [])
+        self.assertEqual(graph.get_neighbors(2), [])
+
+        graph.add_edges([(2, 0, 4)])
+        self.assertEqual(graph.get_neighbors(0), [(1, 5), (2, 6)])
+        self.assertEqual(graph.get_neighbors(1), [])
+        self.assertEqual(graph.get_neighbors(2), [(0, 4)])
+
+    def test_get_neighbors_with_undirected_graph(self):
+        graph = Graph(5, directed=False)
+        self.assertEqual(graph.get_neighbors(0), [])
+
+        graph.add_edges([(0, 1, 5), (0, 2, 6)])
+        self.assertEqual(graph.get_neighbors(0), [(1, 5), (2, 6)])
+        self.assertEqual(graph.get_neighbors(1), [(0, 5)])
+        self.assertEqual(graph.get_neighbors(2), [(0, 6)])
+
+        graph.add_edges([(2, 0, 4)])
+        self.assertEqual(graph.get_neighbors(0), [(1, 5), (2, 6), (2, 4)])
+        self.assertEqual(graph.get_neighbors(1), [(0, 5)])
+        self.assertEqual(graph.get_neighbors(2), [(0, 4), (0, 6)])
 
     def test_reverse_inplace(self):
         graph = Graph(5)
@@ -135,3 +164,21 @@ class TestGraph(unittest.TestCase):
         new_graph = Graph(**graph.to_dict())
         self.assertEqual(new_graph.num_vertices, 5)
         self.assertEqual(new_graph.num_edges, 2)
+
+    def test_copy(self):
+        graph = Graph(5, directed=False, pause_action_cost=5)
+        graph.add_edges([(0, 1, 10), (1, 2, 20)])
+
+        graph_copy = copy.copy(graph)
+        graph_copy.pause_action_cost = 6
+        graph_copy.add_edges([(2, 3, 30)])
+
+        self.assertEqual(graph_copy.directed, False)
+        self.assertEqual(graph_copy.num_edges, 3)
+        self.assertEqual(graph_copy.pause_action_cost, 6)
+        self.assertEqual(graph_copy.edges, [[0, 1, 10], [1, 2, 20], [2, 3, 30]])
+
+        self.assertEqual(graph_copy.directed, False)
+        self.assertEqual(graph.num_edges, 2)
+        self.assertEqual(graph.pause_action_cost, 5)
+        self.assertEqual(graph.edges, [[0, 1, 10], [1, 2, 20]])

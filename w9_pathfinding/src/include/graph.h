@@ -38,4 +38,6 @@ class Graph : public AbsGraph {
         const bool directed_;
         vector<vector<Edge>> edges_, reversed_edges_;
         vector<vector<double>> coordinates_;
+
+        void update_reversed_edges();
 };
