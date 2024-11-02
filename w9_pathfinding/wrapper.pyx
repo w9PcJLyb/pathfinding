@@ -1083,6 +1083,11 @@ cdef class ReservationTable:
         cdef int node_id = to_node_id(self.graph, node)
         return self._obj.is_reserved(time, node_id)
 
+    def is_edge_reserved(self, int time, n1, n2):
+        cdef int n1_id = to_node_id(self.graph, n1)
+        cdef int n2_id = to_node_id(self.graph, n2)
+        return self._obj.is_reserved_edge(time, n1_id, n2_id)
+
     def add_path(
         self,
         path,
@@ -1092,11 +1097,15 @@ cdef class ReservationTable:
         cdef vector[int] node_ids = self._convert_path(path)
         self._obj.add_path(start_time, node_ids, reserve_destination, self.graph.edge_collision)
 
-    def add_vertex_constraint(self, node, int time=0):
+    def add_vertex_constraint(self, int time, node, bool permanent=False):
+        # if permanent - the node is permanently reserved from the moment time, inclusive
         cdef int node_id = to_node_id(self.graph, node)
-        self._obj.add_vertex_constraint(time, node_id)
+        if not permanent:
+            self._obj.add_vertex_constraint(time, node_id)
+        else:
+            self._obj.add_semi_static_constraint(time, node_id)
 
-    def add_edge_constraint(self, n1, n2, int time=0):
+    def add_edge_constraint(self, int time, n1, n2):
         cdef int n1_id, n2_id
         n1_id = to_node_id(self.graph, n1)
         n2_id = to_node_id(self.graph, n2)
