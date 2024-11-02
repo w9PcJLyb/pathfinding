@@ -49,7 +49,8 @@ cdef extern from "src/reservation_table.cpp":
 
 cdef extern from "src/include/reservation_table.h":
     cdef cppclass ReservationTable:
-        ReservationTable(int) except +
+        ReservationTable(int)
+        ReservationTable(const ReservationTable&)
         bool is_reserved(int, int)
         bool is_reserved_edge(int, int, int)
         void add_path(int, vector[int], bool, bool)

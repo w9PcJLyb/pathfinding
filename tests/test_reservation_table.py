@@ -1,4 +1,5 @@
 import unittest
+from copy import copy
 from w9_pathfinding import Grid, ReservationTable
 
 
@@ -34,3 +35,20 @@ class TestReservationTable(unittest.TestCase):
             (100, True),
         ):
             self.assertEqual(rt.is_reserved(time, (0, 1)), reserved)
+
+    def test_copy(self):
+        grid = Grid(width=3, height=3)
+        rt = ReservationTable(grid)
+
+        rt.add_vertex_constraint(time=2, node=(0, 1))
+
+        rt_copy = copy(rt)
+        rt_copy.add_vertex_constraint(3, node=(0, 1))
+
+        self.assertEqual(id(rt.graph), id(rt_copy.graph))
+
+        self.assertTrue(rt.is_reserved(2, (0, 1)))
+        self.assertFalse(rt.is_reserved(3, (0, 1)))
+
+        self.assertTrue(rt_copy.is_reserved(2, (0, 1)))
+        self.assertTrue(rt_copy.is_reserved(3, (0, 1)))

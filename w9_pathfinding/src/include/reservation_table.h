@@ -15,6 +15,7 @@ class ReservationTable {
         const int graph_size;
 
         ReservationTable(int graph_size);
+        ReservationTable(const ReservationTable& rt);
 
         ReservationTable& operator=(const ReservationTable& rt);
 

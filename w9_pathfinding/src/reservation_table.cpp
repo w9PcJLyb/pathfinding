@@ -6,6 +6,13 @@ using std::endl;
 ReservationTable::ReservationTable(int graph_size) : graph_size(graph_size) {
 }
 
+ReservationTable::ReservationTable(const ReservationTable& rt) : ReservationTable(rt.graph_size) {
+    vertex_constraints_ = rt.vertex_constraints_;
+    edge_constraints_ = rt.edge_constraints_;
+    semi_static_constraints_ = rt.semi_static_constraints_;
+    max_time_ = rt.max_time_;
+}
+
 ReservationTable& ReservationTable::operator=(const ReservationTable& rt) {
     if (graph_size != rt.graph_size) {
         throw std::invalid_argument("graph_size should be the same");
