@@ -43,7 +43,20 @@ ALGORITHMS = [
         "unw": 1,
         "w": 1,
     },
-    {"name": "ICTS", "class": pf.ICTS, "params": {"max_time": 0.1}, "unw": 1, "w": 0},
+    {
+        "name": "ICTS(ict_pruning=False)",
+        "class": pf.ICTS,
+        "params": {"max_time": 0.1, "ict_pruning": False},
+        "unw": 1,
+        "w": 0,
+    },
+    {
+        "name": "ICTS(ict_pruning=True)",
+        "class": pf.ICTS,
+        "params": {"max_time": 0.1, "ict_pruning": True},
+        "unw": 1,
+        "w": 0,
+    },
     {
         "name": "A*",
         "class": pf.MultiAgentAStar,

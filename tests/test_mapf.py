@@ -14,7 +14,16 @@ COMPLETE_ALGORITHMS = [
         "class": pf.CBS,
         "params": {"disjoint_splitting": True},
     },
-    {"name": "ICTS", "class": pf.ICTS},
+    {
+        "name": "ICTS(ict_pruning=False)",
+        "class": pf.ICTS,
+        "params": {"ict_pruning": False},
+    },
+    {
+        "name": "ICTS(ict_pruning=True)",
+        "class": pf.ICTS,
+        "params": {"ict_pruning": True},
+    },
     {"name": "A*", "class": pf.MultiAgentAStar, "params": {"od": False}},
     {"name": "A* (OD)", "class": pf.MultiAgentAStar, "params": {"od": True}},
 ]
@@ -390,12 +399,13 @@ class TestComplete(unittest.TestCase):
                 self.assertEqual(len(paths), 4)
                 self.assertTrue(check_paths(grid, paths))
 
-                self.assertListEqual(
-                    paths,
+                self.assertListEqual(paths[0], [(0, 0), (0, 0), (1, 0), (1, 1), (1, 0)])
+                self.assertListEqual(paths[1], [(2, 0), (1, 0), (1, 1), (1, 2), (0, 2)])
+                self.assertListEqual(paths[2], [(2, 2), (2, 1)])
+                self.assertIn(
+                    paths[3],
                     [
-                        [(0, 0), (0, 0), (1, 0), (1, 1), (1, 0)],
-                        [(2, 0), (1, 0), (1, 1), (1, 2), (0, 2)],
-                        [(2, 2), (2, 1)],
                         [(3, 0), (2, 0), (2, 0), (1, 0), (0, 0)],
+                        [(3, 0), (3, 0), (2, 0), (1, 0), (0, 0)],
                     ],
                 )

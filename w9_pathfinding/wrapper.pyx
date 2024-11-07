@@ -1281,6 +1281,14 @@ cdef class ICTS(_AbsMAPF):
     def __dealloc__(self):
         del self._obj
 
+    @property
+    def num_generated_nodes(self):
+        return self._obj.num_generated_nodes
+
+    @property
+    def num_closed_nodes(self):
+        return self._obj.num_closed_nodes
+
     @_mapf
     def mapf(
         self,
@@ -1288,6 +1296,7 @@ cdef class ICTS(_AbsMAPF):
         vector[int] goals,
         int max_length=100,
         double max_time=1,
+        bool ict_pruning=False,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(
@@ -1295,6 +1304,7 @@ cdef class ICTS(_AbsMAPF):
             goals,
             max_length,
             max_time,
+            ict_pruning,
             self._to_crt(reservation_table),
         )
 

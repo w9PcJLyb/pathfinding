@@ -297,8 +297,9 @@ cdef extern from "src/icts.cpp":
 cdef extern from "src/include/icts.h" namespace "icts":
 
     cdef cppclass ICTS(AbsMAPF):
+        int num_generated_nodes, num_closed_nodes
         ICTS(AbsGraph*) except +
-        vector[vector[int]] mapf(vector[int], vector[int], int, double, ReservationTable*) except +
+        vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
 
 
 cdef extern from "src/multi_agent_a_star.cpp":
