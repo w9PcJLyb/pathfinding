@@ -1,10 +1,13 @@
 #pragma once
 
-#include "core.h"
+#include <chrono>
 #include "set"
 #include "map"
+#include "core.h"
 #include "reservation_table.h"
 #include "space_time_a_star.h"
+
+using namespace std::chrono;
 
 
 namespace icts {
@@ -81,13 +84,21 @@ namespace icts {
         // Low-level search
 
         public:
-            LowLevel(AbsGraph* graph, vector<int>& starts, vector<int>& goals, bool ict_pruning, const ReservationTable *rt);
+            LowLevel(
+                AbsGraph* graph,
+                vector<int>& starts,
+                vector<int>& goals,
+                bool ict_pruning,
+                const ReservationTable *rt,
+                time_point<high_resolution_clock> terminate_time
+            );
             vector<Path> search(vector<int>& costs);
 
         private:
             AbsGraph* graph_;
             vector<int> starts_, goals_;
-            bool ict_pruning;
+            bool ict_pruning_;
+            time_point<high_resolution_clock> terminate_time_;
             int num_agents_;
             bool edge_collision_;
             vector<ResumableBFS> bfses_;

@@ -1,9 +1,4 @@
-#include <chrono>
-
 #include "include/icts.h"
-
-using std::chrono::duration;
-using std::chrono::high_resolution_clock;
 
 
 icts::ResumableBFS::ResumableBFS(AbsGraph* graph, int start, int goal, const ReservationTable* rt) :
@@ -258,8 +253,13 @@ std::string icts::ICTNode::to_str() {
 }
 
 icts::LowLevel::LowLevel(
-    AbsGraph* graph, vector<int>& starts, vector<int>& goals, bool ict_pruning, const ReservationTable *rt
-) : graph_(graph), starts_(starts), goals_(goals), ict_pruning(ict_pruning)
+    AbsGraph* graph,
+    vector<int>& starts,
+    vector<int>& goals,
+    bool ict_pruning,
+    const ReservationTable *rt,
+    time_point<high_resolution_clock> terminate_time
+) : graph_(graph), starts_(starts), goals_(goals), ict_pruning_(ict_pruning), terminate_time_(terminate_time)
 {
     num_agents_ = starts_.size();
     edge_collision_ = graph->edge_collision();
@@ -283,7 +283,7 @@ vector<Path> icts::LowLevel::search(vector<int>& costs) {
         max_depth = std::max(max_depth, depth);
     }
 
-    if (ict_pruning && num_agents_ > 2 && enhanced_pairwise_pruning())
+    if (ict_pruning_ && num_agents_ > 2 && enhanced_pairwise_pruning())
         return {};
 
     if (explore(starts_, 0, max_depth))
@@ -295,6 +295,9 @@ vector<Path> icts::LowLevel::search(vector<int>& costs) {
 bool icts::LowLevel::enhanced_pairwise_pruning() {
     for (int i=0; i < num_agents_ - 1; i++) {
         for (int j=i+1; j < num_agents_; j++) {
+            if (high_resolution_clock::now() > terminate_time_)
+                throw timeout_exception("Timeout");
+
             MDD2 mdd2(mdds_[i], mdds_[j], edge_collision_);
             if (!mdd2.resolved)
                 return true;
@@ -326,6 +329,9 @@ vector<Path> icts::LowLevel::get_paths() {
 bool icts::LowLevel::explore(vector<int>& positions, int depth, int target_depth) {
     if (depth >= target_depth)
         return positions == goals_;
+
+    if (high_resolution_clock::now() > terminate_time_)
+        throw timeout_exception("Timeout");
 
     vector<vector<int>> neighbors(num_agents_);
     vector<int> num_neighbors(num_agents_);
@@ -448,11 +454,12 @@ vector<Path> icts::ICTS::mapf(
     }
 
     auto begin_time = high_resolution_clock::now();
+    auto terminate_time = begin_time + duration_cast<milliseconds>(duration<double>(max_time));
     int num_agents = starts.size();
 
     std::queue<ICTNode> queue;
     std::unordered_set<std::string> visited;
-    LowLevel low_level(graph, starts, goals, ict_pruning, rt);
+    LowLevel low_level(graph, starts, goals, ict_pruning, rt, terminate_time);
 
     {
         vector<int> min_depths(num_agents);
@@ -491,9 +498,6 @@ vector<Path> icts::ICTS::mapf(
             num_closed_nodes++;
             return paths;
         }
-
-        if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
-            throw timeout_exception("Timeout");
 
         for (int i = 0; i < num_agents; i++) {
             if (node.costs[i] + 1 > max_length)
