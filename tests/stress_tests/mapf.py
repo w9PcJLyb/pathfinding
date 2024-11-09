@@ -230,8 +230,8 @@ def create_graph_with_queries():
         except ValueError:
             continue
 
+        reserved_paths = []
         if NUM_DYNAMIC_OBSTACLES > 0:
-            reserved_paths = []
             astar = pf.SpaceTimeAStar(graph)
             rt = pf.ReservationTable(graph)
             build = True
