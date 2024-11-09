@@ -32,7 +32,7 @@ namespace icts {
             std::set<dint> visited_;
 
             void update_data(int depth);
-            void add_record(int node_id, int time, int parent);
+            void add_record(int time, int node_id, int parent);
     };
 
     class MDD {
@@ -41,7 +41,7 @@ namespace icts {
         public:
             int start, goal, depth;
 
-            // (node_id, time) -> list of available moves at time + 1
+            // (time, node_id) -> list of available moves at time + 1
             std::map<dint, std::unordered_set<int>> data;
 
             MDD() : start(-1), goal(-1), depth(-1) {};
@@ -58,15 +58,16 @@ namespace icts {
             int depth;
             bool resolved;
 
-            // ((n1, n2), time) -> list of available moves at time + 1
-            std::map<pair<dint, int>, vector<dint>> data;
+            // (time, (n1, n2)) -> list of available moves at time + 1
+            std::map<pair<int, dint>, vector<dint>> data;
 
             MDD2(MDD& mdd1, MDD& mdd2, bool edge_collision);
             pair<MDD, MDD> unfold();
             void print(AbsGraph* graph);
 
         private:
-            int prune(dint positions, int time);
+            void prune();
+            bool get_result_and_prune(int time, dint positions, std::map<pair<int, dint>, bool>& mem);
     };
 
     struct ICTNode {

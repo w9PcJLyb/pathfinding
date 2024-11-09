@@ -1296,7 +1296,7 @@ cdef class ICTS(_AbsMAPF):
         vector[int] goals,
         int max_length=100,
         double max_time=1,
-        bool ict_pruning=False,
+        bool ict_pruning=True,
         ReservationTable reservation_table=None,
     ):
         return self._obj.mapf(

@@ -4,7 +4,7 @@
 icts::ResumableBFS::ResumableBFS(AbsGraph* graph, int start, int goal, const ReservationTable* rt) :
     start(start), goal(goal), graph_(graph), depth_(1), rt_(rt)
 {
-    queue_.push({start, 0});
+    queue_.push({0, start});
     update_data(depth_);
 }
 
@@ -16,23 +16,23 @@ void icts::ResumableBFS::set_depth(int depth) {
 
 void icts::ResumableBFS::update_data(int depth) {
     while (!queue_.empty()) {
-        auto [node_id, time] = queue_.front();
+        auto [time, node_id] = queue_.front();
         queue_.pop();
 
         if (rt_) {
             if (!rt_->is_reserved(time + 1, node_id))
-                add_record(node_id, time + 1, node_id);
+                add_record(time + 1, node_id, node_id);
 
             auto reserved_edges = rt_->get_reserved_edges(time, node_id);
             for (auto& [neighbor_id, cost] : graph_->get_neighbors(node_id)) {
                 if (!reserved_edges.count(neighbor_id) && !rt_->is_reserved(time + 1, neighbor_id))
-                    add_record(neighbor_id, time + 1, node_id);
+                    add_record(time + 1, neighbor_id, node_id);
             }
         }
         else {
-            add_record(node_id, time + 1, node_id);
+            add_record(time + 1, node_id, node_id);
             for (auto& [neighbor_id, cost] : graph_->get_neighbors(node_id))
-                add_record(neighbor_id, time + 1, node_id);
+                add_record(time + 1, neighbor_id, node_id);
         }
 
         if (time >= depth)
@@ -40,8 +40,8 @@ void icts::ResumableBFS::update_data(int depth) {
     }
 }
 
-void icts::ResumableBFS::add_record(int node_id, int time, int parent) {
-    dint node = {node_id, time};
+void icts::ResumableBFS::add_record(int time, int node_id, int parent) {
+    dint node = {time, node_id};
     data[node].push_back(parent);
     if (!visited_.count(node)) {
         queue_.push(node);
@@ -52,7 +52,7 @@ void icts::ResumableBFS::add_record(int node_id, int time, int parent) {
 icts::MDD::MDD(ResumableBFS& bfs) : start(bfs.start), goal(bfs.goal), depth(bfs.depth()) {
     std::queue<dint> queue; 
     std::set<dint> visited;
-    queue.push({goal, depth});
+    queue.push({depth, goal});
 
     while (!queue.empty()) {
         dint nt = queue.front();
@@ -61,11 +61,11 @@ icts::MDD::MDD(ResumableBFS& bfs) : start(bfs.start), goal(bfs.goal), depth(bfs.
         if (!bfs.data.count(nt) || visited.count(nt))
             continue;
 
-        auto [node_id, time] = nt;
+        auto [time, node_id] = nt;
         visited.insert(nt);
         for (int parent : bfs.data[nt]) {
-            queue.push({parent, time - 1});
-            data[{parent, time - 1}].insert(node_id);
+            queue.push({time - 1, parent});
+            data[{time - 1, parent}].insert(node_id);
         }
     }
 }
@@ -78,8 +78,8 @@ void icts::MDD::print(AbsGraph* graph) {
         cout << " - empty" << endl;
     else {
         for (auto const& x : data) {
-            int node_id = x.first.first;
-            int time = x.first.second;
+            int time = x.first.first;
+            int node_id = x.first.second;
             cout << " - node=" << graph->node_to_string(node_id) << ", time=" << time << " -> ";
             for (auto& n : x.second) {
                 cout << graph->node_to_string(n) << " ";
@@ -95,32 +95,26 @@ icts::MDD2::MDD2(MDD& mdd1, MDD& mdd2, bool edge_collision) :
     depths({mdd1.depth, mdd2.depth}),
     depth(std::max(mdd1.depth, mdd2.depth))
 {
-    std::queue<pair<dint, int>> queue;
-    queue.push({starts, 0});
+    std::queue<pair<int, dint>> queue;
+    queue.push({0, starts});
+    std::set<pair<int, dint>> visited;
 
     resolved = false;
     while (!queue.empty()) {
-        auto [positions, time] = queue.front();
+        auto [time, positions] = queue.front();
         queue.pop();
 
-        int n1 = positions.first;
-        int n2 = positions.second;
+        auto [n1, n2] = positions;
 
         std::unordered_set<int> neighbors_1, neighbors_2;
 
-        if (time < mdd1.depth) {
-            if (!mdd1.data.count({n1, time}))
-                cout << "1 " << time << " " << n1 << endl;
-            neighbors_1 = mdd1.data.at({n1, time});
-        }
+        if (time < mdd1.depth)
+            neighbors_1 = mdd1.data.at({time, n1});
         else
             neighbors_1 = {{n1}};
 
-        if (time < mdd2.depth) {
-            if (!mdd2.data.count({n2, time}))
-                cout << "2 " << time << " " << n2 << endl;
-            neighbors_2 = mdd2.data.at({n2, time});
-            }
+        if (time < mdd2.depth)
+            neighbors_2 = mdd2.data.at({time, n2});
         else
             neighbors_2 = {{n2}};
 
@@ -144,10 +138,15 @@ icts::MDD2::MDD2(MDD& mdd1, MDD& mdd2, bool edge_collision) :
         if (neighbors.empty())
             continue;
 
-        data[{{n1, n2}, time}] = neighbors;
+        data[{time, positions}] = neighbors;
         if (time < depth - 1)
-            for (dint& positions : neighbors)
-                queue.push({positions, time + 1});
+            for (dint& positions : neighbors) {
+                pair<int, dint> key = {time + 1, positions};
+                if (visited.count(key))
+                    continue;
+                visited.insert(key);
+                queue.push(key);
+            }
         else if (time == depth - 1 && !resolved) {
             for (dint& positions : neighbors)
                 if (positions == goals)
@@ -155,7 +154,7 @@ icts::MDD2::MDD2(MDD& mdd1, MDD& mdd2, bool edge_collision) :
         }
     }
 
-    prune(starts, 0);
+    prune();
 }
 
 pair<icts::MDD, icts::MDD> icts::MDD2::unfold() {
@@ -163,17 +162,17 @@ pair<icts::MDD, icts::MDD> icts::MDD2::unfold() {
     MDD mdd2(starts.second, goals.second, depths.second);
 
     for (auto& [key, next_positions] : data) {
-        auto [p1, p2] = key.first;
-        int time = key.second;
+        int time = key.first;
+        auto [p1, p2] = key.second;
 
         if (time < mdd1.depth) {
-            auto& d = mdd1.data[{p1, time}];
+            auto& d = mdd1.data[{time, p1}];
             for (auto& [n1, n2] : next_positions)
                 d.insert(n1);
         }
 
         if (time < mdd2.depth) {
-            auto& d = mdd2.data[{p2, time}];
+            auto& d = mdd2.data[{time, p2}];
             for (auto& [n1, n2] : next_positions) {
                 d.insert(n2);
             }
@@ -199,8 +198,8 @@ void icts::MDD2::print(AbsGraph* graph) {
         cout << " - empty" << endl;
     else {
         for (auto const& x : data) {
-            dint positions = x.first.first;
-            int time = x.first.second;
+            int time = x.first.first;
+            dint positions = x.first.second;
             cout << " - node=" << positions_to_str(positions) << ", time=" << time << " -> ";
             for (auto& n : x.second) {
                 cout << positions_to_str(n) << " ";
@@ -210,33 +209,59 @@ void icts::MDD2::print(AbsGraph* graph) {
     }
 }
 
-int icts::MDD2::prune(dint positions, int time) {
-    int num_childrens = 0;
+void icts::MDD2::prune() {
+    std::map<pair<int, dint>, bool> mem;
+    get_result_and_prune(0, starts, mem);
+}
 
-    if (!data.count({positions, time}))
-        return num_childrens;
+bool icts::MDD2::get_result_and_prune(int time, dint positions, std::map<pair<int, dint>, bool>& mem) {
+    pair<int, dint> key = {time, positions};
+    if (mem.count(key))
+        return mem[key];
 
-    vector<dint> next_positions_pruned;
-    for (dint next_positions : data.at({positions, time})) {
-        if (time == depth - 1 && next_positions == goals) {
-            num_childrens += 1;
-            next_positions_pruned.push_back(next_positions);
+    if (!data.count(key)) {
+        mem[key] = false;
+        return false;
+    }
+
+    vector<dint>& next_positions = data.at(key);
+    if (next_positions.empty()) {
+        data.erase(key);
+        mem[key] = false;
+        return false;
+    }
+
+    bool result = false;
+
+    std::unordered_set<int> indexes_to_delete;
+    for (size_t i = 0; i < next_positions.size(); i++) {
+        if (time == depth - 1 && next_positions[i] == goals) {
+            result = true;
             continue;
         }
 
-        int n = prune(next_positions, time + 1);
-        if (n > 0) {
-            num_childrens += n;
-            next_positions_pruned.push_back(next_positions);
-        }
+        int n = get_result_and_prune(time + 1, next_positions[i], mem);
+        if (n > 0)
+            result = true;
+        else
+            indexes_to_delete.insert(i);
     }
 
-    if (next_positions_pruned.empty())
-        data.erase({positions, time});
-    else
-        data[{positions, time}] = next_positions_pruned;
+    if (!indexes_to_delete.empty()) {
+        vector<dint> next_positions_pruned;
+        for (size_t i = 0; i < next_positions.size(); i++) {
+            if (!indexes_to_delete.count(i))
+                next_positions_pruned.push_back(next_positions[i]);
+        }
 
-    return num_childrens;
+        if (next_positions_pruned.empty())
+            data.erase(key);
+        else
+            data[key] = next_positions_pruned;
+    }
+
+    mem[key] = result;
+    return result;
 }
 
 icts::ICTNode::ICTNode(vector<int>& costs) : costs(costs) {
@@ -294,7 +319,13 @@ vector<Path> icts::LowLevel::search(vector<int>& costs) {
 
 bool icts::LowLevel::enhanced_pairwise_pruning() {
     for (int i=0; i < num_agents_ - 1; i++) {
+        if (mdds_[i].depth == 0)
+            continue;
+
         for (int j=i+1; j < num_agents_; j++) {
+            if (mdds_[j].depth == 0)
+                continue;
+
             if (high_resolution_clock::now() > terminate_time_)
                 throw timeout_exception("Timeout");
 
@@ -346,7 +377,7 @@ bool icts::LowLevel::explore(vector<int>& positions, int depth, int target_depth
                 return false;
         }
         
-        auto& s = mdds_[i].data[{positions[i], depth}];
+        auto& s = mdds_[i].data[{depth, positions[i]}];
         if (s.size() == 0)
             return false;
         
@@ -427,7 +458,7 @@ icts::ICTS::ICTS(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
 }
 
 vector<Path> icts::ICTS::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 100, 1.0, false, nullptr);
+    return mapf(starts, goals, 100, 1.0, true, nullptr);
 }
 
 vector<Path> icts::ICTS::mapf(

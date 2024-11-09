@@ -167,7 +167,13 @@ def run_graph(algorithms, graph, starts, goals, reserved_paths):
     for a in algorithms:
         params = a.get("params", {})
         params["reservation_table"] = rt
-        paths, time = find_path(a["finder"], starts, goals, **params)
+        try:
+            paths, time = find_path(a["finder"], starts, goals, **params)
+        except Exception as e:
+            show_graph_info(graph, starts, goals, reserved_paths)
+            print(f"Error: algorithm {a['name']}:")
+            print(e)
+            return False
 
         total_cost = 0
         for path in paths:
