@@ -7,23 +7,23 @@ import w9_pathfinding as pf
 from tests.stress_tests.utils import run_graph
 from tests.stress_tests.random_instance import GridGenerator, random_queries
 
+GRID_SIZE = 8
 NUM_GRAPHS = 100
 NUM_AGENTS = 5
+WEIGHTED = False
+EDGE_COLLISION = True
+OBSTACLE_PERCENTAGE = 0.2
+NUM_DYNAMIC_OBSTACLES = 1
 
-UNWEIGHTED_GRID_GENERATOR = GridGenerator(
-    width=10,
-    height=10,
-    obstacle_percentage=0.4,
-    weighted=False,
-)
+kw = {"weighted": False}
+if WEIGHTED:
+    kw = {"weighted": True, "min_weight": 1, "max_weight": 5}
 
-WEIGHTED_GRID_GENERATOR = GridGenerator(
-    width=10,
-    height=10,
-    obstacle_percentage=0.4,
-    weighted=True,
-    min_weight=1,
-    max_weight=5,
+GRID_GENERATOR = GridGenerator(
+    width=GRID_SIZE,
+    height=GRID_SIZE,
+    obstacle_percentage=OBSTACLE_PERCENTAGE,
+    **kw,
 )
 
 ALGORITHMS = [
@@ -74,9 +74,10 @@ ALGORITHMS = [
 ]
 
 
-def show_graph_info(graph, starts, goals):
-    print(f"{graph.__class__.__name__}(**{graph.to_dict()})")
+def show_graph_info(graph, starts, goals, reserved_paths=None):
+    print(f"grid = {graph.__class__.__name__}(**{graph.to_dict()})")
     print(f"starts, goals = {starts}, {goals}")
+    print(f"reserved_paths = {reserved_paths}")
 
 
 def find_path(finder, starts, goals, **kwargs):
@@ -88,9 +89,9 @@ def find_path(finder, starts, goals, **kwargs):
     return paths, time.time() - t
 
 
-def check_paths(graph, paths):
-    if not paths:
-        return True
+def has_collision(graph, paths, print_info=False):
+    if len(paths) < 2:
+        return False
 
     longest_path = max(len(path) for path in paths)
 
@@ -106,8 +107,9 @@ def check_paths(graph, paths):
 
         for p, agent_ids in positions.items():
             if len(agent_ids) > 1:
-                print(f"Collision at {time}: node = {p}, agents = {agent_ids}")
-                return False
+                if print_info:
+                    print(f"Collision at {time}: node = {p}, agents = {agent_ids}")
+                return True
 
         if graph.edge_collision and time > 0:
             edges = defaultdict(list)
@@ -121,12 +123,15 @@ def check_paths(graph, paths):
 
             for edge, agent_ids in edges.items():
                 if len(agent_ids) > 1:
-                    print(f"Collision at {time}: edge = {edge}, agents = {agent_ids}")
-                    return False
+                    if print_info:
+                        print(
+                            f"Collision at {time}: edge = {edge}, agents = {agent_ids}"
+                        )
+                    return True
 
         time += 1
 
-    return True
+    return False
 
 
 def check_solution(paths, goals):
@@ -153,17 +158,22 @@ def compare_results(results):
     return True
 
 
-def run_graph(algorithms, graph, starts, goals):
+def run_graph(algorithms, graph, starts, goals, reserved_paths):
+    rt = pf.ReservationTable(graph)
+    for path in reserved_paths:
+        rt.add_path(path, reserve_destination=True)
+
     results = []
     for a in algorithms:
         params = a.get("params", {})
+        params["reservation_table"] = rt
         paths, time = find_path(a["finder"], starts, goals, **params)
 
         total_cost = 0
         for path in paths:
             path_cost = graph.calculate_cost(path)
             if path_cost == -1:
-                show_graph_info(graph, starts, goals)
+                show_graph_info(graph, starts, goals, reserved_paths)
                 print(f"Error: algorithm {a['name']} returns the wrong path {path}")
                 return False
             total_cost += path_cost
@@ -178,8 +188,8 @@ def run_graph(algorithms, graph, starts, goals):
             solved = True
         a["num_solved"] += solved
 
-        if not check_paths(graph, paths):
-            show_graph_info(graph, starts, goals)
+        if has_collision(graph, paths + reserved_paths, print_info=True):
+            show_graph_info(graph, starts, goals, reserved_paths)
             print(f"Error: algorithm {a['name']} returns paths with collisions")
             return False
 
@@ -197,7 +207,7 @@ def run_graph(algorithms, graph, starts, goals):
         )
 
     if not compare_results(results):
-        show_graph_info(graph, starts, goals)
+        show_graph_info(graph, starts, goals, reserved_paths)
         print("Error: ")
         for r in results:
             print(f" - {r['algorithm']} : cost = {r['cost']}, paths = {r['paths']}")
@@ -206,31 +216,49 @@ def run_graph(algorithms, graph, starts, goals):
     return True
 
 
-def create_graph_with_queries(generator):
+def create_graph_with_queries():
     while True:
-        graph = generator.instance()
+        graph = GRID_GENERATOR.instance()
+        graph.edge_collision = EDGE_COLLISION
         try:
             queries = random_queries(
-                graph, num_queries=NUM_AGENTS, unique=True, connected=True
+                graph,
+                num_queries=NUM_AGENTS + NUM_DYNAMIC_OBSTACLES,
+                unique=True,
+                connected=True,
             )
         except ValueError:
             continue
 
-        starts, goals = zip(*queries)
-        return graph, starts, goals
+        if NUM_DYNAMIC_OBSTACLES > 0:
+            reserved_paths = []
+            astar = pf.SpaceTimeAStar(graph)
+            rt = pf.ReservationTable(graph)
+            build = True
+            for start, goal in queries[:NUM_DYNAMIC_OBSTACLES]:
+                reserved_path = astar.find_path_with_length_limit(
+                    start, goal, max_length=GRID_SIZE * 2, reservation_table=rt
+                )
+                if reserved_path:
+                    reserved_paths.append(reserved_path)
+                    rt.add_path(reserved_path, reserve_destination=True)
+                else:
+                    build = False
+                    break
+
+            if not build or has_collision(graph, reserved_paths):
+                continue
+
+        starts, goals = zip(*queries[NUM_DYNAMIC_OBSTACLES:])
+        return graph, starts, goals, reserved_paths
 
 
-def stress_test(weighted=False, edge_collision=True):
-
+def stress_test():
     algorithms = copy(ALGORITHMS)
 
-    if not weighted:
-        print(f"\nStress test with unweighted grid...")
-        generator = UNWEIGHTED_GRID_GENERATOR
+    if not WEIGHTED:
         optimal_flag = "unw"
     else:
-        print(f"\nStress test with weighted grid...")
-        generator = WEIGHTED_GRID_GENERATOR
         optimal_flag = "w"
 
     for a in algorithms:
@@ -242,12 +270,11 @@ def stress_test(weighted=False, edge_collision=True):
     for i in range(NUM_GRAPHS):
         print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
 
-        graph, starts, goals = create_graph_with_queries(generator)
-        graph.edge_collision = edge_collision
+        graph, starts, goals, reserved_paths = create_graph_with_queries()
         for a in algorithms:
             a["finder"] = a["class"](graph)
 
-        r = run_graph(algorithms, graph, starts, goals)
+        r = run_graph(algorithms, graph, starts, goals, reserved_paths)
         if not r:
             return
 
@@ -264,25 +291,4 @@ def stress_test(weighted=False, edge_collision=True):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--weighted",
-        "-w",
-        default=False,
-        action=argparse.BooleanOptionalAction,
-        help="generate weighted graphs",
-    )
-    parser.add_argument(
-        "--edge_collision",
-        "-e",
-        default=False,
-        action=argparse.BooleanOptionalAction,
-        help="enable edge collisions",
-    )
-    flags = parser.parse_args()
-    print(flags)
-
-    stress_test(
-        weighted=flags.weighted,
-        edge_collision=flags.edge_collision,
-    )
+    stress_test()
