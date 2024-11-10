@@ -311,7 +311,7 @@ vector<Path> icts::LowLevel::search(vector<int>& costs) {
     if (ict_pruning_ && num_agents_ > 2 && enhanced_pairwise_pruning())
         return {};
 
-    if (explore(starts_, 0, max_depth))
+    if (explore(0, starts_, max_depth))
         return get_paths();
 
     return {};
@@ -357,67 +357,63 @@ vector<Path> icts::LowLevel::get_paths() {
     return paths;
 }
 
-bool icts::LowLevel::explore(vector<int>& positions, int depth, int target_depth) {
-    if (depth >= target_depth)
+vector<vector<int>> icts::LowLevel::get_neighbors(int time, vector<int>& positions) {
+    vector<vector<int>> neighbors(num_agents_);
+    for (int i = 0; i < num_agents_; i++) {
+        if (time >= mdds_[i].depth) {
+            if (positions[i] == goals_[i])
+                neighbors[i].push_back(goals_[i]);
+            continue;
+        }
+
+        auto& s = mdds_[i].data[{time, positions[i]}];
+        neighbors[i] = {s.begin(), s.end()};
+    }
+    return neighbors;
+}
+
+
+bool generate_next_combination(vector<vector<int>>& vectors, vector<int>& current_combination, vector<int>& indices) {
+    for (int i = vectors.size() - 1; i >= 0; --i) {
+        if (indices[i] < (int)vectors[i].size() - 1) {
+            indices[i]++;
+            current_combination[i] = vectors[i][indices[i]];
+            return true;
+        } else {
+            indices[i] = 0;
+            current_combination[i] = vectors[i][0];
+        }
+    }
+    return false;
+}
+
+bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth) {
+    if (time >= target_depth)
         return positions == goals_;
 
     if (high_resolution_clock::now() > terminate_time_)
         throw timeout_exception("Timeout");
 
-    vector<vector<int>> neighbors(num_agents_);
-    vector<int> num_neighbors(num_agents_);
-    for (int i = 0; i < num_agents_; i++) {
-        if (depth >= mdds_[i].depth) {
-            if (positions[i] == goals_[i]) {
-                neighbors[i].push_back(positions[i]);
-                num_neighbors[i] = 1;
-                continue;
-            }
-            else
-                return false;
-        }
-        
-        auto& s = mdds_[i].data[{depth, positions[i]}];
-        if (s.size() == 0)
-            return false;
-        
-        for (int p : s)
-            neighbors[i].push_back(p);
-        num_neighbors[i] = s.size();
-    }
-
-    vector<int> indexes(positions.size(), 0);
-    indexes.back() = -1;
-
-    auto update_indexes = [&] () {
-        int i = indexes.size() - 1;
-        while (i >= 0) {
-            if (indexes[i] < num_neighbors[i] - 1) {
-                indexes[i]++;
-                return true;
-            }
-            else {
-                indexes[i] = 0;
-                i--;
-            }
-        }
-        return false;
-    };
+    vector<vector<int>> neighbors = get_neighbors(time, positions);
 
     vector<int> next_positions(num_agents_);
-    while (true) {
-        if (!update_indexes())
-            break;
+    for (int i = 0; i < num_agents_; i++) {
+        if (neighbors[i].empty())
+            return false;
+        next_positions[i] = neighbors[i][0];
+    }
 
-        for (int i = 0; i < num_agents_; i++)
-            next_positions[i] = neighbors[i][indexes[i]];
+    std::vector<int> indices(num_agents_, 0);
+    indices.back() = -1;
+
+    while (generate_next_combination(neighbors, next_positions, indices)) {
 
         if (has_collision(positions, next_positions))
             continue;
 
         solution_.push_back(next_positions);
 
-        if (explore(next_positions, depth + 1, target_depth))
+        if (explore(time + 1, next_positions, target_depth))
             return true;
 
         solution_.pop_back();

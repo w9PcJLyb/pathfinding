@@ -107,7 +107,8 @@ namespace icts {
             vector<vector<int>> solution_;
 
             bool enhanced_pairwise_pruning();
-            bool explore(vector<int>& positions, int depth, int target_depth);
+            bool explore(int time, vector<int>& positions, int target_depth);
+            vector<vector<int>> get_neighbors(int time, vector<int>& positions);
             vector<Path> get_paths();
             bool has_collision(vector<int>& positions, vector<int>& next_positions);
     };
