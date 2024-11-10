@@ -24,8 +24,16 @@ COMPLETE_ALGORITHMS = [
         "class": pf.ICTS,
         "params": {"ict_pruning": True},
     },
-    {"name": "A*", "class": pf.MultiAgentAStar, "params": {"od": False}},
-    {"name": "A* (OD)", "class": pf.MultiAgentAStar, "params": {"od": True}},
+    {
+        "name": "A(od=False)",
+        "class": pf.MultiAgentAStar,
+        "params": {"operator_decomposition": False},
+    },
+    {
+        "name": "A(od=True)",
+        "class": pf.MultiAgentAStar,
+        "params": {"operator_decomposition": True},
+    },
 ]
 
 MAPF_ALGORITHMS = [
