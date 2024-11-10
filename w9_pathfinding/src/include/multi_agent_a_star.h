@@ -32,6 +32,7 @@ namespace maas {
 
     class MAState {
         public:
+
             MAState(AbsGraph* graph, int node_id, Tree& tree, vector<int>& goal, int time, ReservationTable& rt);
 
             pair<vector<int>, double> next();
@@ -54,12 +55,31 @@ namespace maas {
             MultiAgentAStar(AbsGraph* graph);
 
             vector<Path> mapf(vector<int> starts, vector<int> goals);
-            vector<Path> mapf(vector<int> starts, vector<int> goals, double max_time, bool operator_decomposition, const ReservationTable *rt);
+            vector<Path> mapf(
+                vector<int> starts,
+                vector<int> goals,
+                int max_length,
+                double max_time,
+                bool operator_decomposition,
+                const ReservationTable *rt
+            );
 
         private:
             SpaceTimeAStar st_a_star_;
-            vector<Path> mapf_standard(vector<Agent> &agents, double max_time, int min_search_depth, ReservationTable &rt);
-            vector<Path> mapf_od(vector<Agent> &agents, double max_time, int min_search_depth, ReservationTable &rt);
+            vector<Path> mapf_standard(
+                vector<Agent> &agents,
+                int max_length,
+                double max_time,
+                int min_search_depth,
+                ReservationTable &rt
+            );
+            vector<Path> mapf_od(
+                vector<Agent> &agents,
+                int max_length,
+                double max_time,
+                int min_search_depth,
+                ReservationTable &rt
+            );
             vector<Path> reconstruct_paths(int node_id, Tree& tree);
             void print_node(Node& node);
             std::string positions_to_string(vector<int>& positions, vector<int>& goal, int node_id, Tree& tree);

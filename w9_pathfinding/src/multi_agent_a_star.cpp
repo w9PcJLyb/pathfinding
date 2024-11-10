@@ -113,10 +113,17 @@ maas::MultiAgentAStar::MultiAgentAStar(AbsGraph *graph) : graph(graph), st_a_sta
 }
 
 vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals) {
-    return mapf(starts, goals, 1.0, true, nullptr);
+    return mapf(starts, goals, 100, 1.0, true, nullptr);
 }
 
-vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals, double max_time, bool operator_decomposition, const ReservationTable *rt) {
+vector<Path> maas::MultiAgentAStar::mapf(
+    vector<int> starts,
+    vector<int> goals,
+    int max_length,
+    double max_time,
+    bool operator_decomposition,
+    const ReservationTable *rt
+) {
     assert(starts.size() == goals.size());
 
     if (starts.size() == 0)
@@ -149,9 +156,9 @@ vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals, 
 
     vector<Path> paths;
     if (!operator_decomposition)
-        paths = mapf_standard(agents, max_time, min_search_depth, reservation_table);
+        paths = mapf_standard(agents, max_length, max_time, min_search_depth, reservation_table);
     else
-        paths = mapf_od(agents, max_time, min_search_depth, reservation_table);
+        paths = mapf_od(agents, max_length, max_time, min_search_depth, reservation_table);
 
     if (paths.size() == agents.size()) {
         for (size_t i = 0; i < agents.size(); i++) {
@@ -223,7 +230,13 @@ double maas::MultiAgentAStar::heuristic(vector<int>& positions, vector<Agent> &a
     return h;
 }
 
-vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double max_time, int min_search_depth, ReservationTable &rt) {
+vector<Path> maas::MultiAgentAStar::mapf_standard(
+    vector<Agent> &agents,
+    int max_length,
+    double max_time,
+    int min_search_depth,
+    ReservationTable &rt
+) {
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
@@ -258,6 +271,9 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
 
         if (node.positions == goal && node.time >= min_search_depth)
             return reconstruct_paths(node_id, tree);
+
+        if (node.time >= max_length)
+            break;
 
         MAState state(graph, node_id, tree, goal, node.time, rt);
 
@@ -301,7 +317,13 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(vector<Agent> &agents, double 
 }
 
 
-vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_time, int min_search_depth, ReservationTable &rt) {
+vector<Path> maas::MultiAgentAStar::mapf_od(
+    vector<Agent> &agents,
+    int max_length,
+    double max_time,
+    int min_search_depth,
+    ReservationTable &rt
+) {
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
@@ -342,6 +364,9 @@ vector<Path> maas::MultiAgentAStar::mapf_od(vector<Agent> &agents, double max_ti
 
         if (node.positions == goal && standard_time >= min_search_depth)
             return reconstruct_paths(node_id, tree);
+
+        if (standard_time >= max_length)
+            break;
 
         if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
             throw timeout_exception("Timeout");

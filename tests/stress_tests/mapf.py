@@ -14,6 +14,8 @@ WEIGHTED = False
 EDGE_COLLISION = True
 OBSTACLE_PERCENTAGE = 0.2
 NUM_DYNAMIC_OBSTACLES = 1
+MAX_TIME = 0.1  # time limit
+MAX_LENGTH = 100  # maximum agent path length
 
 kw = {"weighted": False}
 if WEIGHTED:
@@ -32,46 +34,55 @@ ALGORITHMS = [
     {
         "name": "CBS (disjoint_splitting=False)",
         "class": pf.CBS,
-        "params": {"max_time": 0.1, "disjoint_splitting": False},
+        "params": {"disjoint_splitting": False},
         "unw": 1,
         "w": 1,
     },
     {
         "name": "CBS (disjoint_splitting=True)",
         "class": pf.CBS,
-        "params": {"max_time": 0.1, "disjoint_splitting": True},
+        "params": {"disjoint_splitting": True},
         "unw": 1,
         "w": 1,
     },
     {
         "name": "ICTS(ict_pruning=False)",
         "class": pf.ICTS,
-        "params": {"max_time": 0.1, "ict_pruning": False},
+        "params": {"ict_pruning": False},
         "unw": 1,
         "w": 0,
     },
     {
         "name": "ICTS(ict_pruning=True)",
         "class": pf.ICTS,
-        "params": {"max_time": 0.1, "ict_pruning": True},
+        "params": {"ict_pruning": True},
         "unw": 1,
         "w": 0,
     },
     {
         "name": "A*",
         "class": pf.MultiAgentAStar,
-        "params": {"max_time": 0.1, "od": False},
+        "params": {"od": False},
         "unw": 1,
         "w": 1,
     },
     {
         "name": "A* (OD)",
         "class": pf.MultiAgentAStar,
-        "params": {"max_time": 0.1, "od": True},
+        "params": {"od": True},
         "unw": 1,
         "w": 1,
     },
 ]
+
+for a in ALGORITHMS:
+    if "params" not in a:
+        a["params"] = {}
+
+    if a["name"] not in ("HCA*", "WHCA*"):
+        a["params"]["max_time"] = MAX_TIME
+
+    a["params"]["max_length"] = MAX_LENGTH
 
 
 def show_graph_info(graph, starts, goals, reserved_paths=None):

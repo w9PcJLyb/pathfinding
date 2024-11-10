@@ -310,4 +310,4 @@ cdef extern from "src/include/multi_agent_a_star.h" namespace "maas":
 
     cdef cppclass MultiAgentAStar(AbsMAPF):
         MultiAgentAStar(AbsGraph*) except +
-        vector[vector[int]] mapf(vector[int], vector[int], double, bool, ReservationTable*) except +
+        vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
