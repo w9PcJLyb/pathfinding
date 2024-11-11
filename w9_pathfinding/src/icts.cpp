@@ -366,20 +366,6 @@ vector<vector<int>> icts::LowLevel::get_neighbors(int time, vector<int>& positio
     return neighbors;
 }
 
-bool icts::LowLevel::generate_next_combination(vector<vector<int>>& vectors, vector<int>& current_combination, vector<int>& indices) {
-    for (int i = vectors.size() - 1; i >= 0; --i) {
-        if (indices[i] < (int)vectors[i].size() - 1) {
-            indices[i]++;
-            current_combination[i] = vectors[i][indices[i]];
-            return true;
-        } else {
-            indices[i] = 0;
-            current_combination[i] = vectors[i][0];
-        }
-    }
-    return false;
-}
-
 vector<Path> icts::LowLevel::find_solution(int target_depth) {
     solution_.clear();
     solution_.push_back(starts_);
@@ -402,18 +388,7 @@ bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth,
 
     vector<vector<int>> neighbors = get_neighbors(time, positions);
 
-    vector<int> next_positions(num_agents_);
-    for (int i = 0; i < num_agents_; i++) {
-        if (neighbors[i].empty()) {
-            checked.insert(key);
-            return false;
-        }
-        next_positions[i] = neighbors[i][0];
-    }
-
-    std::vector<int> indices(num_agents_, 0);
-    indices.back() = -1;
-
+    vector<int> next_positions, indices;
     while (generate_next_combination(neighbors, next_positions, indices)) {
 
         if (has_collision(positions, next_positions))
