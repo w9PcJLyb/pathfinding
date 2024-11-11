@@ -107,8 +107,10 @@ namespace icts {
             vector<vector<int>> solution_;
 
             bool enhanced_pairwise_pruning();
-            bool explore(int time, vector<int>& positions, int target_depth);
+            vector<Path> find_solution(int target_depth);
+            bool explore(int time, vector<int>& positions, int target_depth, std::unordered_set<pair<int, vector<int>>, SpaceTimeHash>& checked);
             vector<vector<int>> get_neighbors(int time, vector<int>& positions);
+            bool generate_next_combination(vector<vector<int>>& vectors, vector<int>& current_combination, vector<int>& indices);
             vector<Path> get_paths();
             bool has_collision(vector<int>& positions, vector<int>& next_positions);
     };

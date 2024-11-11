@@ -163,3 +163,24 @@ class timeout_exception : public std::runtime_error {
 
 
 void ensure_path_length(Path& path, int length);
+
+
+struct SpaceHash {
+    size_t operator()(const std::vector<int>& position) const {
+        size_t hash_value = 0;
+        for (const auto& x : position) {
+            hash_value ^= std::hash<int>{}(x) + 0x9e3779b9 + (hash_value << 6) + (hash_value >> 2);
+        }
+        return hash_value;
+    }
+};
+
+
+struct SpaceTimeHash {
+    size_t operator()(const std::pair<int, std::vector<int>>& p) const {
+        size_t hash_value = std::hash<int>{}(p.first);
+        size_t vector_hash = SpaceHash{}(p.second);
+        hash_value ^= vector_hash + 0x9e3779b9 + (hash_value << 6) + (hash_value >> 2);
+        return hash_value;
+    }
+};

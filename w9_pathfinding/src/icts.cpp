@@ -297,9 +297,6 @@ icts::LowLevel::LowLevel(
 }
 
 vector<Path> icts::LowLevel::search(vector<int>& costs) {
-    solution_.clear();
-    solution_.push_back(starts_);
-
     int max_depth = 0;
     for (int i = 0; i < num_agents_; i++) {
         int depth = costs[i];
@@ -311,10 +308,7 @@ vector<Path> icts::LowLevel::search(vector<int>& costs) {
     if (ict_pruning_ && num_agents_ > 2 && enhanced_pairwise_pruning())
         return {};
 
-    if (explore(0, starts_, max_depth))
-        return get_paths();
-
-    return {};
+    return find_solution(max_depth);
 }
 
 bool icts::LowLevel::enhanced_pairwise_pruning() {
@@ -372,8 +366,7 @@ vector<vector<int>> icts::LowLevel::get_neighbors(int time, vector<int>& positio
     return neighbors;
 }
 
-
-bool generate_next_combination(vector<vector<int>>& vectors, vector<int>& current_combination, vector<int>& indices) {
+bool icts::LowLevel::generate_next_combination(vector<vector<int>>& vectors, vector<int>& current_combination, vector<int>& indices) {
     for (int i = vectors.size() - 1; i >= 0; --i) {
         if (indices[i] < (int)vectors[i].size() - 1) {
             indices[i]++;
@@ -387,9 +380,22 @@ bool generate_next_combination(vector<vector<int>>& vectors, vector<int>& curren
     return false;
 }
 
-bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth) {
+vector<Path> icts::LowLevel::find_solution(int target_depth) {
+    solution_.clear();
+    solution_.push_back(starts_);
+    std::unordered_set<pair<int, vector<int>>, SpaceTimeHash> checked;
+    if (explore(0, starts_, target_depth, checked))
+        return get_paths();
+    return {};
+}
+
+bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth, std::unordered_set<pair<int, vector<int>>, SpaceTimeHash>& checked) {
     if (time >= target_depth)
         return positions == goals_;
+
+    pair<int, vector<int>> key = {time, positions};
+    if (checked.count(key))
+        return false;
 
     if (high_resolution_clock::now() > terminate_time_)
         throw timeout_exception("Timeout");
@@ -398,8 +404,10 @@ bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth)
 
     vector<int> next_positions(num_agents_);
     for (int i = 0; i < num_agents_; i++) {
-        if (neighbors[i].empty())
+        if (neighbors[i].empty()) {
+            checked.insert(key);
             return false;
+        }
         next_positions[i] = neighbors[i][0];
     }
 
@@ -413,12 +421,13 @@ bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth)
 
         solution_.push_back(next_positions);
 
-        if (explore(time + 1, next_positions, target_depth))
+        if (explore(time + 1, next_positions, target_depth, checked))
             return true;
 
         solution_.pop_back();
     }
 
+    checked.insert(key);
     return false;
 }
 
