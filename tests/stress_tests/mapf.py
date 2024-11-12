@@ -14,7 +14,7 @@ WEIGHTED = False
 EDGE_COLLISION = True
 OBSTACLE_PERCENTAGE = 0.2
 NUM_DYNAMIC_OBSTACLES = 1
-MAX_TIME = 0.1  # time limit
+MAX_TIME = 0.1  # time limit in seconds
 MAX_LENGTH = 100  # maximum agent path length
 
 kw = {"weighted": False}
@@ -170,9 +170,11 @@ def compare_results(results):
 
 
 def run_graph(algorithms, graph, starts, goals, reserved_paths):
-    rt = pf.ReservationTable(graph)
-    for path in reserved_paths:
-        rt.add_path(path, reserve_destination=True)
+    rt = None
+    if reserved_paths:
+        rt = pf.ReservationTable(graph)
+        for path in reserved_paths:
+            rt.add_path(path, reserve_destination=True)
 
     results = []
     for a in algorithms:

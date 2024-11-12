@@ -94,7 +94,8 @@ namespace maas {
             vector<Path> find_paths(int max_length, double max_time);
 
         private:
-            vector<pair<int, double>> get_movements(Node& node, int agent_id, int parent, bool edge_collision);
+            vector<pair<int, double>> get_neighbors(Node& node);
+            std::unordered_set<int> get_occupied_nodes(Node& node);
     };
 
 }

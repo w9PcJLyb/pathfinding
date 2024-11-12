@@ -273,7 +273,6 @@ vector<Path> maas::AStarODSolver::find_paths(int max_length, double max_time) {
     tree_.reserve(graph_->size());
     std::unordered_map<std::vector<int>, double, SpaceHash> node_to_distance;
 
-    bool edge_collision = graph_->edge_collision();
     bool dynamic_obstacles = false;
     int min_search_depth = 0;
     if (rt_ && !rt_->empty()) {
@@ -305,7 +304,6 @@ vector<Path> maas::AStarODSolver::find_paths(int max_length, double max_time) {
         Node node = tree_[node_id];
 
         int agent_id = node.time % num_agents_;
-        int position = node.positions[agent_id];
         int standard_time = node.time / num_agents_;
 
         if (standard_time >= min_search_depth && is_goal(node.positions))
@@ -319,11 +317,11 @@ vector<Path> maas::AStarODSolver::find_paths(int max_length, double max_time) {
 
         int parent = agent_id == 0 ? node_id : node.parent;
 
-        vector<pair<int, double>> movements = get_movements(node, agent_id, parent, edge_collision);
+        vector<pair<int, double>> neighbors = get_neighbors(node);
+        std::unordered_set<int> occupied_nodes = get_occupied_nodes(node);
 
-        auto reserved_edges = rt_->get_reserved_edges(standard_time, position);
-        for (auto &[n, cost] : movements) {
-            if (rt_->is_reserved(standard_time + 1, n) || reserved_edges.count(n))
+        for (auto &[n, cost] : neighbors) {
+            if (occupied_nodes.count(n))
                 continue;
 
             vector<int> new_positions = node.positions;
@@ -358,56 +356,63 @@ maas::AStarODSolver::AStarODSolver(AbsGraph* graph, vector<int>& starts, vector<
     AStarSolver(graph, starts, goals, rt) {
 };
 
-vector<pair<int, double>> maas::AStarODSolver::get_movements(Node& node, int agent_id, int parent, bool edge_collision) {
-    int position = node.positions[agent_id];
+vector<pair<int, double>> maas::AStarODSolver::get_neighbors(Node& node) {
+    int agent_id = node.time % num_agents_;
+    int p = node.positions[agent_id];
+
+    double pause_cost_here = 0;
+    double additional_moving_cost_here = 0;
+    if (p != agents_[agent_id].goal)
+        pause_cost_here = graph_->get_pause_action_cost();
+    else {
+        int parent = agent_id == 0 ? node.id : node.parent;
+        additional_moving_cost_here = get_waiting_time(parent, agent_id) * graph_->get_pause_action_cost();
+    }
+
+    vector<pair<int, double>> neighbors;
+
+    if (!rt_) {
+        neighbors.push_back({p, pause_cost_here});
+        for (auto &[n, cost] : graph_->get_neighbors(p))
+            neighbors.push_back({n, cost + additional_moving_cost_here});
+    }
+    else {
+        int time = node.time / num_agents_;
+
+        if (!rt_->is_reserved(time + 1, p))
+            neighbors.push_back({p, pause_cost_here});
+
+        auto reserved_edges = rt_->get_reserved_edges(time, p);
+        for (auto &[n, cost] : graph_->get_neighbors(p)) {
+            if (!reserved_edges.count(n) && !rt_->is_reserved(time + 1, n))
+                neighbors.push_back({n, cost + additional_moving_cost_here});
+        }
+    }
+
+    return neighbors;
+}
+
+std::unordered_set<int> maas::AStarODSolver::get_occupied_nodes(Node& node) {
+    int agent_id = node.time % num_agents_;
 
     std::unordered_set<int> occupied_nodes;
-    if (agent_id == 0 || !edge_collision) {
+    if (agent_id == 0) {
+        // no agent has made a move yet
+        return occupied_nodes;
+    }
+
+    if (node.parent < 0 || !graph_->edge_collision()) {
         for (int i = 0; i < agent_id; i++)
-            occupied_nodes.insert(node.positions[i]);
-    }
-    else {
-        int standard_node = node.id;
-        while (tree_[standard_node].time % num_agents_ > 0)
-            standard_node = tree_[standard_node].parent;
-
-        vector<int>& standard_positions = tree_[standard_node].positions;
-        for (int i = 0; i < agent_id; i++) {
-            occupied_nodes.insert(node.positions[i]);
-            if (node.positions[i] == position) {
-                occupied_nodes.insert(standard_positions[i]);
-            }
-        }
+            occupied_nodes.insert(node.positions[i]); // vertex conflict
+        return occupied_nodes;
     }
 
-    double pause_action_cost = graph_->get_pause_action_cost();
-
-    vector<pair<int, double>> movements;
-    if (position == agents_[agent_id].goal) {
-        int waiting_time = 0;
-        int node_id_ = tree_[parent].parent;
-        while (node_id_ >= 0 && tree_[node_id_].positions[agent_id] == position) {
-            waiting_time++;
-            node_id_ = tree_[node_id_].parent;
-        }
-
-        if (!occupied_nodes.count(position))
-            movements.push_back({position, 0});
-
-        for (auto &[n, cost] : graph_->get_neighbors(position)) {
-            if (!occupied_nodes.count(n))
-                movements.push_back({n, cost + waiting_time * pause_action_cost});
-        }
+    int p = node.positions[agent_id];
+    vector<int>& previous_positions = tree_[node.parent].positions;
+    for (int i = 0; i < agent_id; i++) {
+        occupied_nodes.insert(node.positions[i]); // vertex conflict
+        if (node.positions[i] == p)
+            occupied_nodes.insert(previous_positions[i]); // edge conflict
     }
-    else {
-        if (!occupied_nodes.count(position))
-            movements.push_back({position, pause_action_cost});
-
-        for (auto &[n, cost] : graph_->get_neighbors(position)) {
-            if (!occupied_nodes.count(n))
-                movements.push_back({n, cost});
-        }
-    }
-
-    return movements;
+    return occupied_nodes;
 }
