@@ -362,6 +362,7 @@ Path SpaceTimeAStar::find_path_with_length_limit__static(int start, int goal, in
                 n.f = distance + h;
                 n.distance = distance;
                 n.parent = current;
+                n.time = time;
                 openset.push({n.f, &n});
             }
         }
