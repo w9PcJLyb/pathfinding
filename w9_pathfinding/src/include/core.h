@@ -10,6 +10,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+#include <unordered_map>
 
 using std::cout;
 using std::endl;
@@ -47,7 +48,7 @@ class AbsGraph {
         virtual bool adjacent(int v1, int v2);
 
         virtual std::string node_to_string(int v) const;
-        void print_path(Path& path) const;
+        void print_path(const Path& path) const;
 
         double min_weight() const {
             return min_weight_;
@@ -163,6 +164,9 @@ class timeout_exception : public std::runtime_error {
 
 
 void ensure_path_length(Path& path, int length);
+
+
+bool has_collision(const vector<int>& positions, const vector<int>& next_positions, bool edge_collision);
 
 
 template <typename T>

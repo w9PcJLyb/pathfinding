@@ -6,110 +6,7 @@ using std::chrono::duration;
 using std::chrono::high_resolution_clock;
 
 
-maas::MAState::MAState(AbsGraph* graph, int node_id, Tree& tree, vector<int>& goal, int time, ReservationTable &rt) {
-    vector<int>& positions = tree[node_id].positions;
-
-    neighbors_.resize(positions.size());
-    next_positions_.resize(positions.size(), 0);
-    ids_.resize(positions.size(), 0);
-    ids_.back() = -1;
-
-    double pause_action_cost = graph->get_pause_action_cost();
-    for (size_t i = 0; i < positions.size(); i++) {
-        int p = positions[i];
-
-        if (p == goal[i]) {
-            int waiting_time = 0;
-            int node_id_ = tree[node_id].parent;
-            while (node_id_ >= 0 && tree[node_id_].positions[i] == p) {
-                waiting_time++;
-                node_id_ = tree[node_id_].parent;
-            }
-
-            if (!rt.is_reserved(time + 1, p))
-                neighbors_[i].push_back({p, 0});
-
-            auto reserved_edges = rt.get_reserved_edges(time, p);
-            for (auto &[n, cost] : graph->get_neighbors(p)) {
-                if (!reserved_edges.count(n) && !rt.is_reserved(time + 1, n))
-                    neighbors_[i].push_back({n, cost + waiting_time * pause_action_cost});
-            }
-        }
-        else {
-            if (!rt.is_reserved(time + 1, p))
-                neighbors_[i].push_back({p, pause_action_cost});
-
-            auto reserved_edges = rt.get_reserved_edges(time, p);
-            for (auto &[n, cost] : graph->get_neighbors(p)) {
-                if (!reserved_edges.count(n) && !rt.is_reserved(time + 1, n))
-                    neighbors_[i].push_back({n, cost});
-            }
-        }
-
-        if (neighbors_[i].empty()) {
-            // this node has no children
-            for (auto& n : neighbors_)
-                n.clear();
-            break;
-        }
-    }
-}
-
-bool maas::MAState::update_indexes_() {
-    int i = ids_.size() - 1;
-    while (i >= 0) {
-        if (ids_[i] < (int)neighbors_[i].size() - 1) {
-            ids_[i]++;
-            return true;
-        }
-        else {
-            ids_[i] = 0;
-            i--;
-        }
-    }
-
-    return false;
-}
-
-pair<vector<int>, double> maas::MAState::next() {
-    if (!update_indexes_())
-        return {{}, 0};
-
-    double cost = 0;
-    for (size_t i = 0; i < ids_.size(); i++) {
-        auto [p, c] = neighbors_[i][ids_[i]];
-        next_positions_[i] = p;
-        cost += c;
-    }
-
-    return {next_positions_, cost};
-}
-
-bool maas::MAState::allowed(vector<int>& positions, vector<int>& next_positions, bool edge_collision) {
-    std::unordered_map<int, int> node_to_agent;
-    for (size_t i = 0; i < next_positions.size(); i++) {
-        int node_id = next_positions[i];
-        if (node_to_agent.count(node_id))
-            return false;
-        else
-            node_to_agent[node_id] = i;
-    }
-
-    if (edge_collision) {
-        for (size_t i = 0; i < positions.size(); i++) {
-            int p = positions[i];
-            int next_p = next_positions[i];
-            if (p == next_p)
-                continue;
-            if (node_to_agent.count(p) && positions[node_to_agent[p]] == next_p)
-                return false;
-        }
-    }
-
-    return true;
-}
-
-maas::MultiAgentAStar::MultiAgentAStar(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
+maas::MultiAgentAStar::MultiAgentAStar(AbsGraph *graph) : graph(graph) {
 }
 
 vector<Path> maas::MultiAgentAStar::mapf(vector<int> starts, vector<int> goals) {
@@ -136,149 +33,85 @@ vector<Path> maas::MultiAgentAStar::mapf(
         goals_set.insert(g);
     }
 
-    vector<Agent> agents;
-    agents.reserve(starts.size());
+    vector<Path> paths;
+    if (!operator_decomposition) {
+        AStarSolver solver(graph, starts, goals, rt);
+        paths = solver.find_paths(max_length, max_time);
+    }
+    else {
+        AStarODSolver solver(graph, starts, goals, rt);
+        paths = solver.find_paths(max_length, max_time);
+    }
+
+    return paths;
+}
+
+maas::AStarSolver::AStarSolver(AbsGraph* graph, vector<int>& starts, vector<int>& goals, const ReservationTable* rt) :
+    graph_(graph), rt_(rt) {
+
+    SpaceTimeAStar st_a_star(graph_);
+
+    agents_.reserve(starts.size());
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
         int goal = goals[agent_id];
-        agents.emplace_back(start, goal, st_a_star_.reverse_resumable_search(goal));
-        if (agents.back().rrs->distance(start) == -1)
-            return {};
+        agents_.emplace_back(start, goal, st_a_star.reverse_resumable_search(goal));
     }
 
-    ReservationTable reservation_table(graph->size());
-    if (rt)
-        reservation_table = *rt;
-
-    int min_search_depth = 0;
-    for (Agent& a : agents)
-        min_search_depth = std::max(min_search_depth, reservation_table.last_time_reserved(a.goal));
-
-    vector<Path> paths;
-    if (!operator_decomposition)
-        paths = mapf_standard(agents, max_length, max_time, min_search_depth, reservation_table);
-    else
-        paths = mapf_od(agents, max_length, max_time, min_search_depth, reservation_table);
-
-    if (paths.size() == agents.size()) {
-        for (size_t i = 0; i < agents.size(); i++) {
-            vector<int>& path = paths[i];
-            int goal = agents[i].goal;
-            while (path.size() > 1 && path.back() == goal && path[path.size() - 2] == goal)
-                path.pop_back();
-        }
-    }
-
-    return paths;
+    num_agents_ = agents_.size();
 }
 
-vector<Path> maas::MultiAgentAStar::reconstruct_paths(int node_id, Tree& tree) {
-    int num_agents = tree[node_id].positions.size();
-    vector<Path> paths(num_agents, vector<int>(0));
-    while (node_id >= 0) {
-        Node& node = tree[node_id];
-        for (size_t i = 0; i < paths.size(); i++)
-            paths[i].push_back(node.positions[i]);
-        node_id = node.parent;
-    }
-    for (Path& path : paths)
-        std::reverse(path.begin(), path.end());
-    return paths;
-}
-
-void maas::MultiAgentAStar::print_node(Node& node) {
-    cout << "Node: parent=" << node.parent << " distance=" << node.distance;
-    cout << " time=" << node.time << " positions=";
-    graph->print_path(node.positions);
-}
-
-std::string maas::MultiAgentAStar::positions_to_string(vector<int>& positions, vector<int>& goal, int node_id, Tree& tree) {
-    std::string s;
-    for (size_t i = 0; i < positions.size(); i++) {
-        int p = positions[i];
-        s += std::to_string(p) + "_";
-        if (p == goal[i]) {
-            int waiting_time = 0;
-            while (node_id >= 0 && tree[node_id].positions[i] == p) {
-                waiting_time++;
-                node_id = tree[node_id].parent;
-            }
-            s += std::to_string(waiting_time) + "_";
-        }
-        else {
-            s += "__";
-        }
-    }
-    return s;
-}
-
-std::string maas::MultiAgentAStar::positions_to_string(vector<int>& positions, vector<int>& goal, int node_id, Tree& tree, int time) {
-    // in case there are dynamic obstacles, we have to add time to the hash
-    std::string h = positions_to_string(positions, goal, node_id, tree);
-    h += "_" + std::to_string(time);
-    return h;
-}
-
-double maas::MultiAgentAStar::heuristic(vector<int>& positions, vector<Agent> &agents) {
-    double h = 0;
-    for (size_t i = 0; i < agents.size(); i++) {
-        double min_distance = agents[i].rrs->distance(positions[i]);
-        if (min_distance < 0)  // unreachable
-            return -1;
-        h += min_distance;
-    }
-    return h;
-}
-
-vector<Path> maas::MultiAgentAStar::mapf_standard(
-    vector<Agent> &agents,
-    int max_length,
-    double max_time,
-    int min_search_depth,
-    ReservationTable &rt
-) {
+vector<Path> maas::AStarSolver::find_paths(int max_length, double max_time) {
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
-    Tree tree;
-    tree.reserve(graph->size());
-    std::unordered_map<std::string, double> node_to_distance;
-    vector<int> goal;
-    bool edge_collision = graph->edge_collision();
-    bool dynamic_obstacles = !rt.empty();
+    tree_.clear();
+    tree_.reserve(graph_->size());
+    std::unordered_map<std::vector<int>, double, SpaceHash> node_to_distance;
+
+    bool edge_collision = graph_->edge_collision();
+    bool dynamic_obstacles = false;
+    int min_search_depth = 0;
+    if (rt_ && !rt_->empty()) {
+        dynamic_obstacles = true;
+        for (Agent& a : agents_)
+            min_search_depth = std::max(min_search_depth, rt_->last_time_reserved(a.goal));
+    }
 
     {
         vector<int> start;
-        for (Agent& agent : agents) {
+        for (Agent& agent : agents_)
             start.push_back(agent.start);
-            goal.push_back(agent.goal);
-        }
 
-        Node root(-1, 0, 0, start);
+        Node root = create_node(-1, 0, 0, start);
 
-        tree.push_back(root);
-        openset.push({0, tree.size() - 1});
-
+        double h = heuristic(start);
+        if (h == -1)
+            return {};
+        openset.push({h, root.id});
         if (!dynamic_obstacles)
-            node_to_distance[positions_to_string(root.positions, goal, -1, tree)] = 0;
+            node_to_distance[to_hash(root.positions, -1)] = 0;
     }
 
     while (!openset.empty()) {
         auto [f, node_id] = openset.top();
         openset.pop();
  
-        Node node = tree[node_id];
+        Node node = tree_[node_id];
 
-        if (node.positions == goal && node.time >= min_search_depth)
-            return reconstruct_paths(node_id, tree);
+        if (node.time >= min_search_depth && is_goal(node.positions))
+            return reconstruct_paths(node_id);
 
         if (node.time >= max_length)
             break;
 
-        MAState state(graph, node_id, tree, goal, node.time, rt);
+        vector<vector<pair<int, double>>> neighbors = get_neighbors(node);
+        vector<pair<int, double>> combination;
+        vector<int> indices;
 
         int counter = 0;
-        while (true) {
+        while (generate_next_combination(neighbors, combination, indices)) {
+
             if (counter % 1000 == 0) {
                 if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
                     throw timeout_exception("Timeout");
@@ -286,29 +119,29 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(
 
             counter++;
 
-            auto [new_positions, cost] = state.next();
-            if (new_positions.empty())
-                break;
+            double cost = 0;
+            vector<int> new_positions(num_agents_);
+            for (int i = 0; i < num_agents_; i++) {
+                cost += combination[i].second;
+                new_positions[i] = combination[i].first;
+            }
 
-            std::string key;
-            if (!dynamic_obstacles)
-                key = positions_to_string(new_positions, goal, node_id, tree);
-            else
-                key = positions_to_string(new_positions, goal, node_id, tree, node.time);
+            if (has_collision(node.positions, new_positions, edge_collision))
+                continue;
+
+            vector<int> key = to_hash(new_positions, node_id);
+            if (dynamic_obstacles)
+                key.push_back(node.time);
 
             if (node_to_distance.count(key) && node.distance + cost >= node_to_distance[key])
                 continue;
 
-            if (!state.allowed(node.positions, new_positions, edge_collision))
-                continue;
-
-            double h = heuristic(new_positions, agents);
+            double h = heuristic(new_positions);
             if (h < 0)
                 continue;
 
-            Node new_node(node_id, node.time + 1, node.distance + cost, new_positions);
-            tree.push_back(new_node);
-            openset.push({new_node.distance + h, tree.size() - 1});
+            Node new_node = create_node(node_id, node.time + 1, node.distance + cost, new_positions);
+            openset.push({new_node.distance + h, new_node.id});
             node_to_distance[key] = new_node.distance;
         }
     }
@@ -316,54 +149,167 @@ vector<Path> maas::MultiAgentAStar::mapf_standard(
     return {};
 }
 
+void maas::AStarSolver::print_node(const Node& node) const {
+    cout << "Node " << node.id << " : parent=" << node.parent << " distance=" << node.distance;
+    cout << " time=" << node.time << " positions=";
+    graph_->print_path(node.positions);
+}
 
-vector<Path> maas::MultiAgentAStar::mapf_od(
-    vector<Agent> &agents,
-    int max_length,
-    double max_time,
-    int min_search_depth,
-    ReservationTable &rt
-) {
+bool maas::AStarSolver::is_goal(vector<int>& positions) {
+    for (int i = 0; i < num_agents_; i++) {
+        if (positions[i] != agents_[i].goal)
+            return false;
+    }
+    return true;
+}
+
+vector<vector<pair<int, double>>> maas::AStarSolver::get_neighbors(Node& node) {
+    vector<vector<pair<int, double>>> neighbors(num_agents_);
+
+    int time = node.time;
+    double pause_action_cost = graph_->get_pause_action_cost();
+
+    for (int i = 0; i < num_agents_; i++) {
+        int p = node.positions[i];
+
+        double pause_cost_here = 0;
+        double additional_moving_cost_here = 0;
+        if (p != agents_[i].goal)
+            pause_cost_here = pause_action_cost;
+        else
+            additional_moving_cost_here = get_waiting_time(node.id, i) * pause_action_cost;
+
+        if (!rt_) {
+            neighbors[i].push_back({p, pause_cost_here});
+            for (auto &[n, cost] : graph_->get_neighbors(p))
+                neighbors[i].push_back({n, cost + additional_moving_cost_here});
+        }
+        else {
+            if (!rt_->is_reserved(time + 1, p))
+                neighbors[i].push_back({p, pause_cost_here});
+
+            auto reserved_edges = rt_->get_reserved_edges(time, p);
+            for (auto &[n, cost] : graph_->get_neighbors(p)) {
+                if (!reserved_edges.count(n) && !rt_->is_reserved(time + 1, n))
+                    neighbors[i].push_back({n, cost + additional_moving_cost_here});
+            }
+        }
+
+        if (neighbors[i].empty()) {
+            for (auto& n : neighbors)
+                n.clear();
+            return neighbors;
+        }
+    }
+
+    return neighbors;
+}
+
+vector<Path> maas::AStarSolver::reconstruct_paths(int node_id) {
+    vector<Path> paths(num_agents_);
+    while (node_id >= 0) {
+        Node& node = tree_[node_id];
+        for (int i = 0; i < num_agents_; i++)
+            paths[i].push_back(node.positions[i]);
+        node_id = node.parent;
+    }
+
+    for (int i = 0; i < num_agents_; i++) {
+        vector<int>& path = paths[i];
+        std::reverse(path.begin(), path.end());
+
+        int goal = agents_[i].goal;
+        while (path.size() > 1 && path.back() == goal && path[path.size() - 2] == goal)
+            path.pop_back();
+    }
+    return paths;
+}
+
+maas::Node maas::AStarSolver::create_node(int parent, int time, double distance, vector<int> &positions) {
+    int node_id = tree_.size();
+    tree_.emplace_back(node_id, parent, time, distance, positions);
+    return tree_.back();
+}
+
+int maas::AStarSolver::get_waiting_time(int node_id, int agent_id) {
+    int waiting_time = 0;
+    int goal = agents_[agent_id].goal;
+    node_id = tree_[node_id].parent;
+    while (node_id >= 0 && tree_[node_id].positions[agent_id] == goal) {
+        waiting_time++;
+        node_id = tree_[node_id].parent;
+    }
+    return waiting_time;
+}
+
+double maas::AStarSolver::heuristic(vector<int>& positions) {
+    double h = 0;
+    for (int i = 0; i < num_agents_; i++) {
+        double min_distance = agents_[i].rrs->distance(positions[i]);
+        if (min_distance < 0)
+            return -1;
+        h += min_distance;
+    }
+    return h;
+}
+
+vector<int> maas::AStarSolver::to_hash(vector<int>& positions, int parent) {
+    vector<int> hash(num_agents_);
+    for (int i = 0; i < num_agents_; i++) {
+        if (positions[i] != agents_[i].goal)
+            hash[i] = positions[i];
+        else
+            hash[i] = -1 - get_waiting_time(parent, i);
+    }
+    return hash;
+}
+
+
+vector<Path> maas::AStarODSolver::find_paths(int max_length, double max_time) {
     auto begin_time = high_resolution_clock::now();
 
     Queue openset;
-    Tree tree;
-    tree.reserve(graph->size());
-    std::unordered_map<std::string, double> node_to_distance;
-    vector<int> goal;
-    double pause_action_cost = graph->get_pause_action_cost();
-    bool edge_collision = graph->edge_collision();
-    bool dynamic_obstacles = !rt.empty();
-    int num_agents = agents.size();
+    tree_.clear();
+    tree_.reserve(graph_->size());
+    std::unordered_map<std::vector<int>, double, SpaceHash> node_to_distance;
+
+    bool edge_collision = graph_->edge_collision();
+    bool dynamic_obstacles = false;
+    int min_search_depth = 0;
+    if (rt_ && !rt_->empty()) {
+        dynamic_obstacles = true;
+        for (Agent& a : agents_)
+            min_search_depth = std::max(min_search_depth, rt_->last_time_reserved(a.goal));
+    }
 
     {
         vector<int> start;
-        for (Agent& agent : agents) {
+        for (Agent& agent : agents_)
             start.push_back(agent.start);
-            goal.push_back(agent.goal);
-        }
 
-        Node root(-1, 0, 0, start);
+        Node root = create_node(-1, 0, 0, start);
 
-        tree.push_back(root);
-        double h = heuristic(start, agents);
-        openset.push({h, tree.size() - 1});
+        double h = heuristic(start);
+        if (h == -1)
+            return {};
+
+        openset.push({h, root.id});
         if (!dynamic_obstacles)
-            node_to_distance[positions_to_string(root.positions, goal, -1, tree)] = 0;
+            node_to_distance[to_hash(root.positions, -1)] = 0;
     }
 
     while (!openset.empty()) {
         auto [f, node_id] = openset.top();
         openset.pop();
 
-        Node node = tree[node_id];
+        Node node = tree_[node_id];
 
-        int agent_id = node.time % num_agents;
+        int agent_id = node.time % num_agents_;
         int position = node.positions[agent_id];
-        int standard_time = node.time / num_agents;
+        int standard_time = node.time / num_agents_;
 
-        if (node.positions == goal && standard_time >= min_search_depth)
-            return reconstruct_paths(node_id, tree);
+        if (standard_time >= min_search_depth && is_goal(node.positions))
+            return reconstruct_paths(node_id);
 
         if (standard_time >= max_length)
             break;
@@ -371,57 +317,13 @@ vector<Path> maas::MultiAgentAStar::mapf_od(
         if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
             throw timeout_exception("Timeout");
 
-        std::unordered_set<int> occupied_nodes;
-        if (agent_id == 0 || !edge_collision) {
-            for (int i = 0; i < agent_id; i++)
-                occupied_nodes.insert(node.positions[i]);
-        }
-        else {
-            int standard_node = node_id;
-            while (tree[standard_node].time % num_agents > 0)
-                standard_node = tree[standard_node].parent;
-
-            vector<int>& standard_positions = tree[standard_node].positions;
-            for (int i = 0; i < agent_id; i++) {
-                occupied_nodes.insert(node.positions[i]);
-                if (node.positions[i] == position) {
-                    occupied_nodes.insert(standard_positions[i]);
-                }
-            }
-        }
-
         int parent = agent_id == 0 ? node_id : node.parent;
 
-        vector<pair<int, double>> movements;
-        if (position == goal[agent_id]) {
-            int waiting_time = 0;
-            int node_id_ = tree[parent].parent;
-            while (node_id_ >= 0 && tree[node_id_].positions[agent_id] == position) {
-                waiting_time++;
-                node_id_ = tree[node_id_].parent;
-            }
+        vector<pair<int, double>> movements = get_movements(node, agent_id, parent, edge_collision);
 
-            if (!occupied_nodes.count(position))
-                movements.push_back({position, 0});
-
-            for (auto &[n, cost] : graph->get_neighbors(position)) {
-                if (!occupied_nodes.count(n))
-                    movements.push_back({n, cost + waiting_time * pause_action_cost});
-            }
-        }
-        else {
-            if (!occupied_nodes.count(position))
-                movements.push_back({position, pause_action_cost});
-
-            for (auto &[n, cost] : graph->get_neighbors(position)) {
-                if (!occupied_nodes.count(n))
-                    movements.push_back({n, cost});
-            }
-        }
-
-        auto reserved_edges = rt.get_reserved_edges(standard_time, position);
+        auto reserved_edges = rt_->get_reserved_edges(standard_time, position);
         for (auto &[n, cost] : movements) {
-            if (rt.is_reserved(standard_time + 1, n) || reserved_edges.count(n))
+            if (rt_->is_reserved(standard_time + 1, n) || reserved_edges.count(n))
                 continue;
 
             vector<int> new_positions = node.positions;
@@ -429,12 +331,10 @@ vector<Path> maas::MultiAgentAStar::mapf_od(
 
             double new_distance = node.distance + cost;
 
-            if (agent_id == num_agents - 1) {
-                std::string key;
-                if (!dynamic_obstacles)
-                    key = positions_to_string(new_positions, goal, node_id, tree);
-                else
-                    key = positions_to_string(new_positions, goal, node_id, tree, node.time);
+            if (agent_id == num_agents_ - 1) {
+                vector<int> key = to_hash(new_positions, node_id);
+                if (dynamic_obstacles)
+                    key.push_back(node.time);
 
                 if (node_to_distance.count(key) && new_distance >= node_to_distance[key])
                     continue;
@@ -442,15 +342,72 @@ vector<Path> maas::MultiAgentAStar::mapf_od(
                 node_to_distance[key] = new_distance;
             }
 
-            double h = heuristic(new_positions, agents);
+            double h = heuristic(new_positions);
             if (h < 0)
                 continue;
 
-            Node new_node(parent, node.time + 1, new_distance, new_positions);
-            tree.push_back(new_node);
-            openset.push({new_distance + h, tree.size() - 1});
+            Node new_node = create_node(parent, node.time + 1, new_distance, new_positions);
+            openset.push({new_distance + h, new_node.id});
         }
     }
 
     return {};
+}
+
+maas::AStarODSolver::AStarODSolver(AbsGraph* graph, vector<int>& starts, vector<int>& goals, const ReservationTable* rt) :
+    AStarSolver(graph, starts, goals, rt) {
+};
+
+vector<pair<int, double>> maas::AStarODSolver::get_movements(Node& node, int agent_id, int parent, bool edge_collision) {
+    int position = node.positions[agent_id];
+
+    std::unordered_set<int> occupied_nodes;
+    if (agent_id == 0 || !edge_collision) {
+        for (int i = 0; i < agent_id; i++)
+            occupied_nodes.insert(node.positions[i]);
+    }
+    else {
+        int standard_node = node.id;
+        while (tree_[standard_node].time % num_agents_ > 0)
+            standard_node = tree_[standard_node].parent;
+
+        vector<int>& standard_positions = tree_[standard_node].positions;
+        for (int i = 0; i < agent_id; i++) {
+            occupied_nodes.insert(node.positions[i]);
+            if (node.positions[i] == position) {
+                occupied_nodes.insert(standard_positions[i]);
+            }
+        }
+    }
+
+    double pause_action_cost = graph_->get_pause_action_cost();
+
+    vector<pair<int, double>> movements;
+    if (position == agents_[agent_id].goal) {
+        int waiting_time = 0;
+        int node_id_ = tree_[parent].parent;
+        while (node_id_ >= 0 && tree_[node_id_].positions[agent_id] == position) {
+            waiting_time++;
+            node_id_ = tree_[node_id_].parent;
+        }
+
+        if (!occupied_nodes.count(position))
+            movements.push_back({position, 0});
+
+        for (auto &[n, cost] : graph_->get_neighbors(position)) {
+            if (!occupied_nodes.count(n))
+                movements.push_back({n, cost + waiting_time * pause_action_cost});
+        }
+    }
+    else {
+        if (!occupied_nodes.count(position))
+            movements.push_back({position, pause_action_cost});
+
+        for (auto &[n, cost] : graph_->get_neighbors(position)) {
+            if (!occupied_nodes.count(n))
+                movements.push_back({n, cost});
+        }
+    }
+
+    return movements;
 }

@@ -391,7 +391,7 @@ bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth,
     vector<int> next_positions, indices;
     while (generate_next_combination(neighbors, next_positions, indices)) {
 
-        if (has_collision(positions, next_positions))
+        if (has_collision(positions, next_positions, edge_collision_))
             continue;
 
         solution_.push_back(next_positions);
@@ -403,34 +403,6 @@ bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth,
     }
 
     checked.insert(key);
-    return false;
-}
-
-bool icts::LowLevel::has_collision(vector<int>& positions, vector<int>& next_positions) {
-    std::unordered_map<int, int> node_to_agent;
-    for (size_t i = 0; i < next_positions.size(); i++) {
-        int node_id = next_positions[i];
-        if (node_to_agent.count(node_id)) {
-            // vertex conflict
-            return true;
-        }
-        else
-            node_to_agent[node_id] = i;
-    }
-
-    if (edge_collision_) {
-        for (size_t i = 0; i < positions.size(); i++) {
-            int p = positions[i];
-            int next_p = next_positions[i];
-            if (p == next_p)
-                continue;
-            if (node_to_agent.count(p) && positions[node_to_agent[p]] == next_p) {
-                // edge conflict
-                return true;
-            }
-        }
-    }
-
     return false;
 }
 
