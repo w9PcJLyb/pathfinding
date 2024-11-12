@@ -215,10 +215,10 @@ class TestMAPF(unittest.TestCase):
         starts = [(0, 0)]
         goals = [(4, 0)]
 
-        for a in [pf.CBS, pf.ICTS, pf.HCAStar, pf.WHCAStar]:
+        for a in MAPF_ALGORITHMS:
             for d in range(8):
-                with self.subTest(f"{a.__name__}(max_length={d})"):
-                    paths = a(grid).mapf(starts, goals, max_length=d)
+                with self.subTest(f"{a['name']}(max_length={d})"):
+                    paths = a["class"](grid).mapf(starts, goals, max_length=d)
                     if d < 4:
                         self.assertEqual(len(paths), 0)
                     else:

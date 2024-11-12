@@ -103,7 +103,7 @@ vector<Path> maas::AStarSolver::find_paths(int max_length, double max_time) {
             return reconstruct_paths(node_id);
 
         if (node.time >= max_length)
-            break;
+            continue;
 
         vector<vector<pair<int, double>>> neighbors = get_neighbors(node);
         vector<pair<int, double>> combination;
@@ -312,7 +312,7 @@ vector<Path> maas::AStarODSolver::find_paths(int max_length, double max_time) {
             return reconstruct_paths(node_id);
 
         if (standard_time >= max_length)
-            break;
+            continue;
 
         if (duration<double>(high_resolution_clock::now() - begin_time).count() > max_time)
             throw timeout_exception("Timeout");
