@@ -208,7 +208,7 @@ vector<vector<pair<int, double>>> maas::AStarSolver::get_neighbors(Node& node) {
 vector<Path> maas::AStarSolver::reconstruct_paths(int node_id) {
     vector<Path> paths(num_agents_);
     while (node_id >= 0) {
-        Node& node = tree_[node_id];
+        Node& node = tree_.at(node_id);
         for (int i = 0; i < num_agents_; i++)
             paths[i].push_back(node.positions[i]);
         node_id = node.parent;
@@ -234,7 +234,7 @@ maas::Node maas::AStarSolver::create_node(int parent, int time, double distance,
 int maas::AStarSolver::get_waiting_time(int node_id, int agent_id) {
     int waiting_time = 0;
     int goal = agents_[agent_id].goal;
-    node_id = tree_[node_id].parent;
+    node_id = tree_.at(node_id).parent;
     while (node_id >= 0 && tree_[node_id].positions[agent_id] == goal) {
         waiting_time++;
         node_id = tree_[node_id].parent;
@@ -258,8 +258,10 @@ vector<int> maas::AStarSolver::to_hash(vector<int>& positions, int parent) {
     for (int i = 0; i < num_agents_; i++) {
         if (positions[i] != agents_[i].goal)
             hash[i] = positions[i];
-        else
+        else if (parent >= 0)
             hash[i] = -1 - get_waiting_time(parent, i);
+        else
+            hash[i] = -1;
     }
     return hash;
 }
