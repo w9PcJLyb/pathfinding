@@ -338,8 +338,8 @@ vector<Path> icts::LowLevel::get_paths() {
     vector<Path> paths(num_agents_);
     for (int i = 0; i < num_agents_; i++) {
         vector<int> path;
-        for (vector<int>& positions : solution_)
-            path.push_back(positions[i]);
+        for (size_t j = solution_.size(); j-- > 0;)
+            path.push_back(solution_[j][i]);
 
         int goal = goals_[i];
         while (path.size() > 1 && path.back() == goal && path[path.size() - 2] == goal)
@@ -368,10 +368,11 @@ vector<vector<int>> icts::LowLevel::get_neighbors(int time, vector<int>& positio
 
 vector<Path> icts::LowLevel::find_solution(int target_depth) {
     solution_.clear();
-    solution_.push_back(starts_);
     std::unordered_set<pair<int, vector<int>>, SpaceTimeHash> checked;
-    if (explore(0, starts_, target_depth, checked))
+    if (explore(0, starts_, target_depth, checked)) {
+        solution_.push_back(starts_);
         return get_paths();
+    }
     return {};
 }
 
@@ -394,12 +395,10 @@ bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth,
         if (has_collision(positions, next_positions, edge_collision_))
             continue;
 
-        solution_.push_back(next_positions);
-
-        if (explore(time + 1, next_positions, target_depth, checked))
+        if (explore(time + 1, next_positions, target_depth, checked)) {
+            solution_.push_back(next_positions);
             return true;
-
-        solution_.pop_back();
+        }
     }
 
     checked.insert(key);
