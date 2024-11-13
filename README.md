@@ -185,16 +185,16 @@ anim = animate_grid(grid, agents)
 
 # Installation
 
-1. Setup virtual environment
+1. Setup virtual environment (optional but recommended)
 
-2. Install Cython, it is needed to wrap the C++ code:
+2. Install Cython:
 
     ```bash
     pip install cython
     ```
 
-3. Clone this repository and install pathfinding from the local filesystem:
+3. Install the package:
 
     ```bash
-    pip install pathfinding/
+    pip install git+https://github.com/w9PcJLyb/pathfinding.git
     ```
