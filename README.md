@@ -3,7 +3,7 @@
 Pathfinding is the problem of finding the best route between two points.
 
 <p align="left">
-    <img style="width:200px" src="https://raw.githubusercontent.com/w9PcJLyb/pathfinding/refs/heads/main/images/pf_grid.png"/>
+    <img src="https://raw.githubusercontent.com/w9PcJLyb/pathfinding/refs/heads/main/images/pf_grid.png" width="128"/>
 </p>
 
 This repository includes several pathfinding algorithms:
@@ -185,6 +185,14 @@ anim = animate_grid(grid, agents)
 
 # Installation
 
+The easiest way to install w9-pathfinding is via pip:
+
+```bash
+pip install w9-pathfinding
+```
+
+Alternatively, you can install it manually:
+
 1. Setup virtual environment (optional but recommended)
 
 2. Install Cython:
@@ -193,8 +201,20 @@ anim = animate_grid(grid, agents)
     pip install cython
     ```
 
-3. Install the package:
+3. Build the Cython extensions:
 
     ```bash
-    pip install git+https://github.com/w9PcJLyb/pathfinding.git
+    python setup.py build_ext --inplace
     ```
+
+4. Finally, install the package:
+
+    ```bash
+    pip install -e .
+    ```
+
+Note: If you are on Linux, you might need to install some basic build tools to compile the Cython extensions:
+
+```bash
+sudo apt install --reinstall build-essential gcc g++
+```
