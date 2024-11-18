@@ -3,7 +3,7 @@
 Pathfinding is the problem of finding the best route between two points.
 
 <p align="left">
-    <img style="width:200px" src="images/pf_grid.png"/>
+    <img style="width:200px" src="https://raw.githubusercontent.com/w9PcJLyb/pathfinding/refs/heads/main/images/pf_grid.png"/>
 </p>
 
 This repository includes several pathfinding algorithms:
@@ -46,7 +46,7 @@ print(path)  # [0, 1, 3]
 Multi-Agent Path Finding (MAPF) is the problem of finding collision-free paths for a group of agents from their location to an assigned target.
 
 <p align="left">
-    <img src="images/mapf_hex.gif"/>
+    <img src="https://raw.githubusercontent.com/w9PcJLyb/pathfinding/refs/heads/main/images/mapf_hex.gif"/>
 </p>
 
 Implemented algorithms:
@@ -114,7 +114,7 @@ print(path2)  # [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (3, 0), (2, 0)]
 ```
 
 <p align="left">
-    <img src="images/dynamic_obstacle_1.gif"/>
+    <img src="https://raw.githubusercontent.com/w9PcJLyb/pathfinding/refs/heads/main/images/dynamic_obstacle_1.gif"/>
 </p>
 
 This approach works quickly and often finds reasonably good solutions. However, in some cases, it may find solutions that are far from optimal or may not find a solution at all, when one agent prevents any path for another agent. An alternative approach is to use Multi-Agent Pathfinding (MAPF) algorithms, which allow us to find paths for both agents simultaneously. Since all MAPF algorithms in this repository are designed to work with the ReservationTable, we can find an optimal solution while taking dynamic obstacles into account:
@@ -133,7 +133,7 @@ print(paths[1])  # [(0, 0), (1, 0), (2, 0), (2, 1), (2, 0)]
 ```
 
 <p align="left">
-    <img src="images/dynamic_obstacle_2.gif"/>
+    <img src="https://raw.githubusercontent.com/w9PcJLyb/pathfinding/refs/heads/main/images/dynamic_obstacle_2.gif"/>
 </p>
 
 # Types of graphs
