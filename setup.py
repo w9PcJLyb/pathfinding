@@ -1,3 +1,4 @@
+import re
 import sys
 from setuptools import setup, find_packages, Extension
 
@@ -18,13 +19,22 @@ ext_modules = [
     )
 ]
 
+
+def read_version():
+    with open("w9_pathfinding/__init__.py") as f:
+        match = re.search(r'__version__ = ["\'](.*)["\']', f.read())
+        if match:
+            return match.group(1)
+        raise RuntimeError("Unable to find version string.")
+
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
     # Information
     name="w9-pathfinding",
-    version="0.0.2",
+    version=read_version(),
     author="w9PcJLyb",
     description="Implementation of some pathfinding algorithms",
     url="https://github.com/w9PcJLyb/pathfinding",
