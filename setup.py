@@ -1,6 +1,12 @@
+import sys
 from setuptools import setup, find_packages, Extension
 
 from Cython.Build import cythonize
+
+if sys.platform == "win32":
+    extra_compile_args = ["/std:c++17"]
+else:
+    extra_compile_args = ["-std=c++17"]
 
 ext_modules = [
     Extension(
@@ -8,7 +14,7 @@ ext_modules = [
         sources=["w9_pathfinding/wrapper.pyx"],
         include_dirs=["w9_pathfinding/src/"],
         language="c++",
-        extra_compile_args=["-std=c++17"],
+        extra_compile_args=extra_compile_args,
     )
 ]
 
@@ -18,7 +24,7 @@ with open("README.md", "r") as fh:
 setup(
     # Information
     name="w9-pathfinding",
-    version="0.0.1",
+    version="0.0.2",
     author="w9PcJLyb",
     description="Implementation of some pathfinding algorithms",
     url="https://github.com/w9PcJLyb/pathfinding",

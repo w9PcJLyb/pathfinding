@@ -236,3 +236,5 @@ Note: If you are on Linux, you might need to install some basic build tools to c
 ```bash
 sudo apt install --reinstall build-essential gcc g++
 ```
+
+If you are on Windows, you might need to install MSVC.
