@@ -55,12 +55,7 @@ class Grid : public AbsGrid {
         // 3 - always allow
         int diagonal_movement_ = 0;
 
-        const vector<Point> directions_ = {
-            // orthogonal movements: top, bottom, left, right
-            {0, -1}, {0, 1}, {-1, 0}, {1, 0},
-            // diagonal movements
-            {-1, -1}, {1, -1}, {-1, 1}, {1, 1}
-        };
+        static const std::array<Point, 8> directions_;
 
         void warp_point(Point &p) const;
 };

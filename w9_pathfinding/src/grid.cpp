@@ -69,6 +69,13 @@ Grid::Point Grid::get_coordinates(int node) const {
     return {node % width, node / width};
 }
 
+const std::array<Grid::Point, 8> Grid::directions_ = {{
+    // orthogonal movements: top, bottom, left, right
+    {0, -1}, {0, 1}, {-1, 0}, {1, 0},
+    // diagonal movements
+    {-1, -1}, {1, -1}, {-1, 1}, {1, 1}
+}};
+
 vector<pair<int, double>> Grid::get_neighbors(int node, bool reversed) {
     vector<pair<int, double>> nb;
     nb.reserve(diagonal_movement_ == 0 ? 4 : 8);

@@ -46,9 +46,7 @@ class Grid3D : public AbsGrid {
         double calculate_cost(Path& path);
 
     private:
-        const vector<Point> directions_ = {
-            {0, 0, -1}, {0, 0, 1}, {0, -1, 0}, {0, 1, 0}, {-1, 0, 0}, {1, 0, 0}
-        };
+        static const std::array<Point, 6> directions_;
 
         void warp_point(Point &p) const;
 };

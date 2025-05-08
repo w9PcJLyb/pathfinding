@@ -75,14 +75,8 @@ class HexGrid : public AbsGrid {
         double calculate_cost(Path& path);
 
     private:
-        // pointy top: odd-r or even-r
-        points_ pointy_even_directions_ = {{-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {-1, 1}, {0, 1}};
-        points_ pointy_odd_directions_ = {{-1, 0}, {1, 0}, {0, -1}, {1, -1}, {0, 1}, {1, 1}};
+        static const std::array<Point, 24> directions_;
 
-        // flat top: odd-q or even-q
-        points_ flat_even_directions_ = {{0, -1}, {0, 1}, {-1, -1}, {-1, 0}, {1, -1}, {1, 0}};
-        points_ flat_odd_directions_ = {{0, -1}, {0, 1}, {-1, 0}, {-1, 1}, {1, 0}, {1, 1}};
-
-        points_ get_directions(const Point &p) const;
+        int get_direction_offset(const Point &p) const;
         void warp_point(Point &p) const;
 };

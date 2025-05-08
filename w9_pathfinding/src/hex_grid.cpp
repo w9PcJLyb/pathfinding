@@ -50,13 +50,18 @@ void HexGrid::warp_point(Point &p) const {
     }
 }
 
-HexGrid::points_ HexGrid::get_directions(const Point &p) const {
-    if (layout <= 1) {
-        return (p.y % 2 == layout) ? pointy_even_directions_ : pointy_odd_directions_;
-    }
-    else {
-        return (p.x % 2 == layout - 2) ? flat_even_directions_ : flat_odd_directions_;
-    }
+const std::array<HexGrid::Point, 24> HexGrid::directions_ = {{
+    {-1, 0}, {1, 0}, {0, -1}, {1, -1}, {0, 1}, {1, 1},   // odd-r
+    {-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {-1, 1}, {0, 1}, // even-r
+    {0, -1}, {0, 1}, {-1, 0}, {-1, 1}, {1, 0}, {1, 1},   // odd-q
+    {0, -1}, {0, 1}, {-1, -1}, {-1, 0}, {1, -1}, {1, 0}  // even-q
+}};
+
+int HexGrid::get_direction_offset(const HexGrid::Point &p) const {
+    if (layout <= 1)
+        return (p.y % 2 == layout) ? 6 : 0;
+    else
+        return (p.x % 2 == layout - 2) ? 18 : 12;
 }
 
 vector<pair<int, double>> HexGrid::get_neighbors(int node, bool reversed) {
@@ -70,8 +75,9 @@ vector<pair<int, double>> HexGrid::get_neighbors(int node, bool reversed) {
 
     nb.reserve(6);
 
-    for (const Point &d : get_directions(p0)) {
-        Point p = p0 + d;
+    int offset = get_direction_offset(p0);
+    for (int i = 0; i < 6; i++) {
+        Point p = p0 + directions_[i + offset];
         bool inside = is_inside(p);
         if (!inside) {
             warp_point(p);

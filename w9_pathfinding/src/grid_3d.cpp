@@ -59,6 +59,10 @@ void Grid3D::warp_point(Point &p) const {
         p.z -= depth;
 }
 
+const std::array<Grid3D::Point, 6> Grid3D::directions_ = {{
+    {0, 0, -1}, {0, 0, 1}, {0, -1, 0}, {0, 1, 0}, {-1, 0, 0}, {1, 0, 0}
+}};
+
 vector<pair<int, double>> Grid3D::get_neighbors(int node, bool reversed) {
     vector<pair<int, double>> nb;
 

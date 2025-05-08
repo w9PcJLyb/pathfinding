@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <queue>
+#include <array>
 #include <vector>
 #include <random>
 #include <numeric>
