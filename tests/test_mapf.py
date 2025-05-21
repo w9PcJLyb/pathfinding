@@ -1,44 +1,44 @@
 import unittest
 from collections import defaultdict
-import w9_pathfinding as pf
-from w9_pathfinding import Graph, Grid, ReservationTable
+from w9_pathfinding import mapf
+from w9_pathfinding.graph import Graph, Grid, ReservationTable
 
 COMPLETE_ALGORITHMS = [
     {
         "name": "CBS (disjoint_splitting=False)",
-        "class": pf.CBS,
+        "class": mapf.CBS,
         "params": {"disjoint_splitting": False},
     },
     {
         "name": "CBS (disjoint_splitting=True)",
-        "class": pf.CBS,
+        "class": mapf.CBS,
         "params": {"disjoint_splitting": True},
     },
     {
         "name": "ICTS(ict_pruning=False)",
-        "class": pf.ICTS,
+        "class": mapf.ICTS,
         "params": {"ict_pruning": False},
     },
     {
         "name": "ICTS(ict_pruning=True)",
-        "class": pf.ICTS,
+        "class": mapf.ICTS,
         "params": {"ict_pruning": True},
     },
     {
         "name": "A(od=False)",
-        "class": pf.MultiAgentAStar,
+        "class": mapf.MultiAgentAStar,
         "params": {"operator_decomposition": False},
     },
     {
         "name": "A(od=True)",
-        "class": pf.MultiAgentAStar,
+        "class": mapf.MultiAgentAStar,
         "params": {"operator_decomposition": True},
     },
 ]
 
 MAPF_ALGORITHMS = [
-    {"name": "HCA*", "class": pf.HCAStar},
-    {"name": "WHCA*", "class": pf.WHCAStar},
+    {"name": "HCA*", "class": mapf.HCAStar},
+    {"name": "WHCA*", "class": mapf.WHCAStar},
 ] + COMPLETE_ALGORITHMS
 
 

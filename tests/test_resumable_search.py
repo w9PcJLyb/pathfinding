@@ -1,5 +1,6 @@
 import unittest
-from w9_pathfinding import Graph, Grid, ResumableBFS, ResumableDijkstra
+from w9_pathfinding.graph import Graph, Grid
+from w9_pathfinding.pf import ResumableBFS, ResumableDijkstra
 
 
 class TestRS(unittest.TestCase):

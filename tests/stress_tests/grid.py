@@ -1,6 +1,6 @@
 from copy import copy
 
-import w9_pathfinding as pf
+from w9_pathfinding import pf
 from tests.stress_tests.utils import run_graph
 from tests.stress_tests.random_instance import GridGenerator, random_queries
 

@@ -1,7 +1,8 @@
 import unittest
-from w9_pathfinding import Graph, DFS, BFS, BiBFS, Dijkstra, BiDijkstra, SpaceTimeAStar
+from w9_pathfinding.graph import Graph
+from w9_pathfinding.pf import DFS, BFS, BiBFS, Dijkstra, BiDijkstra #, SpaceTimeAStar
 
-SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, SpaceTimeAStar]
+SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra] #, SpaceTimeAStar]
 ALL_ALGORITHMS = [DFS, BFS, BiBFS, Dijkstra, BiDijkstra]
 
 

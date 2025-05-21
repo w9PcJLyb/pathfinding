@@ -9,7 +9,6 @@ from w9_pathfinding.diagonal_movement import DiagonalMovement
 
 
 cdef class _AbsGraph:
-    cdef cdefs.AbsGraph* _baseobj
 
     def __cinit__(self):
         pass
@@ -73,9 +72,6 @@ def _construct(cls, kw):
 
 
 cdef class Graph(_AbsGraph):
-    cdef cdefs.Graph* _obj
-    cdef readonly int num_vertices
-    cdef readonly bool directed
 
     def __cinit__(
         self,
@@ -212,7 +208,6 @@ cdef class Graph(_AbsGraph):
 
 
 cdef class _AbsGrid(_AbsGraph):
-    cdef cdefs.AbsGrid* _basegridobj
 
     def assert_in(self, point):
         raise NotImplementedError()
@@ -366,8 +361,6 @@ cdef class _AbsGrid(_AbsGraph):
 
 
 cdef class Grid(_AbsGrid):
-    cdef cdefs.Grid* _obj
-    cdef readonly int width, height
 
     def __cinit__(
         self,
@@ -421,6 +414,9 @@ cdef class Grid(_AbsGrid):
 
     def __dealloc__(self):
         del self._obj
+        self._obj = NULL
+        self._baseobj = NULL
+        self._basegridobj = NULL
 
     def assert_in(self, point):
         if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height:
@@ -519,8 +515,6 @@ cdef class Grid(_AbsGrid):
 
 
 cdef class Grid3D(_AbsGrid):
-    cdef cdefs.Grid3D* _obj
-    cdef readonly int width, height, depth
 
     def __cinit__(
         self,
@@ -609,9 +603,6 @@ cdef class Grid3D(_AbsGrid):
 
 cdef class HexGrid(_AbsGrid):
     # Hexagonal Grid
-
-    cdef cdefs.HexGrid* _obj
-    cdef readonly int width, height
 
     def __cinit__(
         self,
@@ -742,333 +733,7 @@ def to_python_node(graph, node_id):
         raise NotImplementedError
 
 
-def _pathfinding(func):
-
-    def wrap(finder, start, goal, **kwargs):
-        g = finder.graph
-
-        if isinstance(g, Graph):
-            g.assert_in(start)
-            g.assert_in(goal)
-            path = func(finder, start, goal, **kwargs)
-
-        elif isinstance(g, _AbsGrid):
-            start = g.get_node_id(start)
-            goal = g.get_node_id(goal)
-            path = func(finder, start, goal, **kwargs)
-            path = [g.get_coordinates(node) for node in path]
-
-        else:
-            raise NotImplementedError
-
-        return path
-
-    return wrap
-
-
-cdef class _AbsPathFinder():
-    cdef cdefs.AbsPathFinder* _baseobj
-    cdef public _AbsGraph graph
-
-    def __cinit__(self):
-        pass
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(graph={self.graph})"
-
-    @_pathfinding
-    def find_path(self, start, goal):
-        return self._baseobj.find_path(start, goal)
-
-
-cdef class DFS(_AbsPathFinder):
-    cdef cdefs.DFS* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.DFS(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-
-cdef class BFS(_AbsPathFinder):
-    cdef cdefs.BFS* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.BFS(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-
-cdef class BiBFS(_AbsPathFinder):
-    cdef cdefs.BiBFS* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.BiBFS(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-
-cdef class Dijkstra(_AbsPathFinder):
-    cdef cdefs.Dijkstra* _obj
-    
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.Dijkstra(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-
-cdef class BiDijkstra(_AbsPathFinder):
-    cdef cdefs.BiDijkstra* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.BiDijkstra(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-
-cdef class AStar(_AbsPathFinder):
-    cdef cdefs.AStar* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
-            raise ValueError(
-                "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
-            )
-        self.graph = graph
-        self._obj = new cdefs.AStar(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-
-cdef class BiAStar(_AbsPathFinder):
-    cdef cdefs.BiAStar* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
-            raise ValueError(
-                "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
-            )
-        self.graph = graph
-        self._obj = new cdefs.BiAStar(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-
-cdef class GBS(_AbsPathFinder):
-    # Greedy Best-first Search
-
-    cdef cdefs.GBS* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
-            raise ValueError(
-                "GBS cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
-            )
-        self.graph = graph
-        self._obj = new cdefs.GBS(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-
-cdef class IDAStar(_AbsPathFinder):
-    # Iterative deepening A*
-
-    cdef cdefs.IDAStar* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
-            raise ValueError(
-                "IDA* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
-            )
-        self.graph = graph
-        self._obj = new cdefs.IDAStar(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-    @_pathfinding
-    def find_path(self, int start, int goal, double max_distance=10):
-        return self._obj.find_path(start, goal, max_distance)
-
-
-cdef class ResumableBFS:
-    cdef cdefs.ResumableBFS* _obj
-    cdef public _AbsGraph graph
-
-    def __cinit__(self, _AbsGraph graph, start_node):
-        self.graph = graph
-        self._obj = new cdefs.ResumableBFS(graph._baseobj, to_node_id(graph, start_node))
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(graph={self.graph}, start_node={self.start_node})"
-
-    def __dealloc__(self):
-        del self._obj
-
-    @property
-    def start_node(self):
-        return to_python_node(self.graph, self._obj.start_node())
-
-    @start_node.setter
-    def start_node(self, start_node):
-        self._obj.set_start_node(to_node_id(self.graph, start_node))
-
-    def distance(self, node):
-        d = self._obj.distance(to_node_id(self.graph, node))
-        return d if d >= 0 else float("inf")
-
-    def find_path(self, node):
-        g = self.graph
-        path = self._obj.find_path(to_node_id(g, node))
-        return [to_python_node(g, node_id) for node_id in path]
-
-
-cdef class ResumableDijkstra:
-    cdef cdefs.ResumableDijkstra* _obj
-    cdef public _AbsGraph graph
-
-    def __cinit__(self, _AbsGraph graph, start_node):
-        self.graph = graph
-        self._obj = new cdefs.ResumableDijkstra(graph._baseobj, to_node_id(graph, start_node))
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(graph={self.graph}, start_node={self.start_node})"
-
-    def __dealloc__(self):
-        del self._obj
-
-    @property
-    def start_node(self):
-        return to_python_node(self.graph, self._obj.start_node())
-
-    @start_node.setter
-    def start_node(self, start_node):
-        self._obj.set_start_node(to_node_id(self.graph, start_node))
-
-    def distance(self, node):
-        d = self._obj.distance(to_node_id(self.graph, node))
-        return d if d >= 0 else float("inf")
-
-    def find_path(self, node):
-        g = self.graph
-        path = self._obj.find_path(to_node_id(g, node))
-        return [to_python_node(g, node_id) for node_id in path]
-
-
-cdef class SpaceTimeAStar(_AbsPathFinder):
-    cdef cdefs.SpaceTimeAStar* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.SpaceTimeAStar(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-    cdef cdefs.ReservationTable* _to_crt(self, ReservationTable reservation_table):
-        cdef cdefs.ReservationTable* crt
-        if reservation_table is None:
-            crt = NULL
-        else:
-            assert(reservation_table.graph == self.graph)
-            crt = reservation_table._obj
-        return crt
-
-    @_pathfinding
-    def find_path(
-        self,
-        int start,
-        int goal,
-        int search_depth=100,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path_with_depth_limit(
-            start,
-            goal,
-            search_depth,
-            self._to_crt(reservation_table),
-        )
-
-    @_pathfinding
-    def find_path_with_depth_limit(
-        self,
-        int start,
-        int goal,
-        int search_depth=100,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path_with_depth_limit(
-            start,
-            goal,
-            search_depth,
-            self._to_crt(reservation_table),
-        )
-
-    @_pathfinding
-    def find_path_with_exact_length(
-        self,
-        int start,
-        int goal,
-        int length,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path_with_exact_length(
-            start,
-            goal,
-            length,
-            self._to_crt(reservation_table),
-        )
-
-    @_pathfinding
-    def find_path_with_length_limit(
-        self,
-        int start,
-        int goal,
-        int max_length,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path_with_length_limit(
-            start,
-            goal,
-            max_length,
-            self._to_crt(reservation_table),
-        )
-
-
 cdef class ReservationTable:
-    cdef cdefs.ReservationTable* _obj
-    cdef public _AbsGraph graph
 
     def __cinit__(self, _AbsGraph graph):
         cdef int graph_size = graph.size
@@ -1121,220 +786,3 @@ cdef class ReservationTable:
         rt = ReservationTable(self.graph)
         rt._obj = new cdefs.ReservationTable(dereference(self._obj))
         return rt
-
-
-def _mapf(func):
-
-    def wrap(finder, starts, goals, **kwargs):
-        assert len(starts) == len(goals)
-
-        g = finder.graph
-
-        if isinstance(g, Graph):
-            for i in range(len(starts)):
-                g.assert_in(starts[i])
-                g.assert_in(goals[i])
-            paths = func(finder, starts, goals, **kwargs)
-
-        elif isinstance(g, _AbsGrid):
-            starts = [g.get_node_id(x) for x in starts]
-            goals = [g.get_node_id(x) for x in goals]
-            paths = []
-            for path in func(finder, starts, goals, **kwargs):
-                paths.append([g.get_coordinates(node) for node in path])
-
-        else:
-            raise NotImplementedError
-
-        return paths
-
-    return wrap
-
-
-cdef class _AbsMAPF():
-    cdef cdefs.AbsMAPF* _baseobj
-    cdef public _AbsGraph graph
-
-    def __cinit__(self):
-        pass
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(graph={self.graph})"
-
-    cdef cdefs.ReservationTable* _to_crt(self, ReservationTable reservation_table):
-        cdef cdefs.ReservationTable* crt
-        if reservation_table is None:
-            crt = NULL
-        else:
-            assert(reservation_table.graph == self.graph)
-            crt = reservation_table._obj
-        return crt
-
-    @_mapf
-    def mapf(self, vector[int] starts, vector[int] goals):
-        return self._baseobj.mapf(starts, goals)
-
-
-cdef class HCAStar(_AbsMAPF):
-    cdef cdefs.HCAStar* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.HCAStar(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-    @_mapf
-    def mapf(
-        self,
-        vector[int] starts,
-        vector[int] goals,
-        int max_length=100,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.mapf(
-            starts,
-            goals,
-            max_length,
-            self._to_crt(reservation_table),
-        )
-
-
-cdef class WHCAStar(_AbsMAPF):
-    cdef cdefs.WHCAStar* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.WHCAStar(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-    @_mapf
-    def mapf(
-        self,
-        vector[int] starts,
-        vector[int] goals,
-        int max_length=100,
-        int window_size=16,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.mapf(
-            starts,
-            goals,
-            max_length,
-            window_size,
-            self._to_crt(reservation_table),
-        )
-
-
-cdef class CBS(_AbsMAPF):
-    cdef cdefs.CBS* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.CBS(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-    @property
-    def num_generated_nodes(self):
-        return self._obj.num_generated_nodes
-
-    @property
-    def num_closed_nodes(self):
-        return self._obj.num_closed_nodes
-
-    @_mapf
-    def mapf(
-        self,
-        vector[int] starts,
-        vector[int] goals,
-        int max_length=100,
-        double max_time=1,
-        bool disjoint_splitting=True,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.mapf(
-            starts,
-            goals,
-            max_length,
-            max_time,
-            disjoint_splitting,
-            self._to_crt(reservation_table),
-        )
-
-
-cdef class ICTS(_AbsMAPF):
-    cdef cdefs.ICTS* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.ICTS(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-    @property
-    def num_generated_nodes(self):
-        return self._obj.num_generated_nodes
-
-    @property
-    def num_closed_nodes(self):
-        return self._obj.num_closed_nodes
-
-    @_mapf
-    def mapf(
-        self,
-        vector[int] starts,
-        vector[int] goals,
-        int max_length=100,
-        double max_time=1,
-        bool ict_pruning=True,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.mapf(
-            starts,
-            goals,
-            max_length,
-            max_time,
-            ict_pruning,
-            self._to_crt(reservation_table),
-        )
-
-
-cdef class MultiAgentAStar(_AbsMAPF):
-    cdef cdefs.MultiAgentAStar* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.MultiAgentAStar(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-    @_mapf
-    def mapf(
-        self,
-        vector[int] starts,
-        vector[int] goals,
-        int max_length=100,
-        double max_time=1,
-        bool operator_decomposition=True,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.mapf(
-            starts,
-            goals,
-            max_length,
-            max_time,
-            operator_decomposition,
-            self._to_crt(reservation_table),
-        )

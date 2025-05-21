@@ -1,6 +1,6 @@
 import unittest
 from copy import copy
-from w9_pathfinding import Grid, ReservationTable
+from w9_pathfinding.graph import Grid, ReservationTable
 
 
 class TestReservationTable(unittest.TestCase):

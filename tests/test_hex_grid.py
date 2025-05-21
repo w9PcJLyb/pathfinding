@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from w9_pathfinding import HexGrid, HexLayout
+from w9_pathfinding.graph import HexGrid, HexLayout
 
 
 class TestHexGrid(unittest.TestCase):

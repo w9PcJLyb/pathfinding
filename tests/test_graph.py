@@ -1,6 +1,6 @@
 import copy
 import unittest
-from w9_pathfinding import Graph
+from w9_pathfinding.graph import Graph
 
 
 class TestGraph(unittest.TestCase):
