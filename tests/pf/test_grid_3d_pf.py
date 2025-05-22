@@ -1,6 +1,6 @@
 import unittest
 from w9_pathfinding.graph import Grid3D
-from tests.test_grid_pathfinding import ALL_ALGORITHMS
+from tests.pf.test_grid_pf import ALL_ALGORITHMS
 
 
 class TestSimpleGrid3D(unittest.TestCase):

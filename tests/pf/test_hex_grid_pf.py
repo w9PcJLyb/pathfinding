@@ -1,6 +1,6 @@
 import unittest
 from w9_pathfinding.graph import HexGrid
-from tests.test_grid_pathfinding import ALL_ALGORITHMS
+from tests.pf.test_grid_pf import ALL_ALGORITHMS
 
 
 class TestHexGrid(unittest.TestCase):
