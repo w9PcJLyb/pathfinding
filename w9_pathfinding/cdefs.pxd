@@ -33,6 +33,9 @@ cdef extern from "src/include/core.h":
         void update_weight(int, double) except +
         double get_weight(int) except +
         vector[double] get_weights()
+        vector[int] get_coordinates(int node)
+        int get_node_id(vector[int]&)
+        bool is_inside(vector[int]&)
 
     cdef cppclass AbsPathFinder:
         AbsPathFinder() except +

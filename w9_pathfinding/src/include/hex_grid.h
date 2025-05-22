@@ -28,30 +28,6 @@ class HexGrid : public AbsGrid {
     */
 
     public:
-
-        struct Point {
-            int x, y;
-
-            Point() : x(0), y(0) {};
-            Point(int x, int y) : x(x), y(y) {};
-
-            friend Point operator + (const Point& a, const Point& b) {
-                return {a.x + b.x, a.y + b.y};
-            }
-            bool operator == (const Point& p) const {
-                return x == p.x && y == p.y;
-            }
-            std::string to_string() const {
-                return "(" + std::to_string(x) + ", " + std::to_string(y) + ")";
-            }
-            friend std::ostream& operator << (std::ostream& os, const Point& p) {
-                os << p.to_string();
-                return os;
-            }
-        };
-
-        typedef const vector<Point> points_;
-
         HexGrid(int width, int height, int layout);
         HexGrid(int width, int height, int layout, vector<double> weights);
         HexGrid(int layout, vector<vector<double>> &weights);
@@ -66,17 +42,17 @@ class HexGrid : public AbsGrid {
         bool passable_left_right_border = false, passable_up_down_border = false;
 
         size_t size() const;
-        bool is_inside(const Point &p) const;
+        bool is_inside(const vector<int>& p) const;
         vector<pair<int, double>> get_neighbors(int node, bool reversed=false);
-        int get_node_id(const Point &p) const;
-        Point get_coordinates(int node) const;
+        int get_node_id(const vector<int>& p) const;
+        vector<int> get_coordinates(int node) const;
         double estimate_distance(int v1, int v2) const;
         std::string node_to_string(int v) const;
         double calculate_cost(Path& path);
 
     private:
-        static const std::array<Point, 24> directions_;
+        static const std::array<std::array<int, 2>, 24> directions_;
 
-        int get_direction_offset(const Point &p) const;
-        void warp_point(Point &p) const;
+        int get_direction_offset(const vector<int>& p) const;
+        void warp_point(vector<int>& p) const;
 };

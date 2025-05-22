@@ -25,41 +25,41 @@ size_t Grid3D::size() const {
     return width * height * depth;
 }
 
-bool Grid3D::is_inside(const Point &p) const {
-    return (p.x >= 0 && p.x < width && p.y >= 0 && p.y < height && p.z >= 0 && p.z < depth);
+bool Grid3D::is_inside(const vector<int>& p) const {
+    return (p[0] >= 0 && p[0] < width && p[1] >= 0 && p[1] < height && p[2] >= 0 && p[2] < depth);
 }
 
-int Grid3D::get_node_id(const Point &p) const {
-    return p.x + p.y * width + p.z * width * height;
+int Grid3D::get_node_id(const vector<int>& p) const {
+    return p[0] + p[1] * width + p[2] * width * height;
 }
 
-Grid3D::Point Grid3D::get_coordinates(int node) const {
+vector<int> Grid3D::get_coordinates(int node) const {
     int xy = node % (width * height);
     return {xy % width, xy / width, node / (width * height)};
 }
 
-void Grid3D::warp_point(Point &p) const {
+void Grid3D::warp_point(vector<int>& p) const {
     if (!passable_borders) {
         return;
     }
 
-    if (p.x < 0)
-        p.x += width;
-    else if (p.x >= width)
-        p.x -= width;
+    if (p[0] < 0)
+        p[0] += width;
+    else if (p[0] >= width)
+        p[0] -= width;
     
-    if (p.y < 0)
-        p.y += height;
-    else if (p.y >= height)
-        p.y -= height;
+    if (p[1] < 0)
+        p[1] += height;
+    else if (p[1] >= height)
+        p[1] -= height;
 
-    if (p.z < 0)
-        p.z += depth;
-    else if (p.z >= depth)
-        p.z -= depth;
+    if (p[2] < 0)
+        p[2] += depth;
+    else if (p[2] >= depth)
+        p[2] -= depth;
 }
 
-const std::array<Grid3D::Point, 6> Grid3D::directions_ = {{
+const std::array<std::array<int, 3>, 6> Grid3D::directions_ = {{
     {0, 0, -1}, {0, 0, 1}, {0, -1, 0}, {0, 1, 0}, {-1, 0, 0}, {1, 0, 0}
 }};
 
@@ -70,10 +70,10 @@ vector<pair<int, double>> Grid3D::get_neighbors(int node, bool reversed) {
     if (node_weight == -1)
         return nb;
 
-    Point p0 = get_coordinates(node);
+    vector<int> p0 = get_coordinates(node);
 
-    for (const Point &d : directions_) {
-        Point p = p0 + d;
+    for (const auto& d : directions_) {
+        vector<int> p = {p0[0] + d[0], p0[1] + d[1], p0[2] + d[2]};
         if (!is_inside(p)) {
             if (passable_borders)
                 warp_point(p);
@@ -96,12 +96,12 @@ vector<pair<int, double>> Grid3D::get_neighbors(int node, bool reversed) {
 }
 
 double Grid3D::estimate_distance(int v1, int v2) const {
-    Point p1 = get_coordinates(v1);
-    Point p2 = get_coordinates(v2);
+    vector<int> p1 = get_coordinates(v1);
+    vector<int> p2 = get_coordinates(v2);
 
-    int dx = abs(p1.x - p2.x);
-    int dy = abs(p1.y - p2.y);
-    int dz = abs(p1.z - p2.z);
+    int dx = abs(p1[0] - p2[0]);
+    int dy = abs(p1[1] - p2[1]);
+    int dz = abs(p1[2] - p2[2]);
 
     if (passable_borders) {
         if (dx > width / 2)
@@ -118,7 +118,8 @@ double Grid3D::estimate_distance(int v1, int v2) const {
 }
 
 std::string Grid3D::node_to_string(int v) const {
-    return get_coordinates(v).to_string();
+    vector<int> p = get_coordinates(v);
+    return "(" + std::to_string(p[0]) + ", " + std::to_string(p[1]) + ", " + std::to_string(p[2]) + ")";
 }
 
 double Grid3D::calculate_cost(Path& path) {
@@ -127,10 +128,10 @@ double Grid3D::calculate_cost(Path& path) {
 
     double total_cost = 0;
 
-    Point point = get_coordinates(path[0]);
+    vector<int> point = get_coordinates(path[0]);
 
     for (size_t i = 1; i < path.size(); i++) {
-        Point next_point = get_coordinates(path[i]);
+        vector<int> next_point = get_coordinates(path[i]);
 
         if (point == next_point)
             total_cost += get_pause_action_cost();

@@ -135,6 +135,10 @@ class AbsGrid : public AbsGraph {
         void set_weights(vector<double> &weights);
         vector<vector<int>> find_components() override;
 
+        virtual vector<int> get_coordinates(int node) const = 0;
+        virtual int get_node_id(const vector<int>& p) const = 0;
+        virtual bool is_inside(const vector<int>& p) const = 0;
+
     protected:
         // if weight == -1 - there is an impassable obstacle, the node is unreachable
         // if weight >= 0 - weight is the cost of entering this node

@@ -296,6 +296,20 @@ cdef class _AbsGrid(_AbsGraph):
         weights = [int(w == -1) for w in weights]
         return self._convert(weights, self.shape)
 
+    def assert_in(self, point):
+        if not self.is_inside(point):
+            raise ValueError(f"Point {point} is out of the {self}")
+
+    def is_inside(self, point) -> bool:
+        return self._basegridobj.is_inside(point)
+
+    def get_node_id(self, point) -> int:
+        self.assert_in(point)
+        return self._basegridobj.get_node_id(point)
+
+    def get_coordinates(self, int node_id) -> tuple[int]:
+        return tuple(self._basegridobj.get_coordinates(node_id))
+
     @staticmethod
     def _get_shape(data):
         shape = []
@@ -580,18 +594,6 @@ cdef class Grid3D(_AbsGrid):
     def passable_borders(self, bool _b):
         self._obj.passable_borders = _b
 
-    def assert_in(self, point):
-        if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height or not 0 <= point[2] < self.depth:
-            raise ValueError(f"Point {point} is out of the {self}")
-
-    def get_node_id(self, point):
-        self.assert_in(point)
-        return point[0] + point[1] * self.width + point[2] * self.width * self.height
-
-    def get_coordinates(self, int node_id):
-        xy = node_id % (self.width * self.height)
-        return xy % self.width, xy // self.width, node_id // (self.width * self.height)
-
     @property
     def shape(self):
         return self.depth, self.height, self.width
@@ -659,17 +661,6 @@ cdef class HexGrid(_AbsGrid):
 
     def __dealloc__(self):
         del self._obj
-
-    def assert_in(self, point):
-        if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height:
-            raise ValueError(f"Point {point} is out of the {self}")
-
-    def get_node_id(self, point):
-        self.assert_in(point)
-        return point[0] + point[1] * self.width
-
-    def get_coordinates(self, int node_id):
-        return node_id % self.width, node_id // self.width
 
     @property
     def shape(self):

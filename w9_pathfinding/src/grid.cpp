@@ -33,8 +33,8 @@ int Grid::get_diagonal_movement() const {
     return diagonal_movement_;
 }
 
-bool Grid::is_inside(const Point &p) const {
-    return (p.x >= 0 && p.x < width && p.y >= 0 && p.y < height);
+bool Grid::is_inside(const vector<int>& p) const {
+    return (p[0] >= 0 && p[0] < width && p[1] >= 0 && p[1] < height);
 }
 
 void Grid::show_obstacle_map() const {
@@ -46,30 +46,30 @@ void Grid::show_obstacle_map() const {
     }
 }
 
-void Grid::warp_point(Point &p) const {
+void Grid::warp_point(vector<int>& p) const {
     if (passable_left_right_border) {
-        if (p.x < 0)
-            p.x += width;
-        else if (p.x >= width)
-            p.x -= width;
+        if (p[0] < 0)
+            p[0] += width;
+        else if (p[0] >= width)
+            p[0] -= width;
     }
     if (passable_up_down_border) {
-        if (p.y < 0)
-            p.y += height;
-        else if (p.y >= height)
-            p.y -= height;
+        if (p[1] < 0)
+            p[1] += height;
+        else if (p[1] >= height)
+            p[1] -= height;
     }
 }
 
-int Grid::get_node_id(const Point &p) const {
-    return p.x + p.y * width;
+int Grid::get_node_id(const vector<int>& p) const {
+    return p[0] + p[1] * width;
 }
 
-Grid::Point Grid::get_coordinates(int node) const {
+vector<int> Grid::get_coordinates(int node) const {
     return {node % width, node / width};
 }
 
-const std::array<Grid::Point, 8> Grid::directions_ = {{
+const std::array<std::array<int, 2>, 8> Grid::directions_ = {{
     // orthogonal movements: top, bottom, left, right
     {0, -1}, {0, 1}, {-1, 0}, {1, 0},
     // diagonal movements
@@ -79,15 +79,16 @@ const std::array<Grid::Point, 8> Grid::directions_ = {{
 vector<pair<int, double>> Grid::get_neighbors(int node, bool reversed) {
     vector<pair<int, double>> nb;
     nb.reserve(diagonal_movement_ == 0 ? 4 : 8);
-    
-    Point p0 = get_coordinates(node);
+
+    vector<int> p0 = get_coordinates(node);
 
     double node_weight = weights_.at(node);
     if (node_weight == -1)
         return nb;
 
     auto add_direction = [&] (int direction_id) {
-        Point p = p0 + directions_[direction_id];
+        auto& dir = directions_[direction_id];
+        vector<int> p = {p0[0] + dir[0], p0[1] + dir[1]};
 
         bool inside = is_inside(p);
         if (!inside) {
@@ -150,15 +151,15 @@ vector<pair<int, double>> Grid::get_neighbors(int node, bool reversed) {
 }
 
 double Grid::estimate_distance(int v1, int v2) const {
-    Point p1 = get_coordinates(v1);
-    Point p2 = get_coordinates(v2);
+    vector<int> p1 = get_coordinates(v1);
+    vector<int> p2 = get_coordinates(v2);
 
-    int dx = abs(p1.x - p2.x);
+    int dx = abs(p1[0] - p2[0]);
     if (passable_left_right_border && dx > width / 2) {
         dx = width - dx;
     }
 
-    int dy = abs(p1.y - p2.y);
+    int dy = abs(p1[1] - p2[1]);
     if (passable_up_down_border && dy > height / 2) {
         dy = height - dy;
     }
@@ -177,7 +178,8 @@ double Grid::estimate_distance(int v1, int v2) const {
 }
 
 std::string Grid::node_to_string(int v) const {
-    return get_coordinates(v).to_string();
+    vector<int> p = get_coordinates(v);
+    return "(" + std::to_string(p[0]) + ", " + std::to_string(p[1]) + ")";
 }
 
 double Grid::calculate_cost(Path& path) {
@@ -186,17 +188,17 @@ double Grid::calculate_cost(Path& path) {
 
     double total_cost = 0;
 
-    Point point = get_coordinates(path[0]);
+    vector<int> point = get_coordinates(path[0]);
 
     for (size_t i = 1; i < path.size(); i++) {
-        Point next_point = get_coordinates(path[i]);
+        vector<int> next_point = get_coordinates(path[i]);
 
         if (point == next_point) {
             total_cost += get_pause_action_cost();
             continue;
         }
 
-        if (point.x != next_point.x && point.y != next_point.y)
+        if (point[0] != next_point[0] && point[1] != next_point[1])
             total_cost += weights_.at(path[i]) * diagonal_movement_cost_multiplier;
         else
             total_cost += weights_.at(path[i]);
