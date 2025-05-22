@@ -1,7 +1,7 @@
 import copy
 import unittest
 import numpy as np
-from w9_pathfinding.graph import Grid, DiagonalMovement
+from w9_pathfinding.envs import Grid, DiagonalMovement
 
 
 class TestGrid(unittest.TestCase):

@@ -1,5 +1,5 @@
 import unittest
-from w9_pathfinding.graph import Grid3D
+from w9_pathfinding.envs import Grid3D
 from tests.pf.test_grid_pf import ALL_ALGORITHMS
 
 

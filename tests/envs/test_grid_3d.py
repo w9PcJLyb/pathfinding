@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from w9_pathfinding.graph import Grid3D
+from w9_pathfinding.envs import Grid3D
 
 
 class TestGrid3D(unittest.TestCase):

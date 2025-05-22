@@ -1,6 +1,5 @@
 import re
 import sys
-import glob
 from setuptools import setup, find_packages, Extension
 
 from Cython.Build import cythonize
@@ -20,9 +19,9 @@ include_dirs = ["w9_pathfinding/src/include"]
 
 ext_modules = [
     Extension(
-        name="w9_pathfinding.graph",
+        name="w9_pathfinding.envs",
         sources=[
-            "w9_pathfinding/graph.pyx",
+            "w9_pathfinding/envs.pyx",
             *sources(
                 "core", "graph", "grid", "grid_3d", "hex_grid", "reservation_table"
             ),

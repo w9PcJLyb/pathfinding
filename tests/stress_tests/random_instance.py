@@ -1,5 +1,5 @@
 import random
-from w9_pathfinding.graph import Grid, Graph, Grid3D, HexGrid, HexLayout
+from w9_pathfinding.envs import Grid, Graph, Grid3D, HexGrid, HexLayout
 
 
 class _Generator:

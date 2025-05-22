@@ -1,5 +1,5 @@
 import unittest
-from w9_pathfinding.graph import Graph, Grid
+from w9_pathfinding.envs import Graph, Grid
 from w9_pathfinding.pf import ResumableBFS, ResumableDijkstra
 
 

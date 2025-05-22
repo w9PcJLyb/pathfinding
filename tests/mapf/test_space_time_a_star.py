@@ -1,6 +1,6 @@
 import unittest
 from w9_pathfinding import DiagonalMovement
-from w9_pathfinding.graph import Grid, Graph, ReservationTable
+from w9_pathfinding.envs import Grid, Graph, ReservationTable
 from w9_pathfinding.pf import SpaceTimeAStar
 
 

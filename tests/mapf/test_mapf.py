@@ -1,7 +1,7 @@
 import unittest
 from collections import defaultdict
 from w9_pathfinding import mapf
-from w9_pathfinding.graph import Graph, Grid, ReservationTable
+from w9_pathfinding.envs import Graph, Grid, ReservationTable
 
 COMPLETE_ALGORITHMS = [
     {

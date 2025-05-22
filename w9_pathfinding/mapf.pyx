@@ -4,7 +4,7 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 
 from w9_pathfinding cimport cdefs
-from w9_pathfinding.graph cimport _AbsGrid, _AbsGraph, Graph, ReservationTable
+from w9_pathfinding.envs cimport _AbsGrid, _AbsGraph, Graph, ReservationTable
 
 
 def _mapf(func):
