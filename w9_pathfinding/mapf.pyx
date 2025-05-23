@@ -4,7 +4,7 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 
 from w9_pathfinding cimport cdefs
-from w9_pathfinding.envs cimport _AbsGrid, _AbsGraph, Graph, ReservationTable
+from w9_pathfinding.envs cimport _AbsGraph, ReservationTable
 
 
 def _mapf(func):
@@ -12,24 +12,10 @@ def _mapf(func):
     def wrap(finder, starts, goals, **kwargs):
         assert len(starts) == len(goals)
 
-        g = finder.graph
-
-        if isinstance(g, Graph):
-            for i in range(len(starts)):
-                g.assert_in(starts[i])
-                g.assert_in(goals[i])
-            paths = func(finder, starts, goals, **kwargs)
-
-        elif isinstance(g, _AbsGrid):
-            starts = [g.get_node_id(x) for x in starts]
-            goals = [g.get_node_id(x) for x in goals]
-            paths = []
-            for path in func(finder, starts, goals, **kwargs):
-                paths.append([g.get_coordinates(node) for node in path])
-
-        else:
-            raise NotImplementedError
-
+        map = finder.graph._node_mapper
+        starts = map.to_ids(starts)
+        goals = map.to_ids(goals)
+        paths = [map.from_ids(p) for p in func(finder, starts, goals, **kwargs)]
         return paths
 
     return wrap

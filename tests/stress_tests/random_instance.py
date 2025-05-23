@@ -276,13 +276,24 @@ class HexGridGenerator(GridGenerator):
 
 
 def random_queries(graph, num_queries, connected=False, unique=False):
-    is_grid = isinstance(graph, (Grid, Grid3D, HexGrid))
 
     free_nodes = []
-    for node_id in range(graph.size):
-        if is_grid and graph.has_obstacle(graph.get_coordinates(node_id)):
-            continue
-        free_nodes.append(node_id)
+
+    if isinstance(graph, Graph):
+        free_nodes = list(range(graph.size))
+    elif isinstance(graph, (Grid, HexGrid)):
+        obstacle_map = graph.obstacle_map
+        for x in range(graph.width):
+            for y in range(graph.height):
+                if not obstacle_map[y][x]:
+                    free_nodes.append((x, y))
+    elif isinstance(graph, Grid3D):
+        obstacle_map = graph.obstacle_map
+        for x in range(graph.width):
+            for y in range(graph.height):
+                for z in range(graph.depth):
+                    if not obstacle_map[z][y][x]:
+                        free_nodes.append((x, y, z))
 
     if unique and len(free_nodes) < num_queries:
         raise ValueError(f"Can't generate {num_queries} unique queries")
@@ -293,8 +304,6 @@ def random_queries(graph, num_queries, connected=False, unique=False):
     components = []
     if connected:
         components = graph.find_components()
-        if is_grid:
-            components = [[graph.get_node_id(x) for x in c] for c in components]
         components = [set(c) for c in components]
 
     queries = []
@@ -316,9 +325,6 @@ def random_queries(graph, num_queries, connected=False, unique=False):
         if unique:
             start_pool = [x for x in start_pool if x != start]
             goal_pool = [x for x in goal_pool if x != goal]
-
-        if is_grid:
-            start, goal = graph.get_coordinates(start), graph.get_coordinates(goal)
 
         queries.append((start, goal))
 

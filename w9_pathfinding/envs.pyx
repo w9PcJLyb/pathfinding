@@ -8,6 +8,131 @@ from w9_pathfinding.hex_layout import HexLayout
 from w9_pathfinding.diagonal_movement import DiagonalMovement
 
 
+cdef class _NodeMapper:
+    """
+    This class abstracts away the conversion between user-facing node representations
+    (like coordinates) and internal integer node IDs used by C++ pathfinding algorithms.
+    """
+
+    def __cinit__(self):
+        pass
+
+    def contains(self, node) -> bool:
+        """
+        Return True if the given node is inside the graph.
+        Otherwise, return False.
+        """
+        raise NotImplementedError()
+
+    def assert_in(self, node):
+        """
+        Validates that the given user-facing node is inside the graph.
+        Raises an error if the node is invalid.
+        """
+        if not self.contains(node):
+            raise ValueError(f"Node {node} is out of bounds")
+
+    def to_id(self, node) -> int:
+        """
+        Converts a user-facing node to an internal integer node ID.
+        This is used for interfacing with C++ algorithms.
+        """
+        raise NotImplementedError()
+
+    def to_ids(self, nodes):
+        """
+        Converts a list of user-facing nodes to internal IDs.
+        This is used for interfacing with C++ algorithms.
+        """
+        cdef vector[int] node_ids
+        node_ids = [self.to_id(n) for n in nodes]
+        return node_ids
+
+    def from_id(self, int node_id):
+        """
+        Converts an internal node ID back into a user-facing coordinate or identifier.
+        Useful for presenting results back to the use
+        """
+        raise NotImplementedError()
+
+    def from_ids(self, vector[int] node_ids):
+        """
+        Converts a list of internal node IDs back into user-facing coordinates or identifiers.
+        Useful for presenting pathfinding results back to the use
+        """
+        return [self.from_id(n) for n in node_ids]
+
+
+cdef class _SimpleMapper(_NodeMapper):
+    cdef int _size
+
+    def __cinit__(self, size):
+        self._size = size
+
+    def contains(self, node):
+        if int(node) != node:
+            return False
+        return 0 <= node < self._size
+
+    def to_id(self, node):
+        self.assert_in(node)
+        return int(node)
+
+    def from_id(self, node_id):
+        return int(node_id)
+
+
+cdef class _Grid2DMapper(_NodeMapper):
+    cdef int _w, _h
+
+    def __cinit__(self, w, h):
+        self._w = w
+        self._h = h
+
+    def contains(self, node):
+        if len(node) != 2 or any(x != int(x) for x in node):
+            return False
+        return 0 <= node[0] < self._w and 0 <= node[1] < self._h
+
+    def to_id(self, node):
+        self.assert_in(node)
+        return node[0] + node[1] * self._w
+
+    def from_id(self, node_id: int):
+        return node_id % self._w, node_id // self._w
+
+
+cdef class _Grid3DMapper(_NodeMapper):
+    cdef int _w, _h, _d, _wh
+
+    def __cinit__(self, w, h, d):
+        self._w = w
+        self._h = h
+        self._d = d
+        self._wh = self._w * self._h
+
+    def contains(self, node):
+        if len(node) != 3 or any(x != int(x) for x in node):
+            return False
+        return (
+            0 <= node[0] < self._w and
+            0 <= node[1] < self._h and
+            0 <= node[2] < self._d
+        )
+
+    def to_id(self, node):
+        self.assert_in(node)
+        return node[0] + node[1] * self._w + node[2] * self._wh
+
+    def from_id(self, node_id: int):
+        xy = node_id % self._wh
+        return (
+            xy % self._w,
+            xy // self._w,
+            node_id // self._wh,
+        )
+
+
 cdef class _AbsGraph:
 
     def __cinit__(self):
@@ -24,19 +149,29 @@ cdef class _AbsGraph:
     def size(self):
         return self._baseobj.size()
 
-    def calculate_cost(self, vector[int] path):
-        if not self._baseobj.is_valid_path(path):
+    def contains(self, node):
+        return self._node_mapper.contains(node)
+
+    def calculate_cost(self, path):
+        cdef vector[int] nodes = self._node_mapper.to_ids(path)
+        if not self._baseobj.is_valid_path(nodes):
             return -1
-        return self._baseobj.calculate_cost(path)
+        return self._baseobj.calculate_cost(nodes)
 
-    def is_valid_path(self, vector[int] path):
-        return self._baseobj.is_valid_path(path)
+    def is_valid_path(self, path):
+        cdef vector[int] nodes = self._node_mapper.to_ids(path)
+        return self._baseobj.is_valid_path(nodes)
 
-    def get_neighbors(self, int node_id):
+    def get_neighbors(self, node):
         # return [[neighbour_id, cost], ...]
-        return self._baseobj.get_neighbors(node_id)
+        map = self._node_mapper
+        node_id = map.to_id(node)
+        neighbors = self._baseobj.get_neighbors(node_id)
+        return [(map.from_id(node_id), weight) for node_id, weight in neighbors]
 
-    def adjacent(self, int v1, int v2):
+    def adjacent(self, v1, v2):
+        v1 = self._node_mapper.to_id(v1)
+        v2 = self._node_mapper.to_id(v2)
         return self._baseobj.adjacent(v1, v2)
 
     @property
@@ -86,6 +221,7 @@ cdef class Graph(_AbsGraph):
         self._baseobj = self._obj
         self.num_vertices = num_vertices
         self.directed = directed
+        self._node_mapper = _SimpleMapper(self.num_vertices)
         if coordinates:
             self.set_coordinates(coordinates)
         if edges:
@@ -124,8 +260,8 @@ cdef class Graph(_AbsGraph):
     def estimate_distance(self, int v1, int v2):
         if not self.has_coordinates():
             return
-        self.assert_in(v1)
-        self.assert_in(v2)
+        v1 = self._node_mapper.to_id(v1)
+        v2 = self._node_mapper.to_id(v2)
         return self._obj.estimate_distance(v1, v2)
 
     @property
@@ -134,20 +270,18 @@ cdef class Graph(_AbsGraph):
 
     @property
     def edges(self):
+        map = self._node_mapper
         data = []
         for (start, end, cost) in self._obj.get_edges():
-            data.append([int(start), int(end), cost])
+            data.append([map.from_id(start), map.from_id(end), cost])
         return data
 
     @property
     def coordinates(self):
         return self._obj.get_coordinates()
 
-    def assert_in(self, int node_id):
-        if not 0 <= node_id < self.num_vertices:
-            raise ValueError(f"Node with id {node_id} does not exist")
-
     def add_edges(self, edges):
+        map = self._node_mapper
         starts, ends, costs = [], [], []
         for edge in edges:
             if len(edge) == 2:
@@ -155,8 +289,8 @@ cdef class Graph(_AbsGraph):
                 cost = 1
             else:
                 start, end, cost = edge
-            self.assert_in(start)
-            self.assert_in(end)
+            start = map.to_id(start)
+            end = map.to_id(end)
             if cost < 0:
                 raise ValueError("Weight cannot be negative!")
             starts.append(start)
@@ -209,15 +343,6 @@ cdef class Graph(_AbsGraph):
 
 cdef class _AbsGrid(_AbsGraph):
 
-    def assert_in(self, point):
-        raise NotImplementedError()
-
-    def get_node_id(self, point):
-        raise NotImplementedError()
-
-    def get_coordinates(self, int node_id):
-        raise NotImplementedError()
-
     @property
     def shape(self):
         raise NotImplementedError()
@@ -227,47 +352,30 @@ cdef class _AbsGrid(_AbsGraph):
         return f"{self.__class__.__name__}({shape_str})"
 
     def has_obstacle(self, point):
-        return self._basegridobj.has_obstacle(self.get_node_id(point))
+        node_id = self._node_mapper.to_id(point)
+        return self._basegridobj.has_obstacle(node_id)
 
     def add_obstacle(self, point):
-        self._basegridobj.add_obstacle(self.get_node_id(point))
+        node_id = self._node_mapper.to_id(point)
+        self._basegridobj.add_obstacle(node_id)
 
     def remove_obstacle(self, point):
-        self._basegridobj.remove_obstacle(self.get_node_id(point))
+        node_id = self._node_mapper.to_id(point)
+        self._basegridobj.remove_obstacle(node_id)
 
     def update_weight(self, point, new_value):
-        self._basegridobj.update_weight(self.get_node_id(point), new_value)
+        node_id = self._node_mapper.to_id(point)
+        self._basegridobj.update_weight(node_id, new_value)
 
     def get_weight(self, point):
-        return self._basegridobj.get_weight(self.get_node_id(point))
-
-    def get_neighbors(self, point):
-        node_id = self.get_node_id(point)
-        neighbours = []
-        for n, cost in self._baseobj.get_neighbors(node_id):
-            neighbours.append((self.get_coordinates(n), cost))
-        return neighbours
-
-    def calculate_cost(self, path):
-        cdef vector[int] nodes
-        nodes = [self.get_node_id(x) for x in path]
-        if not self._baseobj.is_valid_path(nodes):
-            return -1
-        return self._baseobj.calculate_cost(nodes)
-
-    def is_valid_path(self, path):
-        cdef vector[int] nodes
-        nodes = [self.get_node_id(x) for x in path]
-        return self._baseobj.is_valid_path(nodes)
+        node_id = self._node_mapper.to_id(point)
+        return self._basegridobj.get_weight(node_id)
 
     def find_components(self):
         return [
-            [self.get_coordinates(node_id) for node_id in component]
+            self._node_mapper.from_ids(component)
             for component in self._baseobj.find_components()
         ]
-
-    def adjacent(self, p1, p2):
-        return self._baseobj.adjacent(self.get_node_id(p1), self.get_node_id(p2))
 
     @property
     def weights(self):
@@ -389,6 +497,7 @@ cdef class Grid(_AbsGrid):
 
         self.width = width
         self.height = height
+        self._node_mapper = _Grid2DMapper(self.width, self.height)
 
         if weights is None:
             self._obj = new cdefs.Grid(width, height)
@@ -417,17 +526,6 @@ cdef class Grid(_AbsGrid):
         self._obj = NULL
         self._baseobj = NULL
         self._basegridobj = NULL
-
-    def assert_in(self, point):
-        if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height:
-            raise ValueError(f"Point {point} is out of the {self}")
-
-    def get_node_id(self, point):
-        self.assert_in(point)
-        return point[0] + point[1] * self.width
-
-    def get_coordinates(self, int node_id):
-        return node_id % self.width, node_id // self.width
 
     @property
     def shape(self):
@@ -545,6 +643,7 @@ cdef class Grid3D(_AbsGrid):
         self.width = width
         self.height = height
         self.depth = depth
+        self._node_mapper = _Grid3DMapper(self.width, self.height, self.depth)
 
         if weights is None:
             self._obj = new cdefs.Grid3D(width, height, depth)
@@ -573,18 +672,6 @@ cdef class Grid3D(_AbsGrid):
     @passable_borders.setter
     def passable_borders(self, bool _b):
         self._obj.passable_borders = _b
-
-    def assert_in(self, point):
-        if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height or not 0 <= point[2] < self.depth:
-            raise ValueError(f"Point {point} is out of the {self}")
-
-    def get_node_id(self, point):
-        self.assert_in(point)
-        return point[0] + point[1] * self.width + point[2] * self.width * self.height
-
-    def get_coordinates(self, int node_id):
-        xy = node_id % (self.width * self.height)
-        return xy % self.width, xy // self.width, node_id // (self.width * self.height)
 
     @property
     def shape(self):
@@ -631,6 +718,7 @@ cdef class HexGrid(_AbsGrid):
         self.width = width
         self.height = height
         layout = HexLayout(layout)
+        self._node_mapper = _Grid2DMapper(self.width, self.height)
 
         if weights is None:
             self._obj = new cdefs.HexGrid(width, height, layout)
@@ -650,17 +738,6 @@ cdef class HexGrid(_AbsGrid):
 
     def __dealloc__(self):
         del self._obj
-
-    def assert_in(self, point):
-        if not 0 <= point[0] < self.width or not 0 <= point[1] < self.height:
-            raise ValueError(f"Point {point} is out of the {self}")
-
-    def get_node_id(self, point):
-        self.assert_in(point)
-        return point[0] + point[1] * self.width
-
-    def get_coordinates(self, int node_id):
-        return node_id % self.width, node_id // self.width
 
     @property
     def shape(self):
@@ -714,25 +791,6 @@ cdef class HexGrid(_AbsGrid):
         }
 
 
-def to_node_id(graph, node):
-    if isinstance(graph, Graph):
-        graph.assert_in(node)
-        return node
-    elif isinstance(graph, _AbsGrid):
-        return graph.get_node_id(node)
-    else:
-        raise NotImplementedError
-
-
-def to_python_node(graph, node_id):
-    if isinstance(graph, Graph):
-        return node_id
-    elif isinstance(graph, _AbsGrid):
-        return graph.get_coordinates(node_id)
-    else:
-        raise NotImplementedError
-
-
 cdef class ReservationTable:
 
     def __cinit__(self, _AbsGraph graph):
@@ -747,16 +805,13 @@ cdef class ReservationTable:
     def __repr__(self):
         return f"ReservationTable(graph={self.graph})"
 
-    def _convert_path(self, path):
-        return [to_node_id(self.graph, node) for node in path]
-
     def is_reserved(self, int time, node):
-        cdef int node_id = to_node_id(self.graph, node)
+        cdef int node_id = self.graph._node_mapper.to_id(node)
         return self._obj.is_reserved(time, node_id)
 
     def is_edge_reserved(self, int time, n1, n2):
-        cdef int n1_id = to_node_id(self.graph, n1)
-        cdef int n2_id = to_node_id(self.graph, n2)
+        cdef int n1_id = self.graph._node_mapper.to_id(n1)
+        cdef int n2_id = self.graph._node_mapper.to_id(n2)
         return self._obj.is_reserved_edge(time, n1_id, n2_id)
 
     def add_path(
@@ -765,12 +820,12 @@ cdef class ReservationTable:
         int start_time=0,
         bool reserve_destination=False,
     ):
-        cdef vector[int] node_ids = self._convert_path(path)
+        cdef vector[int] node_ids = self.graph._node_mapper.to_ids(path)
         self._obj.add_path(start_time, node_ids, reserve_destination, self.graph.edge_collision)
 
     def add_vertex_constraint(self, int time, node, bool permanent=False):
         # if permanent - the node is permanently reserved from the moment time, inclusive
-        cdef int node_id = to_node_id(self.graph, node)
+        cdef int node_id = self.graph._node_mapper.to_id(node)
         if not permanent:
             self._obj.add_vertex_constraint(time, node_id)
         else:
@@ -778,8 +833,8 @@ cdef class ReservationTable:
 
     def add_edge_constraint(self, int time, n1, n2):
         cdef int n1_id, n2_id
-        n1_id = to_node_id(self.graph, n1)
-        n2_id = to_node_id(self.graph, n2)
+        n1_id = self.graph._node_mapper.to_id(n1)
+        n2_id = self.graph._node_mapper.to_id(n2)
         self._obj.add_edge_constraint(time, n1_id, n2_id)
 
     def __copy__(self):

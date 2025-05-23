@@ -3,8 +3,13 @@ from libcpp cimport bool
 from w9_pathfinding cimport cdefs
 
 
+cdef class _NodeMapper:
+    pass
+
+
 cdef class _AbsGraph:
     cdef cdefs.AbsGraph* _baseobj
+    cdef readonly _NodeMapper _node_mapper
 
 
 cdef class Graph(_AbsGraph):
