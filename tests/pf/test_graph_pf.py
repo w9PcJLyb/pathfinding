@@ -8,7 +8,7 @@ ALL_ALGORITHMS = [DFS, BFS, BiBFS, Dijkstra, BiDijkstra]
 
 class TestSimpleGraph(unittest.TestCase):
     """
-    pytest tests/test_graph_pathfinding.py::TestSimpleGraph
+    pytest tests/pf/test_graph_pf.py::TestSimpleGraph
     """
 
     def test_graph_without_nodes(self):
@@ -47,7 +47,7 @@ class TestSimpleGraph(unittest.TestCase):
 
 class TestShortestPath(unittest.TestCase):
     """
-    pytest tests/test_graph_pathfinding.py::TestShortestPath
+    pytest tests/pf/test_graph_pf.py::TestShortestPath
     """
 
     def test_case_1(self):

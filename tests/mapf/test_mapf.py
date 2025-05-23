@@ -85,7 +85,7 @@ def check_paths(graph, paths):
 
 class TestMAPF(unittest.TestCase):
     """
-    pytest tests/test_mapf.py::TestMAPF
+    pytest tests/mapf/test_mapf.py::TestMAPF
     """
 
     def test_without_agents(self):
@@ -239,7 +239,7 @@ class TestMAPF(unittest.TestCase):
 
 class TestComplete(unittest.TestCase):
     """
-    pytest tests/test_mapf.py::TestComplete
+    pytest tests/mapf/test_mapf.py::TestComplete
     """
 
     def test_edge_collision(self):

@@ -5,7 +5,7 @@ from w9_pathfinding.pf import ResumableBFS, ResumableDijkstra
 
 class TestRS(unittest.TestCase):
     """
-    pytest tests/test_resumable_search.py::TestRS
+    pytest tests/pf/test_resumable_search.py::TestRS
     """
 
     def test_with_graph(self):

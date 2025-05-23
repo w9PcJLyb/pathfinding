@@ -6,7 +6,7 @@ from w9_pathfinding.envs import Grid, DiagonalMovement
 
 class TestGrid(unittest.TestCase):
     """
-    pytest tests/test_grid.py::TestGrid
+    pytest tests/envs/test_grid.py::TestGrid
     """
 
     def test_find_components(self):

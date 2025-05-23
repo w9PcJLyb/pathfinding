@@ -6,7 +6,7 @@ from w9_pathfinding.pf import SpaceTimeAStar
 
 class TestSpaceTimeAStar(unittest.TestCase):
     """
-    pytest tests/test_space_time_a_star.py::TestSpaceTimeAStar
+    pytest tests/mapf/test_space_time_a_star.py::TestSpaceTimeAStar
     """
 
     def test_with_directed_graph(self):

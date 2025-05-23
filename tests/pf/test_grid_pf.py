@@ -16,7 +16,7 @@ ALL_ALGORITHMS = [pf.DFS, pf.GBS, pf.BFS, pf.BiBFS] + SHORTEST_PATH_ALGORITHMS
 
 class TestSimpleGrid(unittest.TestCase):
     """
-    pytest tests/test_grid_pathfinding.py::TestSimpleGrid
+    pytest tests/pf/test_grid_pf.py::TestSimpleGrid
     """
 
     def test_0d(self):
@@ -204,7 +204,7 @@ class TestSimpleGrid(unittest.TestCase):
 
 class TestShortestPath(unittest.TestCase):
     """
-    pytest tests/test_grid_pathfinding.py::TestShortestPath
+    pytest tests/pf/test_grid_pf.py::TestShortestPath
     """
 
     def test_case_1(self):

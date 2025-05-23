@@ -5,7 +5,7 @@ from w9_pathfinding.envs import Grid3D
 
 class TestGrid3D(unittest.TestCase):
     """
-    pytest tests/test_grid_3d.py::TestGrid3D
+    pytest tests/envs/test_grid_3d.py::TestGrid3D
     """
 
     def test_find_components(self):

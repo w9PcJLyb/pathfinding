@@ -5,7 +5,7 @@ from w9_pathfinding.envs import Grid, ReservationTable
 
 class TestReservationTable(unittest.TestCase):
     """
-    pytest tests/test_reservation_table.py::TestReservationTable
+    pytest tests/mapf/test_reservation_table.py::TestReservationTable
     """
 
     def test_with_grid(self):

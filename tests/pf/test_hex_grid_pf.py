@@ -5,7 +5,7 @@ from tests.pf.test_grid_pf import ALL_ALGORITHMS
 
 class TestHexGrid(unittest.TestCase):
     """
-    pytest tests/test_hex_grid_pathfinding.py::TestHexGrid
+    pytest tests/pf/test_hex_grid_pf.py::TestHexGrid
     """
 
     def test_0d(self):
