@@ -1,7 +1,7 @@
 import math
 import unittest
-from w9_pathfinding import pf, mapf, DiagonalMovement
-from w9_pathfinding.envs import Grid
+from w9_pathfinding import pf, mapf
+from w9_pathfinding.envs import Grid, DiagonalMovement
 
 SHORTEST_PATH_ALGORITHMS = [
     pf.Dijkstra,

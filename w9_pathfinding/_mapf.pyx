@@ -5,7 +5,7 @@ from libcpp.vector cimport vector
 from cython.operator cimport dereference
 
 from w9_pathfinding cimport cdefs
-from w9_pathfinding.envs cimport _AbsGraph
+from w9_pathfinding._envs cimport _AbsGraph
 
 
 cdef class ReservationTable:
