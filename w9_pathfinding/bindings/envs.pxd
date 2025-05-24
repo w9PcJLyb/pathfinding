@@ -1,6 +1,6 @@
 from libcpp cimport bool
 
-from w9_pathfinding cimport cdefs
+from w9_pathfinding.bindings cimport cdefs
 
 
 cdef class _NodeMapper:

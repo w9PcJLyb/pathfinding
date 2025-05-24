@@ -2,7 +2,7 @@
 
 from libcpp cimport bool
 from libcpp.vector cimport vector
-from w9_pathfinding cimport cdefs
+from w9_pathfinding.bindings cimport cdefs
 from w9_pathfinding.hex_layout import HexLayout
 from w9_pathfinding.diagonal_movement import DiagonalMovement
 

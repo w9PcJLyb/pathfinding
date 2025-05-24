@@ -1,4 +1,4 @@
-from ._pf import (
+from .bindings.pf import (
     BFS,
     BiBFS,
     DFS,

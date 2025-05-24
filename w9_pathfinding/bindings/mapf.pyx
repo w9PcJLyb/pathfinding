@@ -4,8 +4,8 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 from cython.operator cimport dereference
 
-from w9_pathfinding cimport cdefs
-from w9_pathfinding._envs cimport _AbsGraph
+from w9_pathfinding.bindings cimport cdefs
+from w9_pathfinding.bindings.envs cimport _AbsGraph
 
 
 cdef class ReservationTable:

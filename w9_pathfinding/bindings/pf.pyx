@@ -1,7 +1,7 @@
 # distutils: language = c++
 
-from w9_pathfinding cimport cdefs
-from w9_pathfinding._envs cimport _AbsGraph, Graph
+from w9_pathfinding.bindings cimport cdefs
+from w9_pathfinding.bindings.envs cimport _AbsGraph, Graph
 
 
 def _pathfinding(func):

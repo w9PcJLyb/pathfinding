@@ -19,9 +19,9 @@ include_dirs = ["w9_pathfinding/src/include"]
 
 ext_modules = [
     Extension(
-        name="w9_pathfinding._envs",
+        name="w9_pathfinding.bindings.envs",
         sources=[
-            "w9_pathfinding/_envs.pyx",
+            "w9_pathfinding/bindings/envs.pyx",
             *sources("core", "graph", "grid", "grid_3d", "hex_grid"),
         ],
         include_dirs=include_dirs,
@@ -29,9 +29,9 @@ ext_modules = [
         extra_compile_args=extra_compile_args,
     ),
     Extension(
-        name="w9_pathfinding._pf",
+        name="w9_pathfinding.bindings.pf",
         sources=[
-            "w9_pathfinding/_pf.pyx",
+            "w9_pathfinding/bindings/pf.pyx",
             *sources(
                 "core",
                 "dfs",
@@ -51,9 +51,9 @@ ext_modules = [
         extra_compile_args=extra_compile_args,
     ),
     Extension(
-        name="w9_pathfinding._mapf",
+        name="w9_pathfinding.bindings.mapf",
         sources=[
-            "w9_pathfinding/_mapf.pyx",
+            "w9_pathfinding/bindings/mapf.pyx",
             *sources(
                 "core",
                 "reservation_table",

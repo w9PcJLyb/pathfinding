@@ -1,4 +1,4 @@
-from ._mapf import (
+from .bindings.mapf import (
     SpaceTimeAStar,
     ReservationTable,
     HCAStar,
