@@ -1,6 +1,6 @@
 import math
 import unittest
-from w9_pathfinding import pf, DiagonalMovement
+from w9_pathfinding import pf, mapf, DiagonalMovement
 from w9_pathfinding.envs import Grid
 
 SHORTEST_PATH_ALGORITHMS = [
@@ -9,7 +9,7 @@ SHORTEST_PATH_ALGORITHMS = [
     pf.AStar,
     pf.BiAStar,
     pf.IDAStar,
-    pf.SpaceTimeAStar,
+    mapf.SpaceTimeAStar,
 ]
 ALL_ALGORITHMS = [pf.DFS, pf.GBS, pf.BFS, pf.BiBFS] + SHORTEST_PATH_ALGORITHMS
 

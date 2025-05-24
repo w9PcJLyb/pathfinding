@@ -180,7 +180,7 @@ cdef extern from "resumable_search.h":
 
 cdef extern from "space_time_a_star.h":
 
-    cdef cppclass SpaceTimeAStar(AbsPathFinder):
+    cdef cppclass SpaceTimeAStar:
         SpaceTimeAStar(AbsGraph*) except +
         vector[int] find_path_with_depth_limit(int, int, int, ReservationTable*)
         vector[int] find_path_with_exact_length(int, int, int, ReservationTable*)

@@ -1,7 +1,7 @@
 import unittest
 from w9_pathfinding import DiagonalMovement
 from w9_pathfinding.envs import Grid, Graph, ReservationTable
-from w9_pathfinding.pf import SpaceTimeAStar
+from w9_pathfinding.mapf import SpaceTimeAStar
 
 
 class TestSpaceTimeAStar(unittest.TestCase):

@@ -7,6 +7,18 @@ from w9_pathfinding cimport cdefs
 from w9_pathfinding.envs cimport _AbsGraph, ReservationTable
 
 
+def _pathfinding(func):
+
+    def wrap(finder, start, goal, **kwargs):
+        map = finder.graph._node_mapper
+        start = map.to_id(start)
+        goal = map.to_id(goal)
+        path = map.from_ids(func(finder, start, goal, **kwargs))
+        return path
+
+    return wrap
+
+
 def _mapf(func):
 
     def wrap(finder, starts, goals, **kwargs):
@@ -19,6 +31,87 @@ def _mapf(func):
         return paths
 
     return wrap
+
+
+cdef class SpaceTimeAStar:
+    cdef cdefs.SpaceTimeAStar* _obj
+    cdef public _AbsGraph graph
+
+    def __cinit__(self, _AbsGraph graph):
+        self.graph = graph
+        self._obj = new cdefs.SpaceTimeAStar(graph._baseobj)
+
+    def __dealloc__(self):
+        del self._obj
+
+    cdef cdefs.ReservationTable* _to_crt(self, ReservationTable reservation_table):
+        cdef cdefs.ReservationTable* crt
+        if reservation_table is None:
+            crt = NULL
+        else:
+            assert(reservation_table.graph == self.graph)
+            crt = reservation_table._obj
+        return crt
+
+    @_pathfinding
+    def find_path(
+        self,
+        start,
+        goal,
+        int search_depth=100,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.find_path_with_depth_limit(
+            start,
+            goal,
+            search_depth,
+            self._to_crt(reservation_table),
+        )
+
+    @_pathfinding
+    def find_path_with_depth_limit(
+        self,
+        start,
+        goal,
+        int search_depth=100,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.find_path_with_depth_limit(
+            start,
+            goal,
+            search_depth,
+            self._to_crt(reservation_table),
+        )
+
+    @_pathfinding
+    def find_path_with_exact_length(
+        self,
+        start,
+        goal,
+        int length,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.find_path_with_exact_length(
+            start,
+            goal,
+            length,
+            self._to_crt(reservation_table),
+        )
+
+    @_pathfinding
+    def find_path_with_length_limit(
+        self,
+        start,
+        goal,
+        int max_length,
+        ReservationTable reservation_table=None,
+    ):
+        return self._obj.find_path_with_length_limit(
+            start,
+            goal,
+            max_length,
+            self._to_crt(reservation_table),
+        )
 
 
 cdef class _AbsMAPF():

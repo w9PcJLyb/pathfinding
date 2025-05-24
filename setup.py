@@ -36,7 +36,6 @@ ext_modules = [
             "w9_pathfinding/pf.pyx",
             *sources(
                 "core",
-                "reservation_table",
                 "dfs",
                 "bfs",
                 "bi_bfs",
@@ -47,7 +46,6 @@ ext_modules = [
                 "gbs",
                 "ida_star",
                 "resumable_search",
-                "space_time_a_star",
             ),
         ],
         include_dirs=include_dirs,

@@ -5,7 +5,6 @@ from collections import defaultdict
 
 from w9_pathfinding import mapf
 from w9_pathfinding.envs import ReservationTable
-from w9_pathfinding.pf import SpaceTimeAStar
 from tests.stress_tests.utils import run_graph
 from tests.stress_tests.random_instance import GridGenerator, random_queries
 
@@ -253,7 +252,7 @@ def create_graph_with_queries():
 
         reserved_paths = []
         if NUM_DYNAMIC_OBSTACLES > 0:
-            astar = SpaceTimeAStar(graph)
+            astar = mapf.SpaceTimeAStar(graph)
             rt = ReservationTable(graph)
             build = True
             for start, goal in queries[:NUM_DYNAMIC_OBSTACLES]:

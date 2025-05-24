@@ -1,7 +1,7 @@
 # distutils: language = c++
 
 from w9_pathfinding cimport cdefs
-from w9_pathfinding.envs cimport _AbsGraph, Graph, ReservationTable
+from w9_pathfinding.envs cimport _AbsGraph, Graph
 
 
 def _pathfinding(func):
@@ -10,8 +10,7 @@ def _pathfinding(func):
         map = finder.graph._node_mapper
         start = map.to_id(start)
         goal = map.to_id(goal)
-        path = func(finder, start, goal, **kwargs)
-        path = map.from_ids(path)
+        path = map.from_ids(func(finder, start, goal, **kwargs))
         return path
 
     return wrap
@@ -244,84 +243,3 @@ cdef class ResumableDijkstra:
         node_id = map.to_id(node)
         path = self._obj.find_path(node_id)
         return map.from_ids(path)
-
-
-cdef class SpaceTimeAStar(_AbsPathFinder):
-    cdef cdefs.SpaceTimeAStar* _obj
-
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.SpaceTimeAStar(graph._baseobj)
-        self._baseobj = self._obj
-
-    def __dealloc__(self):
-        del self._obj
-
-    cdef cdefs.ReservationTable* _to_crt(self, ReservationTable reservation_table):
-        cdef cdefs.ReservationTable* crt
-        if reservation_table is None:
-            crt = NULL
-        else:
-            assert(reservation_table.graph == self.graph)
-            crt = reservation_table._obj
-        return crt
-
-    @_pathfinding
-    def find_path(
-        self,
-        int start,
-        int goal,
-        int search_depth=100,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path_with_depth_limit(
-            start,
-            goal,
-            search_depth,
-            self._to_crt(reservation_table),
-        )
-
-    @_pathfinding
-    def find_path_with_depth_limit(
-        self,
-        int start,
-        int goal,
-        int search_depth=100,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path_with_depth_limit(
-            start,
-            goal,
-            search_depth,
-            self._to_crt(reservation_table),
-        )
-
-    @_pathfinding
-    def find_path_with_exact_length(
-        self,
-        int start,
-        int goal,
-        int length,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path_with_exact_length(
-            start,
-            goal,
-            length,
-            self._to_crt(reservation_table),
-        )
-
-    @_pathfinding
-    def find_path_with_length_limit(
-        self,
-        int start,
-        int goal,
-        int max_length,
-        ReservationTable reservation_table=None,
-    ):
-        return self._obj.find_path_with_length_limit(
-            start,
-            goal,
-            max_length,
-            self._to_crt(reservation_table),
-        )
