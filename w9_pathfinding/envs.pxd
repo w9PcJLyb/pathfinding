@@ -35,8 +35,3 @@ cdef class Grid3D(_AbsGrid):
 cdef class HexGrid(_AbsGrid):
     cdef cdefs.HexGrid* _obj
     cdef readonly int width, height
-
-
-cdef class ReservationTable:
-    cdef cdefs.ReservationTable* _obj
-    cdef public _AbsGraph graph

@@ -2,7 +2,6 @@
 
 from libcpp cimport bool
 from libcpp.vector cimport vector
-from cython.operator cimport dereference
 from w9_pathfinding cimport cdefs
 from w9_pathfinding.hex_layout import HexLayout
 from w9_pathfinding.diagonal_movement import DiagonalMovement
@@ -789,55 +788,3 @@ cdef class HexGrid(_AbsGrid):
             "passable_up_down_border": self.passable_up_down_border,
             **super().to_dict(),
         }
-
-
-cdef class ReservationTable:
-
-    def __cinit__(self, _AbsGraph graph):
-        cdef int graph_size = graph.size
-
-        self.graph = graph
-        self._obj = new cdefs.ReservationTable(graph_size)
-
-    def __dealloc__(self):
-        del self._obj
-
-    def __repr__(self):
-        return f"ReservationTable(graph={self.graph})"
-
-    def is_reserved(self, int time, node):
-        cdef int node_id = self.graph._node_mapper.to_id(node)
-        return self._obj.is_reserved(time, node_id)
-
-    def is_edge_reserved(self, int time, n1, n2):
-        cdef int n1_id = self.graph._node_mapper.to_id(n1)
-        cdef int n2_id = self.graph._node_mapper.to_id(n2)
-        return self._obj.is_reserved_edge(time, n1_id, n2_id)
-
-    def add_path(
-        self,
-        path,
-        int start_time=0,
-        bool reserve_destination=False,
-    ):
-        cdef vector[int] node_ids = self.graph._node_mapper.to_ids(path)
-        self._obj.add_path(start_time, node_ids, reserve_destination, self.graph.edge_collision)
-
-    def add_vertex_constraint(self, int time, node, bool permanent=False):
-        # if permanent - the node is permanently reserved from the moment time, inclusive
-        cdef int node_id = self.graph._node_mapper.to_id(node)
-        if not permanent:
-            self._obj.add_vertex_constraint(time, node_id)
-        else:
-            self._obj.add_semi_static_constraint(time, node_id)
-
-    def add_edge_constraint(self, int time, n1, n2):
-        cdef int n1_id, n2_id
-        n1_id = self.graph._node_mapper.to_id(n1)
-        n2_id = self.graph._node_mapper.to_id(n2)
-        self._obj.add_edge_constraint(time, n1_id, n2_id)
-
-    def __copy__(self):
-        rt = ReservationTable(self.graph)
-        rt._obj = new cdefs.ReservationTable(dereference(self._obj))
-        return rt

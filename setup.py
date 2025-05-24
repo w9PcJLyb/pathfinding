@@ -22,9 +22,7 @@ ext_modules = [
         name="w9_pathfinding.envs",
         sources=[
             "w9_pathfinding/envs.pyx",
-            *sources(
-                "core", "graph", "grid", "grid_3d", "hex_grid", "reservation_table"
-            ),
+            *sources("core", "graph", "grid", "grid_3d", "hex_grid"),
         ],
         include_dirs=include_dirs,
         language="c++",

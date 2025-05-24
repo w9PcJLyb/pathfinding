@@ -1,6 +1,7 @@
 import unittest
 from copy import copy
-from w9_pathfinding.envs import Grid, ReservationTable
+from w9_pathfinding.envs import Grid
+from w9_pathfinding.mapf import ReservationTable
 
 
 class TestReservationTable(unittest.TestCase):

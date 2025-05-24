@@ -4,7 +4,7 @@ from copy import copy
 from collections import defaultdict
 
 from w9_pathfinding import mapf
-from w9_pathfinding.envs import ReservationTable
+from w9_pathfinding.mapf import ReservationTable
 from tests.stress_tests.utils import run_graph
 from tests.stress_tests.random_instance import GridGenerator, random_queries
 
