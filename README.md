@@ -41,7 +41,8 @@ This repository includes several pathfinding algorithms:
 Example:
 
 ```python
-from w9_pathfinding import Graph, Dijkstra
+from w9_pathfinding.envs import Graph
+from w9_pathfinding.pf import Dijkstra
 
 graph = Graph(num_vertices=4)
 graph.add_edges(
@@ -82,7 +83,8 @@ Here optimality means that the algorithm can find the optimal solution in terms 
 Example:
 
 ```python
-from w9_pathfinding import Grid, WHCAStar
+from w9_pathfinding.envs import Grid
+from w9_pathfinding.mapf import WHCAStar
 
 grid = Grid(
     # -1 - unwalkable cell
@@ -108,7 +110,8 @@ To manage dynamic obstacles in pathfinding, a ReservationTable can be used. This
 Let's look at a simple example. We have three agents: Agent 0, Agent 1, and Agent 2. Agent 0 has a predetermined path that we cannot change, this agent acts as a dynamic obstacle. Agents 1 and 2 each have a starting point and a destination, and we want to find paths for both agents while ensuring they do not collide with each other or with Agent 0. We can achieve this by calling Space-Time A* twice, updating the ReservationTable between the calls:
 
 ```python
-from w9_pathfinding import Grid, SpaceTimeAStar, ReservationTable
+from w9_pathfinding.envs import Grid
+from w9_pathfinding.mapf import SpaceTimeAStar, ReservationTable
 
 grid = Grid(width=5, height=4, edge_collision=True)
 grid.add_obstacle((1, 1))  # static obstacle
@@ -138,7 +141,7 @@ print(path2)  # [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (3, 0), (2, 0)]
 This approach works quickly and often finds reasonably good solutions. However, in some cases, it may find solutions that are far from optimal or may not find a solution at all, when one agent prevents any path for another agent. An alternative approach is to use Multi-Agent Pathfinding (MAPF) algorithms, which allow us to find paths for both agents simultaneously. Since all MAPF algorithms in this repository are designed to work with the ReservationTable, we can find an optimal solution while taking dynamic obstacles into account:
 
 ```python
-from w9_pathfinding import CBS
+from w9_pathfinding.mapf import CBS
 
 rt = ReservationTable(grid)
 rt.add_path(path0, reserve_destination=True)
@@ -175,7 +178,7 @@ Visualization is only available for Grid and HexGrid. To use visualization, you 
 Example:
 
 ```python
-from w9_pathfinding import HexGrid
+from w9_pathfinding.envs import HexGrid
 from w9_pathfinding.visualization import plot_grid, animate_grid
 
 grid = HexGrid(
