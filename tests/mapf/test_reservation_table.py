@@ -1,11 +1,12 @@
 import unittest
 from copy import copy
-from w9_pathfinding import Grid, ReservationTable
+from w9_pathfinding.envs import Grid
+from w9_pathfinding.mapf import ReservationTable
 
 
 class TestReservationTable(unittest.TestCase):
     """
-    pytest tests/test_reservation_table.py::TestReservationTable
+    pytest tests/mapf/test_reservation_table.py::TestReservationTable
     """
 
     def test_with_grid(self):

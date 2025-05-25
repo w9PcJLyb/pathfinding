@@ -1,11 +1,11 @@
 import unittest
 import numpy as np
-from w9_pathfinding import HexGrid, HexLayout
+from w9_pathfinding.envs import HexGrid, HexLayout
 
 
 class TestHexGrid(unittest.TestCase):
     """
-    pytest tests/test_hex_grid.py::TestHexGrid
+    pytest tests/envs/test_hex_grid.py::TestHexGrid
     """
 
     def test_layout(self):

@@ -1,11 +1,11 @@
 import unittest
-from w9_pathfinding import Grid3D
-from tests.test_grid_pathfinding import ALL_ALGORITHMS
+from w9_pathfinding.envs import Grid3D
+from tests.pf.test_grid_pf import ALL_ALGORITHMS
 
 
 class TestSimpleGrid3D(unittest.TestCase):
     """
-    pytest tests/test_grid_3d_pathfinding.py::TestSimpleGrid3D
+    pytest tests/pf/test_grid_3d_pf.py::TestSimpleGrid3D
     """
 
     def test_0d(self):

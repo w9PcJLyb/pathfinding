@@ -9,14 +9,67 @@ if sys.platform == "win32":
 else:
     extra_compile_args = ["-std=c++17"]
 
+
+def sources(*files):
+    return [f"w9_pathfinding/src/{f}.cpp" for f in files]
+
+
+include_dirs = ["w9_pathfinding/src/include"]
+
+
 ext_modules = [
     Extension(
-        name="w9_pathfinding.cpf",
-        sources=["w9_pathfinding/wrapper.pyx"],
-        include_dirs=["w9_pathfinding/src/"],
+        name="w9_pathfinding.bindings.envs",
+        sources=[
+            "w9_pathfinding/bindings/envs.pyx",
+            *sources("core", "graph", "grid", "grid_3d", "hex_grid"),
+        ],
+        include_dirs=include_dirs,
         language="c++",
         extra_compile_args=extra_compile_args,
-    )
+    ),
+    Extension(
+        name="w9_pathfinding.bindings.pf",
+        sources=[
+            "w9_pathfinding/bindings/pf.pyx",
+            *sources(
+                "core",
+                "dfs",
+                "bfs",
+                "bi_bfs",
+                "dijkstra",
+                "bi_dijkstra",
+                "a_star",
+                "bi_a_star",
+                "gbs",
+                "ida_star",
+                "resumable_search",
+            ),
+        ],
+        include_dirs=include_dirs,
+        language="c++",
+        extra_compile_args=extra_compile_args,
+    ),
+    Extension(
+        name="w9_pathfinding.bindings.mapf",
+        sources=[
+            "w9_pathfinding/bindings/mapf.pyx",
+            *sources(
+                "core",
+                "reservation_table",
+                "resumable_search",
+                "space_time_a_star",
+                "hc_a_star",
+                "whc_a_star",
+                "cbs",
+                "icts",
+                "multi_agent_a_star",
+            ),
+        ],
+        include_dirs=include_dirs,
+        language="c++",
+        extra_compile_args=extra_compile_args,
+    ),
 ]
 
 
@@ -46,7 +99,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     # Build instructions
-    ext_modules=cythonize(ext_modules),
+    ext_modules=cythonize(ext_modules, language_level="3", force=False),
     packages=find_packages(),
     install_requires=["setuptools", "cython"],
     extras_require={

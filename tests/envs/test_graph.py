@@ -1,11 +1,11 @@
 import copy
 import unittest
-from w9_pathfinding import Graph
+from w9_pathfinding.envs import Graph
 
 
 class TestGraph(unittest.TestCase):
     """
-    pytest tests/test_graph.py::TestGraph
+    pytest tests/envs/test_graph.py::TestGraph
     """
 
     def test_get_neighbors_with_directed_graph(self):

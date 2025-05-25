@@ -4,7 +4,7 @@ from matplotlib import animation, colors, pyplot as plt, patheffects as pe
 from matplotlib.path import Path
 from matplotlib.patches import Circle, Rectangle, PathPatch
 
-from w9_pathfinding import Grid, HexGrid
+from w9_pathfinding.envs import Grid, HexGrid
 
 
 class GridVisualizer:

@@ -1,7 +1,7 @@
 import math
 import unittest
-import w9_pathfinding as pf
-from w9_pathfinding import Grid, DiagonalMovement
+from w9_pathfinding import pf, mapf
+from w9_pathfinding.envs import Grid, DiagonalMovement
 
 SHORTEST_PATH_ALGORITHMS = [
     pf.Dijkstra,
@@ -9,14 +9,14 @@ SHORTEST_PATH_ALGORITHMS = [
     pf.AStar,
     pf.BiAStar,
     pf.IDAStar,
-    pf.SpaceTimeAStar,
+    mapf.SpaceTimeAStar,
 ]
 ALL_ALGORITHMS = [pf.DFS, pf.GBS, pf.BFS, pf.BiBFS] + SHORTEST_PATH_ALGORITHMS
 
 
 class TestSimpleGrid(unittest.TestCase):
     """
-    pytest tests/test_grid_pathfinding.py::TestSimpleGrid
+    pytest tests/pf/test_grid_pf.py::TestSimpleGrid
     """
 
     def test_0d(self):
@@ -204,7 +204,7 @@ class TestSimpleGrid(unittest.TestCase):
 
 class TestShortestPath(unittest.TestCase):
     """
-    pytest tests/test_grid_pathfinding.py::TestShortestPath
+    pytest tests/pf/test_grid_pf.py::TestShortestPath
     """
 
     def test_case_1(self):

@@ -1,16 +1,11 @@
 import unittest
-from w9_pathfinding import (
-    Grid,
-    Graph,
-    DiagonalMovement,
-    SpaceTimeAStar,
-    ReservationTable,
-)
+from w9_pathfinding.envs import Grid, Graph, DiagonalMovement
+from w9_pathfinding.mapf import SpaceTimeAStar, ReservationTable
 
 
 class TestSpaceTimeAStar(unittest.TestCase):
     """
-    pytest tests/test_space_time_a_star.py::TestSpaceTimeAStar
+    pytest tests/mapf/test_space_time_a_star.py::TestSpaceTimeAStar
     """
 
     def test_with_directed_graph(self):

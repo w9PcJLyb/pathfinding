@@ -1,44 +1,45 @@
 import unittest
 from collections import defaultdict
-import w9_pathfinding as pf
-from w9_pathfinding import Graph, Grid, ReservationTable
+from w9_pathfinding import mapf
+from w9_pathfinding.envs import Graph, Grid
+from w9_pathfinding.mapf import ReservationTable
 
 COMPLETE_ALGORITHMS = [
     {
         "name": "CBS (disjoint_splitting=False)",
-        "class": pf.CBS,
+        "class": mapf.CBS,
         "params": {"disjoint_splitting": False},
     },
     {
         "name": "CBS (disjoint_splitting=True)",
-        "class": pf.CBS,
+        "class": mapf.CBS,
         "params": {"disjoint_splitting": True},
     },
     {
         "name": "ICTS(ict_pruning=False)",
-        "class": pf.ICTS,
+        "class": mapf.ICTS,
         "params": {"ict_pruning": False},
     },
     {
         "name": "ICTS(ict_pruning=True)",
-        "class": pf.ICTS,
+        "class": mapf.ICTS,
         "params": {"ict_pruning": True},
     },
     {
         "name": "A(od=False)",
-        "class": pf.MultiAgentAStar,
+        "class": mapf.MultiAgentAStar,
         "params": {"operator_decomposition": False},
     },
     {
         "name": "A(od=True)",
-        "class": pf.MultiAgentAStar,
+        "class": mapf.MultiAgentAStar,
         "params": {"operator_decomposition": True},
     },
 ]
 
 MAPF_ALGORITHMS = [
-    {"name": "HCA*", "class": pf.HCAStar},
-    {"name": "WHCA*", "class": pf.WHCAStar},
+    {"name": "HCA*", "class": mapf.HCAStar},
+    {"name": "WHCA*", "class": mapf.WHCAStar},
 ] + COMPLETE_ALGORITHMS
 
 
@@ -85,7 +86,7 @@ def check_paths(graph, paths):
 
 class TestMAPF(unittest.TestCase):
     """
-    pytest tests/test_mapf.py::TestMAPF
+    pytest tests/mapf/test_mapf.py::TestMAPF
     """
 
     def test_without_agents(self):
@@ -239,7 +240,7 @@ class TestMAPF(unittest.TestCase):
 
 class TestComplete(unittest.TestCase):
     """
-    pytest tests/test_mapf.py::TestComplete
+    pytest tests/mapf/test_mapf.py::TestComplete
     """
 
     def test_edge_collision(self):

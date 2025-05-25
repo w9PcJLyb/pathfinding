@@ -3,11 +3,7 @@ from libcpp.pair cimport pair
 from libcpp.vector cimport vector
 
 
-cdef extern from "src/core.cpp":
-    pass
-
-
-cdef extern from "src/include/core.h":
+cdef extern from "core.h":
 
     cdef cppclass AbsGraph:
         AbsGraph() except +
@@ -43,11 +39,7 @@ cdef extern from "src/include/core.h":
         vector[vector[int]] mapf(vector[int], vector[int])
 
 
-cdef extern from "src/reservation_table.cpp":
-    pass
-
-
-cdef extern from "src/include/reservation_table.h":
+cdef extern from "reservation_table.h":
     cdef cppclass ReservationTable:
         ReservationTable(int)
         ReservationTable(const ReservationTable&)
@@ -60,11 +52,7 @@ cdef extern from "src/include/reservation_table.h":
         int last_time_reserved(int)
 
 
-cdef extern from "src/graph.cpp":
-    pass
-
-
-cdef extern from "src/include/graph.h":
+cdef extern from "graph.h":
 
     cdef cppclass Graph(AbsGraph):
         Graph(int, bool) except +
@@ -79,11 +67,7 @@ cdef extern from "src/include/graph.h":
         Graph* create_reversed_graph()
 
 
-cdef extern from "src/grid.cpp":
-    pass
-
-
-cdef extern from "src/include/grid.h":
+cdef extern from "grid.h":
 
     cdef cppclass Grid(AbsGrid):
         bool passable_left_right_border, passable_up_down_border
@@ -95,11 +79,7 @@ cdef extern from "src/include/grid.h":
         void set_diagonal_movement(int)
 
 
-cdef extern from "src/grid_3d.cpp":
-    pass
-
-
-cdef extern from "src/include/grid_3d.h":
+cdef extern from "grid_3d.h":
 
     cdef cppclass Grid3D(AbsGrid):
         bool passable_borders
@@ -108,11 +88,7 @@ cdef extern from "src/include/grid_3d.h":
         Grid3D(int, int, int, vector[double]) except +
 
 
-cdef extern from "src/hex_grid.cpp":
-    pass
-
-
-cdef extern from "src/include/hex_grid.h":
+cdef extern from "hex_grid.h":
 
     cdef cppclass HexGrid(AbsGrid):
         bool passable_left_right_border, passable_up_down_border
@@ -122,111 +98,70 @@ cdef extern from "src/include/hex_grid.h":
         HexGrid(int, int, int, vector[double]) except +
 
 
-cdef extern from "src/dfs.cpp":
-    pass
-
-
-cdef extern from "src/include/dfs.h":
+cdef extern from "dfs.h":
 
     cdef cppclass DFS(AbsPathFinder):
         DFS(AbsGraph*) except + 
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/bfs.cpp":
-    pass
-
-
-cdef extern from "src/include/bfs.h":
+cdef extern from "bfs.h":
 
     cdef cppclass BFS(AbsPathFinder):
         BFS(AbsGraph*) except +
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/bi_bfs.cpp":
-    pass
-
-
-cdef extern from "src/include/bi_bfs.h":
+cdef extern from "bi_bfs.h":
 
     cdef cppclass BiBFS(AbsPathFinder):
         BiBFS(AbsGraph*) except +
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/dijkstra.cpp":
-    pass
-
-
-cdef extern from "src/include/dijkstra.h":
+cdef extern from "dijkstra.h":
 
     cdef cppclass Dijkstra(AbsPathFinder):
         Dijkstra(AbsGraph*) except +
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/bi_dijkstra.cpp":
-    pass
-
-
-cdef extern from "src/include/bi_dijkstra.h":
+cdef extern from "bi_dijkstra.h":
 
     cdef cppclass BiDijkstra(AbsPathFinder):
         BiDijkstra(AbsGraph*) except +
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/a_star.cpp":
-    pass
-
-
-cdef extern from "src/include/a_star.h":
+cdef extern from "a_star.h":
 
     cdef cppclass AStar(AbsPathFinder):
         AStar(AbsGraph*) except +
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/bi_a_star.cpp":
-    pass
-
-
-cdef extern from "src/include/bi_a_star.h":
+cdef extern from "bi_a_star.h":
 
     cdef cppclass BiAStar(AbsPathFinder):
         BiAStar(AbsGraph*) except +
         vector[int] find_path(int, int)
 
 
-cdef extern from "src/gbs.cpp":
-    pass
-
-
-cdef extern from "src/include/gbs.h":
+cdef extern from "gbs.h":
 
     cdef cppclass GBS(AbsPathFinder):
         GBS(AbsGraph*) except +
         vector[int] find_path(int, int)
 
 
-
-cdef extern from "src/ida_star.cpp":
-    pass
-
-
-cdef extern from "src/include/ida_star.h":
+cdef extern from "ida_star.h":
 
     cdef cppclass IDAStar(AbsPathFinder):
         IDAStar(AbsGraph*) except +
         vector[int] find_path(int, int, double)
 
 
-cdef extern from "src/resumable_search.cpp":
-    pass
-
-
-cdef extern from "src/include/resumable_search.h":
+cdef extern from "resumable_search.h":
 
     cdef cppclass ResumableBFS:
         ResumableBFS(AbsGraph*, int) except +
@@ -243,46 +178,30 @@ cdef extern from "src/include/resumable_search.h":
         void set_start_node(int)
 
 
-cdef extern from "src/space_time_a_star.cpp":
-    pass
+cdef extern from "space_time_a_star.h":
 
-
-cdef extern from "src/include/space_time_a_star.h":
-
-    cdef cppclass SpaceTimeAStar(AbsPathFinder):
+    cdef cppclass SpaceTimeAStar:
         SpaceTimeAStar(AbsGraph*) except +
         vector[int] find_path_with_depth_limit(int, int, int, ReservationTable*)
         vector[int] find_path_with_exact_length(int, int, int, ReservationTable*)
         vector[int] find_path_with_length_limit(int, int, int, ReservationTable*)
 
 
-cdef extern from "src/hc_a_star.cpp":
-    pass
-
-
-cdef extern from "src/include/hc_a_star.h":
+cdef extern from "hc_a_star.h":
 
     cdef cppclass HCAStar(AbsMAPF):
         HCAStar(AbsGraph*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, ReservationTable*)
 
 
-cdef extern from "src/whc_a_star.cpp":
-    pass
-
-
-cdef extern from "src/include/whc_a_star.h":
+cdef extern from "whc_a_star.h":
 
     cdef cppclass WHCAStar(AbsMAPF):
         WHCAStar(AbsGraph*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, int, ReservationTable*)
 
 
-cdef extern from "src/cbs.cpp":
-    pass
-
-
-cdef extern from "src/include/cbs.h":
+cdef extern from "cbs.h":
 
     cdef cppclass CBS(AbsMAPF):
         int num_generated_nodes, num_closed_nodes
@@ -290,11 +209,7 @@ cdef extern from "src/include/cbs.h":
         vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
 
 
-cdef extern from "src/icts.cpp":
-    pass
-
-
-cdef extern from "src/include/icts.h" namespace "icts":
+cdef extern from "icts.h" namespace "icts":
 
     cdef cppclass ICTS(AbsMAPF):
         int num_generated_nodes, num_closed_nodes
@@ -302,11 +217,7 @@ cdef extern from "src/include/icts.h" namespace "icts":
         vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
 
 
-cdef extern from "src/multi_agent_a_star.cpp":
-    pass
-
-
-cdef extern from "src/include/multi_agent_a_star.h" namespace "maas":
+cdef extern from "multi_agent_a_star.h" namespace "maas":
 
     cdef cppclass MultiAgentAStar(AbsMAPF):
         MultiAgentAStar(AbsGraph*) except +

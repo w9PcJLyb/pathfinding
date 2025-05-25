@@ -1,6 +1,6 @@
 from copy import copy
 
-import w9_pathfinding as pf
+from w9_pathfinding import pf, mapf
 from tests.stress_tests.utils import run_graph
 from tests.stress_tests.random_instance import GridGenerator, random_queries
 
@@ -36,7 +36,7 @@ ALGORITHMS = [
     {"name": "Bi A*", "class": pf.BiAStar, "unw": 1, "w": 1},
     {
         "name": "Space-Time A*",
-        "class": pf.SpaceTimeAStar,
+        "class": mapf.SpaceTimeAStar,
         "unw": 1,
         "w": 1,
         "params": {"search_depth": 10**5},

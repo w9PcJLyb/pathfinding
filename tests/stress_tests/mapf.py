@@ -3,7 +3,8 @@ import argparse
 from copy import copy
 from collections import defaultdict
 
-import w9_pathfinding as pf
+from w9_pathfinding import mapf
+from w9_pathfinding.mapf import ReservationTable
 from tests.stress_tests.utils import run_graph
 from tests.stress_tests.random_instance import GridGenerator, random_queries
 
@@ -29,46 +30,46 @@ GRID_GENERATOR = GridGenerator(
 )
 
 ALGORITHMS = [
-    {"name": "HCA*", "class": pf.HCAStar, "unw": 0, "w": 0},
-    {"name": "WHCA*", "class": pf.WHCAStar, "unw": 0, "w": 0},
+    {"name": "HCA*", "class": mapf.HCAStar, "unw": 0, "w": 0},
+    {"name": "WHCA*", "class": mapf.WHCAStar, "unw": 0, "w": 0},
     {
         "name": "CBS (disjoint_splitting=False)",
-        "class": pf.CBS,
+        "class": mapf.CBS,
         "params": {"disjoint_splitting": False},
         "unw": 1,
         "w": 1,
     },
     {
         "name": "CBS (disjoint_splitting=True)",
-        "class": pf.CBS,
+        "class": mapf.CBS,
         "params": {"disjoint_splitting": True},
         "unw": 1,
         "w": 1,
     },
     {
         "name": "ICTS(ict_pruning=False)",
-        "class": pf.ICTS,
+        "class": mapf.ICTS,
         "params": {"ict_pruning": False},
         "unw": 1,
         "w": 0,
     },
     {
         "name": "ICTS(ict_pruning=True)",
-        "class": pf.ICTS,
+        "class": mapf.ICTS,
         "params": {"ict_pruning": True},
         "unw": 1,
         "w": 0,
     },
     {
         "name": "A*(od=False)",
-        "class": pf.MultiAgentAStar,
+        "class": mapf.MultiAgentAStar,
         "params": {"operator_decomposition": False},
         "unw": 1,
         "w": 1,
     },
     {
         "name": "A*(od=True)",
-        "class": pf.MultiAgentAStar,
+        "class": mapf.MultiAgentAStar,
         "params": {"operator_decomposition": True},
         "unw": 1,
         "w": 1,
@@ -172,7 +173,7 @@ def compare_results(results):
 def run_graph(algorithms, graph, starts, goals, reserved_paths):
     rt = None
     if reserved_paths:
-        rt = pf.ReservationTable(graph)
+        rt = ReservationTable(graph)
         for path in reserved_paths:
             rt.add_path(path, reserve_destination=True)
 
@@ -251,8 +252,8 @@ def create_graph_with_queries():
 
         reserved_paths = []
         if NUM_DYNAMIC_OBSTACLES > 0:
-            astar = pf.SpaceTimeAStar(graph)
-            rt = pf.ReservationTable(graph)
+            astar = mapf.SpaceTimeAStar(graph)
+            rt = ReservationTable(graph)
             build = True
             for start, goal in queries[:NUM_DYNAMIC_OBSTACLES]:
                 reserved_path = astar.find_path_with_length_limit(

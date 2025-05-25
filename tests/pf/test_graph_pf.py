@@ -1,5 +1,7 @@
 import unittest
-from w9_pathfinding import Graph, DFS, BFS, BiBFS, Dijkstra, BiDijkstra, SpaceTimeAStar
+from w9_pathfinding.envs import Graph
+from w9_pathfinding.pf import DFS, BFS, BiBFS, Dijkstra, BiDijkstra
+from w9_pathfinding.mapf import SpaceTimeAStar
 
 SHORTEST_PATH_ALGORITHMS = [Dijkstra, BiDijkstra, SpaceTimeAStar]
 ALL_ALGORITHMS = [DFS, BFS, BiBFS, Dijkstra, BiDijkstra]
@@ -7,7 +9,7 @@ ALL_ALGORITHMS = [DFS, BFS, BiBFS, Dijkstra, BiDijkstra]
 
 class TestSimpleGraph(unittest.TestCase):
     """
-    pytest tests/test_graph_pathfinding.py::TestSimpleGraph
+    pytest tests/pf/test_graph_pf.py::TestSimpleGraph
     """
 
     def test_graph_without_nodes(self):
@@ -46,7 +48,7 @@ class TestSimpleGraph(unittest.TestCase):
 
 class TestShortestPath(unittest.TestCase):
     """
-    pytest tests/test_graph_pathfinding.py::TestShortestPath
+    pytest tests/pf/test_graph_pf.py::TestShortestPath
     """
 
     def test_case_1(self):
