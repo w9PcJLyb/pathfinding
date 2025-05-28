@@ -1,6 +1,6 @@
 import random
 from typing import Union, Literal, Optional, Annotated
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from w9_pathfinding.envs import (
     Grid,
@@ -24,49 +24,45 @@ class _EnvFactory(BaseModel):
         super().__init__(**data)
         self._rng = random.Random(self.random_seed)
 
-    @property
-    def rng(self):
-        return self._rng
-
     def __call__(self):
-        NotImplementedError()
+        raise NotImplementedError()
 
 
 class GridFactory(_EnvFactory):
     """
-    A configurable generator for creating random 2D grid graphs.
+    A factory for generating random 2D grids.
 
     Parameters
     ----------
     width : int
-        Number of columns in the grid.
+        Number of columns in the grid
 
     height : int
-        Number of rows in the grid.
+        Number of rows in the grid
 
     obstacle_ratio : float, default=0.0
-        Fraction of grid cells to turn into obstacles (0.0 = none, 1.0 = fully blocked).
+        Fraction of grid cells to turn into obstacles (0.0 = none, 1.0 = fully blocked)
 
     weighted : bool, default=False
-        If True, nodes are assigned random weights between min_weight and max_weight.
+        If True, nodes are assigned random weights between min_weight and max_weight
 
     min_weight : float, default=1.0
-        Minimum edge weight when `weighted` is True.
+        Minimum edge weight when `weighted` is True
 
     max_weight : float, default=1.0
-        Maximum edge weight when `weighted` is True.
+        Maximum edge weight when `weighted` is True
 
     diagonal_movement : DiagonalMovement | "random", default="never"
         Specifies when diagonal movement is allowed.
 
     diagonal_movement_cost_multiplier : float | "random", default=1.0
-        Multiplier applied to diagonal movement weights (typically ~1.41).
-
-    passable_left_right_border : bool | "random", default=False
-        If True, wraparound is enabled from the left edge to the right edge
+        Multiplier applied to diagonal movement weights (typically ~1.41)
 
     passable_up_down_border : bool | "random", default=False
         If True, wraparound is enabled from the top edge to the bottom edge
+
+    passable_left_right_border : bool | "random", default=False
+        If True, wraparound is enabled from the left edge to the right edge
 
     random_seed : int, optional
         Optional seed to produce reproducible sequences of generated grids
@@ -88,27 +84,27 @@ class GridFactory(_EnvFactory):
     diagonal_movement_cost_multiplier: Union[
         Annotated[float, Field(ge=1.0, le=2.0)], Literal[RANDOM]
     ] = 1.0
-    passable_left_right_border: Union[bool, Literal[RANDOM]] = False
     passable_up_down_border: Union[bool, Literal[RANDOM]] = False
+    passable_left_right_border: Union[bool, Literal[RANDOM]] = False
 
-    def __call__(self):
+    def __call__(self) -> Grid:
         weights = self._generate_weights()
 
         dm = self.diagonal_movement
         if dm == RANDOM:
-            dm = self.rng.choice(list(DiagonalMovement))
+            dm = self._rng.choice(list(DiagonalMovement))
 
         dm_cost = self.diagonal_movement_cost_multiplier
         if dm_cost == RANDOM:
-            dm_cost = self.rng.uniform(1, 2)
+            dm_cost = self._rng.uniform(1, 2)
 
         lr_border = self.passable_left_right_border
         if lr_border == RANDOM:
-            lr_border = self.rng.choice([False, True])
+            lr_border = self._rng.choice([False, True])
 
         ud_border = self.passable_up_down_border
         if ud_border == RANDOM:
-            ud_border = self.rng.choice([False, True])
+            ud_border = self._rng.choice([False, True])
 
         grid = Grid(
             weights,
@@ -125,10 +121,237 @@ class GridFactory(_EnvFactory):
         for _ in range(self.height):
             row = [0] * self.width
             for i in range(self.width):
-                if self.rng.random() < self.obstacle_ratio:
+                if self._rng.random() < self.obstacle_ratio:
                     w = -1  # obstacle
                 elif self.weighted:
-                    w = self.rng.uniform(self.min_weight, self.max_weight)
+                    w = self._rng.uniform(self.min_weight, self.max_weight)
+                else:
+                    w = 1
+                row[i] = w
+            weights.append(row)
+        return weights
+
+
+class Grid3DFactory(_EnvFactory):
+    """
+    A factory for generating random 3D grids.
+
+    Parameters
+    ----------
+    width : int
+        Number of columns in the grid
+
+    height : int
+        Number of rows in the grid
+
+    depth : int
+        Number of layers along the Z-axis (depth) of the grid
+
+    obstacle_ratio : float, default=0.0
+        Fraction of grid cells to turn into obstacles (0.0 = none, 1.0 = fully blocked)
+
+    weighted : bool, default=False
+        If True, nodes are assigned random weights between min_weight and max_weight
+
+    min_weight : float, default=1.0
+        Minimum edge weight when `weighted` is True
+
+    max_weight : float, default=1.0
+        Maximum edge weight when `weighted` is True
+
+    passable_borders : bool | "random", default=False
+        If True, allows wraparound movement across opposite borders of the grid (along any axis)
+
+    random_seed : int, optional
+        Optional seed to produce reproducible sequences of generated grids
+
+    Usage
+    -----
+    >>> factory = Grid3DFactory(width=5, height=4, depth=2, obstacle_ratio=0.2, random_seed=42)
+    >>> grid1 = factory()
+    >>> grid2 = factory()  # different grid
+    """
+
+    width: int = Field(..., gt=0)
+    height: int = Field(..., gt=0)
+    depth: int = Field(..., gt=0)
+    obstacle_ratio: float = Field(0.0, ge=0.0, le=1.0)
+    weighted: bool = False
+    min_weight: float = Field(1.0, ge=0.0)
+    max_weight: float = Field(1.0, ge=0.0)
+    passable_borders: Union[bool, Literal[RANDOM]] = False
+
+    def __call__(self) -> Grid3D:
+        weights = self._generate_weights()
+
+        passable_borders = self.passable_borders
+        if passable_borders == RANDOM:
+            passable_borders = self._rng.choice([False, True])
+
+        grid = Grid3D(weights, passable_borders=passable_borders)
+
+        return grid
+
+    def _generate_weights(self):
+        weights = []
+        for _ in range(self.depth):
+            weights.append([])
+            for _ in range(self.height):
+                row = [0] * self.width
+                for i in range(self.width):
+                    if self._rng.random() < self.obstacle_ratio:
+                        w = -1  # obstacle
+                    elif self.weighted:
+                        w = self._rng.uniform(self.min_weight, self.max_weight)
+                    else:
+                        w = 1
+                    row[i] = w
+                weights[-1].append(row)
+        return weights
+
+
+class HexGridFactory(_EnvFactory):
+    """
+    A factory for generating random hexagonal grids.
+
+    Parameters
+    ----------
+    width : int
+        Number of columns in the grid
+
+    height : int
+        Number of rows in the grid
+
+    obstacle_ratio : float, default=0.0
+        Fraction of grid cells to turn into obstacles (0.0 = none, 1.0 = fully blocked)
+
+    weighted : bool, default=False
+        If True, nodes are assigned random weights between min_weight and max_weight
+
+    min_weight : float, default=1.0
+        Minimum edge weight when `weighted` is True
+
+    max_weight : float, default=1.0
+        Maximum edge weight when `weighted` is True
+
+    layout : HexLayout | "random", default="odd_r"
+        Specifies the hex layout. Can be pointy-top, flat-top, or random
+
+    passable_up_down_border : bool | "random", default=False
+        If True, wraparound is enabled from the top edge to the bottom edge
+
+    passable_left_right_border : bool | "random", default=False
+        If True, wraparound is enabled from the left edge to the right edge
+
+    random_seed : int, optional
+        Optional seed to produce reproducible sequences of generated grids
+
+    Usage
+    -----
+    >>> factory = HexGridFactory(width=5, height=4, obstacle_ratio=0.2, random_seed=42)
+    >>> grid1 = factory()
+    >>> grid2 = factory()  # different grid
+    """
+
+    width: int = Field(..., gt=0)
+    height: int = Field(..., gt=0)
+    obstacle_ratio: float = Field(0.0, ge=0.0, le=1.0)
+    weighted: bool = False
+    min_weight: float = Field(1.0, ge=0.0)
+    max_weight: float = Field(1.0, ge=0.0)
+    layout: Union[HexLayout, Literal[RANDOM]] = HexLayout.odd_r
+    passable_up_down_border: Union[bool, Literal[RANDOM]] = False
+    passable_left_right_border: Union[bool, Literal[RANDOM]] = False
+
+    @model_validator(mode="after")
+    def check_wraparound(self):
+        if (
+            self.height % 2 == 1
+            and self.layout != RANDOM
+            and self.layout.is_pointy_top()
+        ):
+            if self.passable_up_down_border is True:
+                raise ValueError(
+                    "passable_up_down_border=True is not supported for odd-height grids "
+                    f"with pointy-top layout (height={self.height}, layout={self.layout})."
+                )
+            elif self.passable_up_down_border == RANDOM:
+                self.passable_up_down_border = False
+
+        if self.width % 2 == 1 and self.layout != RANDOM and self.layout.is_flat_top():
+            if self.passable_left_right_border is True:
+                raise ValueError(
+                    "passable_left_right_border=True is not supported for odd-width grids "
+                    f"with flat-top layout (width={self.width}, layout={self.layout})."
+                )
+            elif self.passable_left_right_border == RANDOM:
+                self.passable_left_right_border = False
+
+        return self
+
+    @model_validator(mode="after")
+    def check_layouts(self):
+        if not self.available_layouts:
+            raise ValueError(
+                "Cannot determine a valid layout for the given configuration: "
+                f"width={self.width}, height={self.height}, "
+                f"passable_up_down_border={self.passable_up_down_border}, "
+                f"passable_left_right_border={self.passable_left_right_border}."
+            )
+        return self
+
+    @property
+    def available_layouts(self):
+        if self.layout != RANDOM:
+            return [self.layout]
+
+        available_layouts = list(HexLayout)
+
+        if self.height % 2 == 1 and self.passable_up_down_border is True:
+            available_layouts = [x for x in available_layouts if not x.is_pointy_top()]
+
+        if self.width % 2 == 1 and self.passable_left_right_border is True:
+            available_layouts = [x for x in available_layouts if not x.is_flat_top()]
+
+        return available_layouts
+
+    def __call__(self) -> HexGrid:
+        weights = self._generate_weights()
+
+        layout = self._rng.choice(self.available_layouts)
+
+        ud_border = self.passable_up_down_border
+        if ud_border == RANDOM:
+            if layout.is_pointy_top() and self.height % 2 == 1:
+                ud_border = False
+            else:
+                ud_border = self._rng.choice([False, True])
+
+        lr_border = self.passable_left_right_border
+        if lr_border == RANDOM:
+            if layout.is_flat_top() and self.width % 2 == 1:
+                lr_border = False
+            else:
+                lr_border = self._rng.choice([False, True])
+
+        grid = HexGrid(
+            weights,
+            layout=layout,
+            passable_up_down_border=ud_border,
+            passable_left_right_border=lr_border,
+        )
+
+        return grid
+
+    def _generate_weights(self):
+        weights = []
+        for _ in range(self.height):
+            row = [0] * self.width
+            for i in range(self.width):
+                if self._rng.random() < self.obstacle_ratio:
+                    w = -1  # obstacle
+                elif self.weighted:
+                    w = self._rng.uniform(self.min_weight, self.max_weight)
                 else:
                     w = 1
                 row[i] = w

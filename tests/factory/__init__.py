@@ -1,1 +1,1 @@
-from .factory import GridFactory, RANDOM
+from .factory import GridFactory, HexGridFactory, Grid3DFactory, RANDOM

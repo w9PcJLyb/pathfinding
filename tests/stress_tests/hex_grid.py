@@ -1,26 +1,35 @@
 from copy import copy
 
+from tests.factory import HexGridFactory, RANDOM
 from tests.stress_tests.utils import run_graph
-from tests.stress_tests.random_instance import HexGridGenerator, random_queries
+from tests.stress_tests.random_instance import random_queries
 from tests.stress_tests.grid import ALGORITHMS
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
 
-UNWEIGHTED_GRID_GENERATOR = HexGridGenerator(
+UNWEIGHTED_GRID_FACTORY = HexGridFactory(
     width=64,
     height=64,
-    obstacle_percentage=0.2,
+    obstacle_ratio=0.2,
     weighted=False,
+    layout=RANDOM,
+    passable_up_down_border=RANDOM,
+    passable_left_right_border=RANDOM,
+    random_seed=42,
 )
 
-WEIGHTED_GRID_GENERATOR = HexGridGenerator(
+WEIGHTED_GRID_FACTORY = HexGridFactory(
     width=64,
     height=64,
-    obstacle_percentage=0.2,
+    obstacle_ratio=0.2,
     weighted=True,
     min_weight=0.5,
     max_weight=1.5,
+    layout=RANDOM,
+    passable_up_down_border=RANDOM,
+    passable_left_right_border=RANDOM,
+    random_seed=42,
 )
 
 
@@ -30,11 +39,11 @@ def stress_test(weighted):
 
     if not weighted:
         print(f"\nStress test with unweighted grid...")
-        generator = UNWEIGHTED_GRID_GENERATOR
+        factory = UNWEIGHTED_GRID_FACTORY
         shortest_path_flag = "unw"
     else:
         print(f"\nStress test with weighted grid...")
-        generator = WEIGHTED_GRID_GENERATOR
+        factory = WEIGHTED_GRID_FACTORY
         shortest_path_flag = "w"
 
     for a in algorithms:
@@ -45,7 +54,7 @@ def stress_test(weighted):
     for i in range(NUM_GRAPHS):
         print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
 
-        graph = generator.instance()
+        graph = factory()
         queries = random_queries(graph, num_queries=NUM_QUERIES_PER_GRAPH)
 
         for a in algorithms:
