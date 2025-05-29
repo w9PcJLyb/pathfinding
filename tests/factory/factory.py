@@ -24,6 +24,19 @@ class _EnvFactory(BaseModel):
         super().__init__(**data)
         self._rng = random.Random(self.random_seed)
 
+    @model_validator(mode="after")
+    def check_weights(self):
+        min_weight = getattr(self, "min_weight", None)
+        max_weight = getattr(self, "max_weight", None)
+        if (
+            min_weight is not None
+            and max_weight is not None
+            and min_weight > max_weight
+        ):
+            raise ValueError("min_weight must be less than or equal to max_weight.")
+
+        return self
+
     def __call__(self):
         raise NotImplementedError()
 
@@ -46,7 +59,7 @@ class GridFactory(_EnvFactory):
     weighted : bool, default=False
         If True, nodes are assigned random weights between min_weight and max_weight
 
-    min_weight : float, default=1.0
+    min_weight : float, default=0.0
         Minimum edge weight when `weighted` is True
 
     max_weight : float, default=1.0
@@ -78,7 +91,7 @@ class GridFactory(_EnvFactory):
     height: int = Field(..., gt=0)
     obstacle_ratio: float = Field(0.0, ge=0.0, le=1.0)
     weighted: bool = False
-    min_weight: float = Field(1.0, ge=0.0)
+    min_weight: float = Field(0.0, ge=0.0)
     max_weight: float = Field(1.0, ge=0.0)
     diagonal_movement: Union[DiagonalMovement, Literal[RANDOM]] = DiagonalMovement.never
     diagonal_movement_cost_multiplier: Union[
@@ -153,7 +166,7 @@ class Grid3DFactory(_EnvFactory):
     weighted : bool, default=False
         If True, nodes are assigned random weights between min_weight and max_weight
 
-    min_weight : float, default=1.0
+    min_weight : float, default=0.0
         Minimum edge weight when `weighted` is True
 
     max_weight : float, default=1.0
@@ -177,7 +190,7 @@ class Grid3DFactory(_EnvFactory):
     depth: int = Field(..., gt=0)
     obstacle_ratio: float = Field(0.0, ge=0.0, le=1.0)
     weighted: bool = False
-    min_weight: float = Field(1.0, ge=0.0)
+    min_weight: float = Field(0.0, ge=0.0)
     max_weight: float = Field(1.0, ge=0.0)
     passable_borders: Union[bool, Literal[RANDOM]] = False
 
@@ -228,7 +241,7 @@ class HexGridFactory(_EnvFactory):
     weighted : bool, default=False
         If True, nodes are assigned random weights between min_weight and max_weight
 
-    min_weight : float, default=1.0
+    min_weight : float, default=0.0
         Minimum edge weight when `weighted` is True
 
     max_weight : float, default=1.0
@@ -257,7 +270,7 @@ class HexGridFactory(_EnvFactory):
     height: int = Field(..., gt=0)
     obstacle_ratio: float = Field(0.0, ge=0.0, le=1.0)
     weighted: bool = False
-    min_weight: float = Field(1.0, ge=0.0)
+    min_weight: float = Field(0.0, ge=0.0)
     max_weight: float = Field(1.0, ge=0.0)
     layout: Union[HexLayout, Literal[RANDOM]] = HexLayout.odd_r
     passable_up_down_border: Union[bool, Literal[RANDOM]] = False
