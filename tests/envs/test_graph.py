@@ -1,5 +1,6 @@
 import copy
 import unittest
+import numpy as np
 from w9_pathfinding.envs import Graph
 
 
@@ -182,3 +183,10 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(graph.num_edges, 2)
         self.assertEqual(graph.pause_action_cost, 5)
         self.assertEqual(graph.edges, [[0, 1, 10], [1, 2, 20]])
+
+    def test_init_with_numpy_edges(self):
+        num_vertices = 3
+        edges = np.random.randint(0, num_vertices, size=(10, 2))
+        graph = Graph(num_vertices, edges=edges)
+        self.assertEqual(graph.num_vertices, 3)
+        self.assertEqual(graph.num_edges, 10)

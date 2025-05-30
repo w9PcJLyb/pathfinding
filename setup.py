@@ -103,7 +103,14 @@ setup(
     packages=find_packages(),
     install_requires=["setuptools", "cython"],
     extras_require={
-        "dev": ["pytest", "pytest-subtests", "twine", "numpy", "matplotlib"],
+        "dev": [
+            "pytest",
+            "pytest-subtests",
+            "twine",
+            "numpy",
+            "matplotlib",
+            "pydantic",
+        ],
     },
     python_requires=">=3.10",
 )

@@ -1,38 +1,34 @@
 from copy import copy
 
 from w9_pathfinding import pf, mapf
+from tests.factory import GraphFactory, SpatialGraphFactory
 from tests.stress_tests.utils import run_graph
-from tests.stress_tests.random_instance import (
-    GraphGenerator,
-    GraphWithCoordinatesGenerator,
-    random_queries,
-)
+from tests.stress_tests.random_instance import random_queries
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
 
-UNWEIGHTED_GRAPH_GENERATOR = GraphGenerator(
+UNWEIGHTED_GRAPH_FACTORY = GraphFactory(
     num_vertices=5000,
     branching_factor=3,
     weighted=False,
-    bidirectional=False,
+    directed=True,
 )
 
-WEIGHTED_GRAPH_GENERATOR = GraphGenerator(
+WEIGHTED_GRAPH_FACTORY = GraphFactory(
     num_vertices=5000,
     branching_factor=3,
+    directed=True,
     weighted=True,
-    bidirectional=False,
-    max_weight=1000,
+    min_weight=0.5,
+    max_weight=10,
 )
 
-GRAPH_WITH_COORDINATES_GENERATOR = GraphWithCoordinatesGenerator(
+GRAPH_WITH_COORDINATES_FACTORY = SpatialGraphFactory(
     num_vertices=5000,
     branching_factor=3,
-    bidirectional=False,
+    directed=True,
     num_dimensions=3,
-    min_x=-1000,
-    max_x=1000,
 )
 
 # - unw - can find the shortest path in an unweighted graph
@@ -64,15 +60,15 @@ def stress_test(weighted, with_coordinates=False):
 
     if not weighted:
         print(f"\nStress test with unweighted graph...")
-        generator = UNWEIGHTED_GRAPH_GENERATOR
+        factory = UNWEIGHTED_GRAPH_FACTORY
         shortest_path_flag = "unw"
     elif not with_coordinates:
         print(f"\nStress test with weighted graph...")
-        generator = WEIGHTED_GRAPH_GENERATOR
+        factory = WEIGHTED_GRAPH_FACTORY
         shortest_path_flag = "w"
     else:
         print(f"\nStress test graph with coordinates...")
-        generator = GRAPH_WITH_COORDINATES_GENERATOR
+        factory = GRAPH_WITH_COORDINATES_FACTORY
         shortest_path_flag = "w"
 
     if not with_coordinates:
@@ -86,7 +82,7 @@ def stress_test(weighted, with_coordinates=False):
     for i in range(NUM_GRAPHS):
         print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
 
-        graph = generator.instance()
+        graph = factory()
         queries = random_queries(graph, num_queries=NUM_QUERIES_PER_GRAPH)
 
         for a in algorithms:
