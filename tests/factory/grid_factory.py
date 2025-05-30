@@ -11,7 +11,26 @@ from w9_pathfinding.envs import (
 )
 
 
-class GridFactory(EnvFactory):
+class _GridEnvFactory(EnvFactory):
+
+    obstacle_ratio: float = Field(0.0, ge=0.0, le=1.0)
+    weighted: bool = False
+    min_weight: float = Field(0.0, ge=0.0)
+    max_weight: float = Field(1.0, ge=0.0)
+
+    def _generate_weights(self, size):
+        obstacles = self._rng.choice(
+            [-1, 1], size=size, p=(self.obstacle_ratio, 1 - self.obstacle_ratio)
+        )
+        if not self.weighted:
+            return obstacles
+
+        weights = self._rng.uniform(self.min_weight, self.max_weight, size=size)
+        weights[obstacles == -1] = -1
+        return weights
+
+
+class GridFactory(_GridEnvFactory):
     """
     A factory for generating random 2D grids.
 
@@ -59,10 +78,6 @@ class GridFactory(EnvFactory):
 
     width: int = Field(..., gt=0)
     height: int = Field(..., gt=0)
-    obstacle_ratio: float = Field(0.0, ge=0.0, le=1.0)
-    weighted: bool = False
-    min_weight: float = Field(0.0, ge=0.0)
-    max_weight: float = Field(1.0, ge=0.0)
     diagonal_movement: Union[DiagonalMovement, Literal[RANDOM]] = DiagonalMovement.never
     diagonal_movement_cost_multiplier: Union[
         Annotated[float, Field(ge=1.0, le=2.0)], Literal[RANDOM]
@@ -71,7 +86,7 @@ class GridFactory(EnvFactory):
     passable_left_right_border: Union[bool, Literal[RANDOM]] = False
 
     def __call__(self) -> Grid:
-        weights = self._generate_weights()
+        weights = self._generate_weights((self.height, self.width))
 
         dm = self.diagonal_movement
         if dm == RANDOM:
@@ -99,23 +114,8 @@ class GridFactory(EnvFactory):
 
         return grid
 
-    def _generate_weights(self):
-        weights = []
-        for _ in range(self.height):
-            row = [0] * self.width
-            for i in range(self.width):
-                if self._rng.random() < self.obstacle_ratio:
-                    w = -1  # obstacle
-                elif self.weighted:
-                    w = self._rng.uniform(self.min_weight, self.max_weight)
-                else:
-                    w = 1
-                row[i] = w
-            weights.append(row)
-        return weights
 
-
-class Grid3DFactory(EnvFactory):
+class Grid3DFactory(_GridEnvFactory):
     """
     A factory for generating random 3D grids.
 
@@ -158,14 +158,10 @@ class Grid3DFactory(EnvFactory):
     width: int = Field(..., gt=0)
     height: int = Field(..., gt=0)
     depth: int = Field(..., gt=0)
-    obstacle_ratio: float = Field(0.0, ge=0.0, le=1.0)
-    weighted: bool = False
-    min_weight: float = Field(0.0, ge=0.0)
-    max_weight: float = Field(1.0, ge=0.0)
     passable_borders: Union[bool, Literal[RANDOM]] = False
 
     def __call__(self) -> Grid3D:
-        weights = self._generate_weights()
+        weights = self._generate_weights((self.depth, self.height, self.width))
 
         passable_borders = self.passable_borders
         if passable_borders == RANDOM:
@@ -175,25 +171,8 @@ class Grid3DFactory(EnvFactory):
 
         return grid
 
-    def _generate_weights(self):
-        weights = []
-        for _ in range(self.depth):
-            weights.append([])
-            for _ in range(self.height):
-                row = [0] * self.width
-                for i in range(self.width):
-                    if self._rng.random() < self.obstacle_ratio:
-                        w = -1  # obstacle
-                    elif self.weighted:
-                        w = self._rng.uniform(self.min_weight, self.max_weight)
-                    else:
-                        w = 1
-                    row[i] = w
-                weights[-1].append(row)
-        return weights
 
-
-class HexGridFactory(EnvFactory):
+class HexGridFactory(_GridEnvFactory):
     """
     A factory for generating random hexagonal grids.
 
@@ -238,10 +217,6 @@ class HexGridFactory(EnvFactory):
 
     width: int = Field(..., gt=0)
     height: int = Field(..., gt=0)
-    obstacle_ratio: float = Field(0.0, ge=0.0, le=1.0)
-    weighted: bool = False
-    min_weight: float = Field(0.0, ge=0.0)
-    max_weight: float = Field(1.0, ge=0.0)
     layout: Union[HexLayout, Literal[RANDOM]] = HexLayout.odd_r
     passable_up_down_border: Union[bool, Literal[RANDOM]] = False
     passable_left_right_border: Union[bool, Literal[RANDOM]] = False
@@ -299,9 +274,9 @@ class HexGridFactory(EnvFactory):
         return available_layouts
 
     def __call__(self) -> HexGrid:
-        weights = self._generate_weights()
+        weights = self._generate_weights((self.height, self.width))
 
-        layout = self._rng.choice(self.available_layouts)
+        layout = HexLayout(self._rng.choice(self.available_layouts))
 
         ud_border = self.passable_up_down_border
         if ud_border == RANDOM:
@@ -325,18 +300,3 @@ class HexGridFactory(EnvFactory):
         )
 
         return grid
-
-    def _generate_weights(self):
-        weights = []
-        for _ in range(self.height):
-            row = [0] * self.width
-            for i in range(self.width):
-                if self._rng.random() < self.obstacle_ratio:
-                    w = -1  # obstacle
-                elif self.weighted:
-                    w = self._rng.uniform(self.min_weight, self.max_weight)
-                else:
-                    w = 1
-                row[i] = w
-            weights.append(row)
-        return weights
