@@ -223,7 +223,7 @@ cdef class Graph(_AbsGraph):
         self._node_mapper = _SimpleMapper(self.num_vertices)
         if coordinates:
             self.set_coordinates(coordinates)
-        if edges:
+        if edges is not None:
             self.add_edges(edges)
         self._base_init(**kwargs)
 
