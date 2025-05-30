@@ -1,47 +1,17 @@
-import random
-from typing import Union, Literal, Optional, Annotated
-from pydantic import BaseModel, Field, model_validator
+from typing import Union, Literal, Annotated
+from pydantic import Field, model_validator
 
+from .graph_factory import EnvFactory, RANDOM
 from w9_pathfinding.envs import (
     Grid,
-    Graph,
     Grid3D,
     HexGrid,
     HexLayout,
     DiagonalMovement,
 )
 
-RANDOM = "random"
 
-
-class _EnvFactory(BaseModel):
-    random_seed: Optional[int] = None
-
-    class Config:
-        extra = "forbid"
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        self._rng = random.Random(self.random_seed)
-
-    @model_validator(mode="after")
-    def check_weights(self):
-        min_weight = getattr(self, "min_weight", None)
-        max_weight = getattr(self, "max_weight", None)
-        if (
-            min_weight is not None
-            and max_weight is not None
-            and min_weight > max_weight
-        ):
-            raise ValueError("min_weight must be less than or equal to max_weight.")
-
-        return self
-
-    def __call__(self):
-        raise NotImplementedError()
-
-
-class GridFactory(_EnvFactory):
+class GridFactory(EnvFactory):
     """
     A factory for generating random 2D grids.
 
@@ -57,7 +27,7 @@ class GridFactory(_EnvFactory):
         Fraction of grid cells to turn into obstacles (0.0 = none, 1.0 = fully blocked)
 
     weighted : bool, default=False
-        If True, nodes are assigned random weights between min_weight and max_weight
+        If True, nodes are assigned random weights in the range [min_weight, max_weight]
 
     min_weight : float, default=0.0
         Minimum edge weight when `weighted` is True
@@ -145,7 +115,7 @@ class GridFactory(_EnvFactory):
         return weights
 
 
-class Grid3DFactory(_EnvFactory):
+class Grid3DFactory(EnvFactory):
     """
     A factory for generating random 3D grids.
 
@@ -164,7 +134,7 @@ class Grid3DFactory(_EnvFactory):
         Fraction of grid cells to turn into obstacles (0.0 = none, 1.0 = fully blocked)
 
     weighted : bool, default=False
-        If True, nodes are assigned random weights between min_weight and max_weight
+        If True, nodes are assigned random weights in the range [min_weight, max_weight]
 
     min_weight : float, default=0.0
         Minimum edge weight when `weighted` is True
@@ -223,7 +193,7 @@ class Grid3DFactory(_EnvFactory):
         return weights
 
 
-class HexGridFactory(_EnvFactory):
+class HexGridFactory(EnvFactory):
     """
     A factory for generating random hexagonal grids.
 
@@ -239,7 +209,7 @@ class HexGridFactory(_EnvFactory):
         Fraction of grid cells to turn into obstacles (0.0 = none, 1.0 = fully blocked)
 
     weighted : bool, default=False
-        If True, nodes are assigned random weights between min_weight and max_weight
+        If True, nodes are assigned random weights in the range [min_weight, max_weight]
 
     min_weight : float, default=0.0
         Minimum edge weight when `weighted` is True
