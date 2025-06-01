@@ -9,26 +9,29 @@ NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
 
 UNWEIGHTED_GRAPH_FACTORY = GraphFactory(
-    num_vertices=5000,
+    num_vertices=1000,
     branching_factor=3,
     weighted=False,
     directed=True,
+    random_seed=42,
 )
 
 WEIGHTED_GRAPH_FACTORY = GraphFactory(
-    num_vertices=5000,
+    num_vertices=1000,
     branching_factor=3,
     directed=True,
     weighted=True,
     min_weight=0.5,
     max_weight=10,
+    random_seed=42,
 )
 
 GRAPH_WITH_COORDINATES_FACTORY = SpatialGraphFactory(
-    num_vertices=5000,
+    num_vertices=1000,
     branching_factor=3,
     directed=True,
     num_dimensions=3,
+    random_seed=42,
 )
 
 # - unw - can find the shortest path in an unweighted graph

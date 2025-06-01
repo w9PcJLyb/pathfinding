@@ -65,33 +65,53 @@ class _GraphEnvFactory(EnvFactory):
 
     def _generate_edges(self):
 
-        if self.directed:
-            all_edges = [
-                (v, e)
-                for v in range(self.num_vertices)
-                for e in range(self.num_vertices)
-                if self.allow_selfloops or v != e
-            ]
-        else:
-            all_edges = []
-            for v in range(self.num_vertices):
-                s = v if self.allow_selfloops else v + 1
-                all_edges += [(v, e) for e in range(s, self.num_vertices)]
+        max_out_degree = self.num_vertices - 1
+        if self.allow_selfloops:
+            max_out_degree += 1
 
-        num_edges = int(self.branching_factor * self.num_vertices)
+        lam = self.branching_factor
         if not self.directed:
             # For undirected graphs, each edge contributes
             # to the branching_factor of both connected nodes.
-            num_edges //= 2
+            lam = self.branching_factor / 2
 
-        if not self.allow_multiedges and num_edges > len(all_edges):
-            raise ValueError(
-                f"Cannot create {num_edges} unique edges "
-                f"from only {len(all_edges)} possible combinations "
-                f"(directed={self.directed}, self-loops={self.allow_selfloops})"
-            )
+        out_degrees = self._rng.poisson(lam=lam, size=self.num_vertices)
+        if not self.allow_multiedges:
+            out_degrees = np.clip(out_degrees, 0, max_out_degree)
 
-        edges = self._rng.choice(all_edges, num_edges, replace=self.allow_multiedges)
+        edges = []
+
+        if self.directed or self.allow_multiedges:
+            for node, out_degree in enumerate(out_degrees):
+                ends = self._rng.choice(
+                    max_out_degree, size=out_degree, replace=self.allow_multiedges
+                )
+                if self.allow_selfloops:
+                    edges += [(node, e) for e in ends]
+                else:
+                    edges += [(node, e) if e < node else (node, e + 1) for e in ends]
+
+        else:
+            used_edges = [set() for _ in range(self.num_vertices)]
+            for n1, out_degree in enumerate(out_degrees):
+                n1_edges = used_edges[n1]
+
+                free_edges = []
+                for n2 in range(self.num_vertices):
+                    if not self.allow_selfloops and n1 == n2:
+                        continue
+                    if n2 in n1_edges:
+                        continue
+                    free_edges.append(n2)
+
+                ends = self._rng.choice(
+                    free_edges, size=min(len(free_edges), out_degree), replace=False
+                )
+
+                for n2 in ends:
+                    edges.append((n1, n2))
+                    n1_edges.add(n2)
+                    used_edges[n2].add(n1)
 
         return edges
 
