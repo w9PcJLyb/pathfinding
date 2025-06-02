@@ -55,7 +55,8 @@ maas::AStarSolver::AStarSolver(AbsGraph* graph, vector<int>& starts, vector<int>
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
         int goal = goals[agent_id];
-        agents_.emplace_back(start, goal, st_a_star.reverse_resumable_search(goal));
+        auto rrs = st_a_star.reverse_resumable_search(goal);
+        agents_.emplace_back(start, goal, std::move(rrs));
     }
 
     num_agents_ = agents_.size();

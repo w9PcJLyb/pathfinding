@@ -259,7 +259,7 @@ bool CBS::low_level(
         agent.goal,
         max_length,
         &rt_,
-        agent.rrs,
+        agent.rrs.get(),
         rt_.last_time_reserved(agent.goal)
     );
     if (path.empty())
@@ -338,7 +338,7 @@ Path CBS::find_new_path(
             agent.goal,
             right_landmark - left_landmark,
             &rt_,
-            agent.rrs,
+            agent.rrs.get(),
             rt_.last_time_reserved(agent.goal),
             left_landmark
         );
@@ -360,7 +360,7 @@ Path CBS::find_new_path(
             agent.goal,
             max_length,
             &rt_,
-            agent.rrs,
+            agent.rrs.get(),
             rt_.last_time_reserved(agent.goal)
         );
         if (path.empty())
@@ -382,7 +382,7 @@ Path CBS::find_new_path(
             agent.goal,
             max_length - left_landmark,
             &rt_,
-            agent.rrs,
+            agent.rrs.get(),
             rt_.last_time_reserved(agent.goal),
             left_landmark
         );
@@ -439,7 +439,8 @@ vector<Path> CBS::mapf(
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
         int goal = goals[agent_id];
-        agents.emplace_back(start, goal, st_a_star_.reverse_resumable_search(goal));
+        auto rrs = st_a_star_.reverse_resumable_search(goal);
+        agents.emplace_back(start, goal, std::move(rrs));
     }
 
     ReservationTable reservation_table(graph->size());
@@ -479,7 +480,7 @@ vector<Path> CBS::mapf_(
                 agent.goal,
                 max_length,
                 &rt,
-                agent.rrs,
+                agent.rrs.get(),
                 rt.last_time_reserved(agent.goal)
             );
             if (path.empty())

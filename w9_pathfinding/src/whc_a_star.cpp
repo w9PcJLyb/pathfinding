@@ -31,7 +31,8 @@ vector<Path> WHCAStar::mapf(
     for (size_t agent_id = 0; agent_id < starts.size(); agent_id++) {
         int start = starts[agent_id];
         int goal = goals[agent_id];
-        agents.emplace_back(start, goal, st_a_star_.reverse_resumable_search(goal));
+        auto rrs = st_a_star_.reverse_resumable_search(goal);
+        agents.emplace_back(start, goal, std::move(rrs));
     }
 
     return mapf_(agents, max_length, window_size, reservation_table);
@@ -75,7 +76,7 @@ vector<Path> WHCAStar::mapf_(
             agent.goal,
             active_window,
             &rt,
-            agent.rrs,
+            agent.rrs.get(),
             rt.last_time_reserved(agent.goal),
             time
         );

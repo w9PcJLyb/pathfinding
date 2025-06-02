@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "core.h"
 #include "space_time_a_star.h"
 #include "resumable_search.h"
@@ -12,13 +13,13 @@ class WHCAStar : public AbsMAPF {
 
     struct Agent {
         int start, goal;
-        ResumableSearch *rrs;
+        std::unique_ptr<ResumableSearch> rrs;
         Path path;
 
-        Agent(int start, int goal, ResumableSearch *rrs) : start(start), goal(goal), rrs(rrs) {
+        Agent(int start, int goal, std::unique_ptr<ResumableSearch> rrs)
+            : start(start), goal(goal), rrs(std::move(rrs)) {
             path.push_back(start);
         }
-        ~Agent() {delete rrs;};
 
         int position() {
             return path.back();

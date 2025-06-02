@@ -4,10 +4,6 @@
 SpaceTimeAStar::SpaceTimeAStar(AbsGraph *graph) : graph(graph), rrs_(nullptr) {
 }
 
-SpaceTimeAStar::~SpaceTimeAStar() {
-    delete rrs_;
-}
-
 Path SpaceTimeAStar::reconstruct_path(int start, Node* node) {
     Path path = {node->node_id};
     while (node->parent != nullptr) {
@@ -18,11 +14,11 @@ Path SpaceTimeAStar::reconstruct_path(int start, Node* node) {
     return path;
 }
 
-ResumableSearch* SpaceTimeAStar::reverse_resumable_search(int node_id) {
+std::unique_ptr<ResumableSearch> SpaceTimeAStar::reverse_resumable_search(int node_id) {
     if (graph->has_coordinates())
-        return new ResumableAStar(graph, node_id, true);
+        return std::make_unique<ResumableAStar>(graph, node_id, true);
     else
-        return new ResumableDijkstra(graph, node_id, true);
+        return std::make_unique<ResumableDijkstra>(graph, node_id, true);
 }
 
 ResumableSearch* SpaceTimeAStar::ensure_rrs(ResumableSearch* rrs, int goal) {
@@ -34,7 +30,7 @@ ResumableSearch* SpaceTimeAStar::ensure_rrs(ResumableSearch* rrs, int goal) {
     else
         rrs_->set_start_node(goal);
 
-    return rrs_;
+    return rrs_.get();
 }
 
 Path SpaceTimeAStar::find_path(int start, int end) {

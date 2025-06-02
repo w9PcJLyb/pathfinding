@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "core.h"
 #include "space_time_a_star.h"
 #include "resumable_search.h"
@@ -15,12 +16,10 @@ class CBS : public AbsMAPF {
 
     struct Agent {
         int start, goal;
-        ResumableSearch *rrs;
+        std::unique_ptr<ResumableSearch> rrs;
 
-        Agent(int start, int goal, ResumableSearch *rrs) : start(start), goal(goal), rrs(rrs) {};
-        ~Agent() {
-            delete rrs;
-        };
+        Agent(int start, int goal, std::unique_ptr<ResumableSearch> rrs)
+            : start(start), goal(goal), rrs(std::move(rrs)) {}
     };
 
     struct Conflict {

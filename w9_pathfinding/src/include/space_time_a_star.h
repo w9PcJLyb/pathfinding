@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "core.h"
 #include "resumable_search.h"
 #include "reservation_table.h"
@@ -21,9 +22,8 @@ class SpaceTimeAStar {
     public:
         AbsGraph* graph;
         SpaceTimeAStar(AbsGraph* graph);
-        ~SpaceTimeAStar();
 
-        ResumableSearch* reverse_resumable_search(int node_id);
+        std::unique_ptr<ResumableSearch> reverse_resumable_search(int node_id);
         Path find_path(int start, int end);
 
         /*
@@ -68,7 +68,7 @@ class SpaceTimeAStar {
         );
 
     private:
-        ResumableSearch* rrs_;
+        std::unique_ptr<ResumableSearch> rrs_;
 
         ResumableSearch* ensure_rrs(ResumableSearch* rrs, int goal);
         Path reconstruct_path(int start, Node* node);
