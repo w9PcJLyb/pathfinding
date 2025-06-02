@@ -277,6 +277,8 @@ cdef class Graph(_AbsGraph):
 
     @property
     def coordinates(self):
+        if not self.has_coordinates():
+            return None
         return self._obj.get_coordinates()
 
     def add_edges(self, edges):
