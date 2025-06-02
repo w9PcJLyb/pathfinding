@@ -1,14 +1,12 @@
 import time
-import argparse
 from copy import copy
 from collections import defaultdict
 
 from w9_pathfinding import mapf
 from w9_pathfinding.mapf import ReservationTable
 from w9_pathfinding.envs import DiagonalMovement
-from tests.factory import GridFactory
+from tests.factory import GridFactory, QueryGenerator
 from tests.stress_tests.utils import run_graph
-from tests.stress_tests.random_instance import random_queries
 
 GRID_SIZE = 8
 NUM_GRAPHS = 100
@@ -33,6 +31,8 @@ GRID_GENERATOR = GridFactory(
     passable_up_down_border=False,
     random_seed=42,
 )
+
+QUERY_GENERATOR = QueryGenerator(random_seed=9)
 
 ALGORITHMS = [
     {"name": "HCA*", "class": mapf.HCAStar, "unw": 0, "w": 0},
@@ -246,11 +246,8 @@ def create_graph_with_queries():
         graph = GRID_GENERATOR()
         graph.edge_collision = EDGE_COLLISION
         try:
-            queries = random_queries(
-                graph,
-                num_queries=NUM_AGENTS + NUM_DYNAMIC_OBSTACLES,
-                unique=True,
-                connected=True,
+            queries = QUERY_GENERATOR.generate_queries(
+                graph, n=NUM_AGENTS + NUM_DYNAMIC_OBSTACLES, unique=True, connected=True
             )
         except ValueError:
             continue

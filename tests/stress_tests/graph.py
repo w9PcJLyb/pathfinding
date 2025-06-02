@@ -1,9 +1,8 @@
 from copy import copy
 
 from w9_pathfinding import pf, mapf
-from tests.factory import GraphFactory, SpatialGraphFactory
+from tests.factory import GraphFactory, SpatialGraphFactory, QueryGenerator
 from tests.stress_tests.utils import run_graph
-from tests.stress_tests.random_instance import random_queries
 
 NUM_GRAPHS = 100
 NUM_QUERIES_PER_GRAPH = 10
@@ -33,6 +32,8 @@ GRAPH_WITH_COORDINATES_FACTORY = SpatialGraphFactory(
     num_dimensions=3,
     random_seed=42,
 )
+
+QUERY_GENERATOR = QueryGenerator(random_seed=9)
 
 # - unw - can find the shortest path in an unweighted graph
 # - w - can find the shortest path in a weighted graph
@@ -86,7 +87,7 @@ def stress_test(weighted, with_coordinates=False):
         print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
 
         graph = factory()
-        queries = random_queries(graph, num_queries=NUM_QUERIES_PER_GRAPH)
+        queries = QUERY_GENERATOR.generate_queries(graph, NUM_QUERIES_PER_GRAPH)
 
         for a in algorithms:
             a["finder"] = a["class"](graph)

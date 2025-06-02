@@ -1,8 +1,7 @@
 from copy import copy
 
-from tests.factory import HexGridFactory, RANDOM
+from tests.factory import HexGridFactory, QueryGenerator, RANDOM
 from tests.stress_tests.utils import run_graph
-from tests.stress_tests.random_instance import random_queries
 from tests.stress_tests.grid import ALGORITHMS
 
 NUM_GRAPHS = 100
@@ -32,6 +31,8 @@ WEIGHTED_GRID_FACTORY = HexGridFactory(
     random_seed=42,
 )
 
+QUERY_GENERATOR = QueryGenerator(random_seed=9)
+
 
 def stress_test(weighted):
 
@@ -55,7 +56,7 @@ def stress_test(weighted):
         print(f"run {i + 1}/{NUM_GRAPHS}", end="\r")
 
         graph = factory()
-        queries = random_queries(graph, num_queries=NUM_QUERIES_PER_GRAPH)
+        queries = QUERY_GENERATOR.generate_queries(graph, NUM_QUERIES_PER_GRAPH)
 
         for a in algorithms:
             a["finder"] = a["class"](graph)
