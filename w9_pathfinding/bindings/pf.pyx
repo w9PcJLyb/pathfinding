@@ -18,7 +18,7 @@ def _pathfinding(func):
 
 cdef class _AbsPathFinder():
     cdef cdefs.AbsPathFinder* _baseobj
-    cdef public _AbsGraph graph
+    cdef readonly _AbsGraph graph
 
     def __cinit__(self):
         pass
@@ -173,7 +173,7 @@ cdef class IDAStar(_AbsPathFinder):
 
 cdef class ResumableBFS:
     cdef cdefs.ResumableBFS* _obj
-    cdef public _AbsGraph graph
+    cdef readonly _AbsGraph graph
 
     def __cinit__(self, _AbsGraph graph, start_node):
         self.graph = graph
@@ -210,7 +210,7 @@ cdef class ResumableBFS:
 
 cdef class ResumableDijkstra:
     cdef cdefs.ResumableDijkstra* _obj
-    cdef public _AbsGraph graph
+    cdef readonly _AbsGraph graph
 
     def __cinit__(self, _AbsGraph graph, start_node):
         self.graph = graph

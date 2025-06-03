@@ -10,7 +10,7 @@ from w9_pathfinding.bindings.envs cimport _AbsGraph
 
 cdef class ReservationTable:
     cdef cdefs.ReservationTable* _obj
-    cdef public _AbsGraph graph
+    cdef readonly _AbsGraph graph
 
     def __cinit__(self, _AbsGraph graph):
         cdef int graph_size = graph.size
@@ -90,7 +90,7 @@ def _mapf(func):
 
 cdef class SpaceTimeAStar:
     cdef cdefs.SpaceTimeAStar* _obj
-    cdef public _AbsGraph graph
+    cdef readonly _AbsGraph graph
 
     def __cinit__(self, _AbsGraph graph):
         self.graph = graph
@@ -171,7 +171,7 @@ cdef class SpaceTimeAStar:
 
 cdef class _AbsMAPF():
     cdef cdefs.AbsMAPF* _baseobj
-    cdef public _AbsGraph graph
+    cdef readonly _AbsGraph graph
 
     def __cinit__(self):
         pass

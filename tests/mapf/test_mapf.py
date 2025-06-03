@@ -3,6 +3,7 @@ from collections import defaultdict
 from w9_pathfinding import mapf
 from w9_pathfinding.envs import Graph, Grid
 from w9_pathfinding.mapf import ReservationTable
+from tests.factory import GridFactory
 
 COMPLETE_ALGORITHMS = [
     {
@@ -88,6 +89,16 @@ class TestMAPF(unittest.TestCase):
     """
     pytest tests/mapf/test_mapf.py::TestMAPF
     """
+
+    def test_switch_graph(self):
+        graph_factory = GridFactory(width=4, height=4)
+
+        g1 = graph_factory()
+        g2 = graph_factory()
+
+        finder = mapf.CBS(graph=g1)
+        with self.assertRaises(AttributeError):
+            finder.graph = g2  # error: the attribute 'graph' is read-only
 
     def test_without_agents(self):
         grid = Grid(width=5, height=5)
