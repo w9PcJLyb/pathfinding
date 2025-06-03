@@ -109,7 +109,7 @@ setup(
             "twine",
             "numpy",
             "matplotlib",
-            "pydantic",
+            "pydantic>=2.11.0",
         ],
     },
     python_requires=">=3.10",

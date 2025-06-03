@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Optional
-from pydantic import Field, BaseModel, model_validator
+from pydantic import Field, BaseModel, ConfigDict, model_validator
 
 from w9_pathfinding.envs import Graph
 
@@ -9,9 +9,7 @@ RANDOM = "random"
 
 class EnvFactory(BaseModel):
     random_seed: Optional[int] = None
-
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     def __init__(self, **data):
         super().__init__(**data)
