@@ -10,6 +10,7 @@ cdef class _NodeMapper:
 cdef class _AbsGraph:
     cdef cdefs.AbsGraph* _baseobj
     cdef readonly _NodeMapper _node_mapper
+    cdef object __weakref__
 
 
 cdef class Graph(_AbsGraph):
