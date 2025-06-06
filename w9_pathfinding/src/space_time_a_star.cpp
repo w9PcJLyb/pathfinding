@@ -89,10 +89,6 @@ Path SpaceTimeAStar::find_path_with_depth_limit(
     auto process_node = [&] (int node_id, double cost, Node* current) {
         int time = current->time + 1;
 
-        if (rt_.is_reserved(time, node_id)) {
-            return false;
-        }
-
         double h = rrs->distance(node_id);
         if (h == -1)
             return false;
@@ -118,31 +114,34 @@ Path SpaceTimeAStar::find_path_with_depth_limit(
         auto [f, current] = openset.top();
         openset.pop();
 
-        if (current->node_id == goal) {
-            if (current->time >= min_terminal_time)
+        int t = current->time;
+        int n = current->node_id;
+
+        if (n == goal) {
+            if (t >= min_terminal_time)
                 return reconstruct_path(start, current);
-            else if (current->time == -1) {
+            else if (t == -1) {
                 // terminal node
                 return reconstruct_path(start, current->parent);
             }
         }
 
-        int h = current->node_id + current->time * graph_size;
+        int h = n + t * graph_size;
         if (nodes.count(h) && f > nodes.at(h).f)
             continue;
 
-        if (current->time >= max_terminal_time) {
+        if (t >= max_terminal_time) {
             // terminal node
-            if (process_node(goal, rrs->distance(current->node_id), current)) {
-                nodes.at(goal + (current->time + 1) * graph_size).time = -1;
-            }
+            if (process_node(goal, rrs->distance(n), current))
+                nodes.at(goal + (t + 1) * graph_size).time = -1;
         }
         else {
-            process_node(current->node_id, pause_action_cost, current);
+            if (!rt_.is_reserved(t + 1, n))
+                process_node(n, pause_action_cost, current);
 
-            auto reserved_edges = rt_.get_reserved_edges(current->time, current->node_id);
-            for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {
-                if (!reserved_edges.count(node_id))
+            auto reserved_edges = rt_.get_reserved_edges(t, n);
+            for (auto &[node_id, cost] : graph->get_neighbors(n)) {
+                if (!reserved_edges.count(node_id) && !rt_.is_reserved(t + 1, node_id))
                     process_node(node_id, cost, current);
             }
         }

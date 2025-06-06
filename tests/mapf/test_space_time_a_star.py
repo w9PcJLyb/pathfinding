@@ -74,6 +74,22 @@ class TestSpaceTimeAStar(unittest.TestCase):
                 path = path[1:]  # ignore start
                 self.assertEqual(len(path), min(d, 4))
 
+    def test_search_depth_with_dynamic_obstacles(self):
+        grid = Grid(width=4, height=4, edge_collision=True)
+        start, end = (0, 0), (3, 0)
+
+        rt = ReservationTable(grid)
+        obstacle_path = [(2, 0), (2, 0), (2, 0), (3, 0), (3, 0), (3, 1), (3, 1)]
+        rt.add_path(obstacle_path)
+
+        ans = [(0, 0), (1, 0), (1, 0), (2, 0), (2, 0), (3, 0)]
+
+        a = SpaceTimeAStar(grid)
+        for d in range(8):
+            with self.subTest(f"search_depth={d}"):
+                path = a.find_path(start, end, search_depth=d, reservation_table=rt)
+                self.assertEqual(path, ans[: d + 1])
+
     def test_search_depth_2(self):
         """
         + - - - - - - +
