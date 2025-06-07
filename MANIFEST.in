@@ -2,3 +2,4 @@ include w9_pathfinding/src/*.cpp
 include w9_pathfinding/src/include/*.h
 include w9_pathfinding/bindings/*.pyx
 include w9_pathfinding/bindings/*.pxd
+exclude w9_pathfinding/bindings/*.cpp
