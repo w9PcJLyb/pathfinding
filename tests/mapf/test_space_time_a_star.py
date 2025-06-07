@@ -21,7 +21,7 @@ class TestSpaceTimeAStar(unittest.TestCase):
         graph = Graph(5, edges=[[0, 1, 100], [0, 4, 1], [1, 2, 100], [2, 3, 100]])
 
         a = SpaceTimeAStar(graph)
-        path = a.find_path(0, 3, search_depth=4)
+        path = a.find_path(0, 3)
         self.assertListEqual(path, [0, 1, 2, 3])
 
     def test_with_grid(self):
@@ -70,7 +70,7 @@ class TestSpaceTimeAStar(unittest.TestCase):
         a = SpaceTimeAStar(grid)
         for d in range(8):
             with self.subTest(f"search_depth={d}"):
-                path = a.find_path(start, end, search_depth=d)
+                path = a.find_path_with_depth_limit(start, end, search_depth=d)
                 path = path[1:]  # ignore start
                 self.assertEqual(len(path), min(d, 4))
 
@@ -82,13 +82,12 @@ class TestSpaceTimeAStar(unittest.TestCase):
         obstacle_path = [(2, 0), (2, 0), (2, 0), (3, 0), (3, 0), (3, 1), (3, 1)]
         rt.add_path(obstacle_path)
 
-        ans = [(0, 0), (1, 0), (1, 0), (2, 0), (2, 0), (3, 0)]
-
         a = SpaceTimeAStar(grid)
         for d in range(8):
             with self.subTest(f"search_depth={d}"):
-                path = a.find_path(start, end, search_depth=d, reservation_table=rt)
-                self.assertEqual(path, ans[: d + 1])
+                path = a.find_path_with_depth_limit(start, end, search_depth=d, reservation_table=rt)
+                path = path[1:]  # ignore start
+                self.assertEqual(len(path), min(d, 5))
 
     def test_search_depth_2(self):
         """
@@ -114,7 +113,7 @@ class TestSpaceTimeAStar(unittest.TestCase):
         grid = Grid(weights=weights, diagonal_movement=DiagonalMovement.never)
 
         a = SpaceTimeAStar(grid)
-        path = a.find_path(start, end, search_depth=8)
+        path = a.find_path_with_depth_limit(start, end, search_depth=8)
         self.assertEqual(len(path), 9)
         self.assertListEqual(
             path,

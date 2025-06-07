@@ -50,7 +50,7 @@ ALGORITHMS = [
         "class": mapf.SpaceTimeAStar,
         "unw": 1,
         "w": 1,
-        "params": {"search_depth": 10**5},
+        "params": {"max_length": 10**5},
     },
 ]
 

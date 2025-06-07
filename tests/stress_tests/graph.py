@@ -53,7 +53,7 @@ ALGORITHMS = [
         "unw": 1,
         "w": 1,
         "h": 0,
-        "params": {"search_depth": 10**5},
+        "params": {"max_length": 10**5},
     },
 ]
 

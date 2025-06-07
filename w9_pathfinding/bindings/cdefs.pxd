@@ -163,28 +163,26 @@ cdef extern from "ida_star.h":
 
 cdef extern from "resumable_search.h":
 
-    cdef cppclass ResumableBFS:
-        ResumableBFS(AbsGraph*, int) except +
+    cdef cppclass ResumableSearch:
         double distance(int)
         vector[int] find_path(int)
         int start_node()
         void set_start_node(int)
 
-    cdef cppclass ResumableDijkstra:
+    cdef cppclass ResumableBFS(ResumableSearch):
+        ResumableBFS(AbsGraph*, int) except +
+
+    cdef cppclass ResumableDijkstra(ResumableSearch):
         ResumableDijkstra(AbsGraph*, int) except +
-        double distance(int)
-        vector[int] find_path(int)
-        int start_node()
-        void set_start_node(int)
 
 
 cdef extern from "space_time_a_star.h":
 
     cdef cppclass SpaceTimeAStar:
         SpaceTimeAStar(AbsGraph*) except +
-        vector[int] find_path_with_depth_limit(int, int, int, ReservationTable*)
+        vector[int] find_path_with_depth_limit(int, int, int, ReservationTable*, ResumableSearch*, int)
         vector[int] find_path_with_exact_length(int, int, int, ReservationTable*)
-        vector[int] find_path_with_length_limit(int, int, int, ReservationTable*)
+        vector[int] find_path_with_length_limit(int, int, int, ReservationTable*, ResumableSearch*, int)
 
 
 cdef extern from "hc_a_star.h":

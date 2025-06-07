@@ -1,11 +1,12 @@
 # distutils: language = c++
 
+from functools import wraps
 from w9_pathfinding.bindings cimport cdefs
 from w9_pathfinding.bindings.envs cimport _AbsGraph, Graph
 
 
 def _pathfinding(func):
-
+    @wraps(func)
     def wrap(finder, start, goal, **kwargs):
         map = finder.graph._node_mapper
         start = map.to_id(start)
