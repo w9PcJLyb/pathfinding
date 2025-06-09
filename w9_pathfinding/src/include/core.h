@@ -133,12 +133,31 @@ class AbsGrid : public AbsGraph {
 
         void update_weight(int node, double w);
         void set_weights(vector<double> &weights);
+
+        void set_pause_weight(double w);
+        void set_pause_weights(vector<double> &weights);
+        double get_pause_weight(int node) const;
+        vector<double> get_pause_weights() const;
+
+        void clear_pause_weights() {
+            pause_weights_.clear();
+            pause_weight_ = 1;
+        }
+
         vector<vector<int>> find_components() override;
 
     protected:
-        // if weight == -1 - there is an impassable obstacle, the node is unreachable
-        // if weight >= 0 - weight is the cost of entering this node
+        // weights_[i] - cost to move to node i.
+        // If weights_[i] == -1, the node i is considered an impassable obstacle and is unreachable.
         vector<double> weights_;
+
+        // Default pause cost for all nodes.
+        // Used when pause_weights_ is empty.
+        double pause_weight_ = 1;
+
+        // pause_weights_[i] - cost to pause at node i.
+        // If pause_weights_[i] == -1, pausing is not allowed at node i.
+        vector<double> pause_weights_;
 };
 
 

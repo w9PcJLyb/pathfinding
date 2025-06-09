@@ -5,8 +5,6 @@ double AbsGraph::calculate_cost(Path& path) {
     if (path.size() <= 1)
         return 0;
 
-    double pause_action_cost = get_pause_action_cost();
-
     double total_cost = 0;
 
     int node_id = path[0];
@@ -233,6 +231,40 @@ void AbsGrid::set_weights(vector<double> &weights) {
 
     min_weight_ = min_weight;
     weights_ = weights;
+}
+
+void AbsGrid::set_pause_weight(double w) {
+    if (w < 0)
+        throw std::invalid_argument("Pause weight must be non-negative");
+    pause_weight_ = w;
+}
+
+void AbsGrid::set_pause_weights(vector<double> &weights) {
+    if (weights.size() != size())
+        throw std::invalid_argument(
+            "Weights must have exactly " + std::to_string(size()) + " elements"
+        );
+
+    for (double w : weights) {
+        if (w < 0 && w != -1)
+            throw std::invalid_argument("Weight must be either non-negative or equal to -1");
+    }
+
+    pause_weights_ = weights;
+}
+
+double AbsGrid::get_pause_weight(int node) const {
+    if (!pause_weights_.empty())
+        return pause_weights_.at(node);
+    return pause_weight_;
+}
+
+vector<double> AbsGrid::get_pause_weights() const {
+    if (!pause_weights_.empty())
+        return pause_weights_;
+
+    vector<double> weights(size(), pause_weight_);
+    return weights;
 }
 
 vector<vector<int>> AbsGrid::find_components() {

@@ -115,7 +115,7 @@ vector<pair<int, double>> Grid::get_neighbors(int node, bool reversed, bool incl
 
     // add center direction
     if (include_self)
-        nb.push_back({node, get_pause_action_cost()});
+        nb.push_back({node, get_pause_weight(node)});
 
     // add cardinal directions
     int top = add_direction(0);
@@ -194,7 +194,7 @@ double Grid::calculate_cost(Path& path) {
         Point next_point = get_coordinates(path[i]);
 
         if (point == next_point) {
-            total_cost += get_pause_action_cost();
+            total_cost += get_pause_weight(path[i]);
             continue;
         }
 

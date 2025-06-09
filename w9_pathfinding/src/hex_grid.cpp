@@ -76,7 +76,7 @@ vector<pair<int, double>> HexGrid::get_neighbors(int node, bool reversed, bool i
     nb.reserve(6 + include_self);
 
     if (include_self)
-        nb.push_back({node, get_pause_action_cost()});
+        nb.push_back({node, get_pause_weight(node)});
 
     int offset = get_direction_offset(p0);
     for (int i = 0; i < 6; i++) {
@@ -136,7 +136,7 @@ double HexGrid::calculate_cost(Path& path) {
         Point next_point = get_coordinates(path[i]);
 
         if (point == next_point)
-            total_cost += get_pause_action_cost();
+            total_cost += get_pause_weight(path[i]);
         else {
             total_cost += weights_.at(path[i]);
             point = next_point;

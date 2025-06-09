@@ -71,7 +71,7 @@ vector<pair<int, double>> Grid3D::get_neighbors(int node, bool reversed, bool in
         return nb;
 
     if (include_self)
-        nb.push_back({node, get_pause_action_cost()});
+        nb.push_back({node, get_pause_weight(node)});
 
     Point p0 = get_coordinates(node);
 
@@ -136,7 +136,7 @@ double Grid3D::calculate_cost(Path& path) {
         Point next_point = get_coordinates(path[i]);
 
         if (point == next_point)
-            total_cost += get_pause_action_cost();
+            total_cost += get_pause_weight(path[i]);
         else {
             total_cost += weights_.at(path[i]);
             point = next_point;
