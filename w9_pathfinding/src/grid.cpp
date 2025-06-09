@@ -76,15 +76,15 @@ const std::array<Grid::Point, 8> Grid::directions_ = {{
     {-1, -1}, {1, -1}, {-1, 1}, {1, 1}
 }};
 
-vector<pair<int, double>> Grid::get_neighbors(int node, bool reversed) {
-    vector<pair<int, double>> nb;
-    nb.reserve(diagonal_movement_ == 0 ? 4 : 8);
-    
-    Point p0 = get_coordinates(node);
+vector<pair<int, double>> Grid::get_neighbors(int node, bool reversed, bool include_self) {
+    vector<pair<int, double>> nb;  // neighbors
+    nb.reserve(include_self + (diagonal_movement_ == 0 ? 4 : 8));
 
     double node_weight = weights_.at(node);
     if (node_weight == -1)
         return nb;
+
+    Point p0 = get_coordinates(node);
 
     auto add_direction = [&] (int direction_id) {
         Point p = p0 + directions_[direction_id];
@@ -113,38 +113,40 @@ vector<pair<int, double>> Grid::get_neighbors(int node, bool reversed) {
         return node_id;
     };
 
-    if (diagonal_movement_ == 0) {
-        // without diagonal movements
-        for (int i = 0; i < 4; i++)
-            add_direction(i);
-        return nb;
-    }
+    // add center direction
+    if (include_self)
+        nb.push_back({node, get_pause_action_cost()});
 
+    // add cardinal directions
     int top = add_direction(0);
     int bottom = add_direction(1);
     int left = add_direction(2);
     int right = add_direction(3);
 
-    bool top_left = 1, top_right = 1, bottom_left = 1, bottom_right = 1;
-    if (diagonal_movement_ == 1) {
-        // only when no obstacle
-        top_left = (top >= 0) && (left >= 0);
-        top_right = (top >= 0) && (right >= 0);
-        bottom_left = (bottom >= 0) && (left >= 0);
-        bottom_right = (bottom >= 0) && (right >= 0);
+    // add diagonal directions
+    switch (diagonal_movement_) {
+
+        case 1:  // only when no obstacle
+            if ((top >= 0) && (left >= 0)) add_direction(4);
+            if ((top >= 0) && (right >= 0)) add_direction(5);
+            if ((bottom >= 0) && (left >= 0)) add_direction(6);
+            if ((bottom >= 0) && (right >= 0)) add_direction(7);
+            break;
+
+        case 2:  // if at most one obstacle
+            if ((top >= 0) || (left >= 0)) add_direction(4);
+            if ((top >= 0) || (right >= 0)) add_direction(5);
+            if ((bottom >= 0) || (left >= 0)) add_direction(6);
+            if ((bottom >= 0) || (right >= 0)) add_direction(7);
+            break;
+
+        case 3:  // always
+            add_direction(4);
+            add_direction(5);
+            add_direction(6);
+            add_direction(7);
+            break;
     }
-    else if (diagonal_movement_ == 2) {
-        // if at most one obstacle
-        top_left = (top >= 0) || (left >= 0);
-        top_right = (top >= 0) || (right >= 0);
-        bottom_left = (bottom >= 0) || (left >= 0);
-        bottom_right = (bottom >= 0) || (right >= 0);
-    }
-    
-    if (top_left) add_direction(4);
-    if (top_right) add_direction(5);
-    if (bottom_left) add_direction(6);
-    if (bottom_right) add_direction(7);
 
     return nb;
 }

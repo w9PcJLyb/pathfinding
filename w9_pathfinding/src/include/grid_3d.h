@@ -40,7 +40,7 @@ class Grid3D : public AbsGrid {
         int get_node_id(const Point &p) const;
         Point get_coordinates(int node) const;
         bool is_inside(const Point &p) const;
-        vector<pair<int, double>> get_neighbors(int node, bool reversed=false);
+        vector<pair<int, double>> get_neighbors(int node, bool reversed=false, bool include_self=false);
         double estimate_distance(int v1, int v2) const;
         std::string node_to_string(int v) const;
         double calculate_cost(Path& path);

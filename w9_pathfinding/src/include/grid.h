@@ -41,7 +41,7 @@ class Grid : public AbsGrid {
         int get_diagonal_movement() const;
         void show_obstacle_map() const;
         bool is_inside(const Point &p) const;
-        vector<pair<int, double>> get_neighbors(int node, bool reversed=false);
+        vector<pair<int, double>> get_neighbors(int node, bool reversed=false, bool include_self=false);
         int get_node_id(const Point &p) const;
         Point get_coordinates(int node) const;
         double estimate_distance(int v1, int v2) const;

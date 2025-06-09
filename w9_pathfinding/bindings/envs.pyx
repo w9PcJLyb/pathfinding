@@ -161,11 +161,11 @@ cdef class _AbsGraph:
         cdef vector[int] nodes = self._node_mapper.to_ids(path)
         return self._baseobj.is_valid_path(nodes)
 
-    def get_neighbors(self, node):
+    def get_neighbors(self, node, include_self=False):
         # return [[neighbour_id, cost], ...]
         map = self._node_mapper
         node_id = map.to_id(node)
-        neighbors = self._baseobj.get_neighbors(node_id)
+        neighbors = self._baseobj.get_neighbors(node_id, False, include_self)
         return [(map.from_id(node_id), weight) for node_id, weight in neighbors]
 
     def adjacent(self, v1, v2):

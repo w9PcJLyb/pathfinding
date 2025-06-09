@@ -21,7 +21,7 @@ class Graph : public AbsGraph {
         size_t num_edges() const;
         void add_edge(int start, int end, double cost);
         void add_edges(vector<int> starts, vector<int> ends, vector<double> costs);
-        vector<pair<int, double>> get_neighbors(int node, bool reversed=false);
+        vector<pair<int, double>> get_neighbors(int node, bool reversed=false, bool include_self=false);
         vector<vector<double>> get_edges() const;
         vector<vector<double>> get_coordinates() const;
         void set_coordinates(vector<vector<double>> &coordinates);

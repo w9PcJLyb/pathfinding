@@ -27,7 +27,7 @@ class AbsGraph {
         AbsGraph() {};
         virtual ~AbsGraph() {};
         virtual size_t size() const = 0;
-        virtual vector<pair<int, double>> get_neighbors(int node, bool reversed=false) = 0;
+        virtual vector<pair<int, double>> get_neighbors(int node, bool reversed=false, bool include_self=false) = 0;
         virtual bool has_coordinates() const = 0;
 
         // returns a lower bound of the distance between two vertices

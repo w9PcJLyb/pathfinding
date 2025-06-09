@@ -11,7 +11,7 @@ cdef extern from "core.h":
         double calculate_cost(vector[int])
         bool is_valid_path(vector[int])
         void reverse_inplace()
-        vector[pair[int, double]] get_neighbors(int)
+        vector[pair[int, double]] get_neighbors(int, bool, bool)
         vector[vector[int]] find_components()
         vector[vector[int]] find_scc()
         bool adjacent(int, int)

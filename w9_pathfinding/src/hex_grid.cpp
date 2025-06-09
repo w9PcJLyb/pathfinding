@@ -64,7 +64,7 @@ int HexGrid::get_direction_offset(const HexGrid::Point &p) const {
         return (p.x % 2 == layout - 2) ? 18 : 12;
 }
 
-vector<pair<int, double>> HexGrid::get_neighbors(int node, bool reversed) {
+vector<pair<int, double>> HexGrid::get_neighbors(int node, bool reversed, bool include_self) {
     vector<pair<int, double>> nb;
     
     double node_weight = weights_.at(node);
@@ -73,7 +73,10 @@ vector<pair<int, double>> HexGrid::get_neighbors(int node, bool reversed) {
 
     Point p0 = get_coordinates(node);
 
-    nb.reserve(6);
+    nb.reserve(6 + include_self);
+
+    if (include_self)
+        nb.push_back({node, get_pause_action_cost()});
 
     int offset = get_direction_offset(p0);
     for (int i = 0; i < 6; i++) {

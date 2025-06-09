@@ -15,17 +15,11 @@ double AbsGraph::calculate_cost(Path& path) {
         int next_node_id = path[i];
 
         double step_cost = -1;
-        for (auto &[n, cost] : get_neighbors(node_id)) {
+        for (auto &[n, cost] : get_neighbors(node_id, false, true)) {
             if (n == next_node_id) {
-                if (step_cost == -1 || cost < step_cost) {
+                if (step_cost == -1 || cost < step_cost)
                     step_cost = cost;
-                }
             }
-        }
-
-        if (next_node_id == node_id) {
-            if (step_cost == -1 || pause_action_cost < step_cost)
-                step_cost = pause_action_cost;
         }
 
         if (step_cost == -1) {
