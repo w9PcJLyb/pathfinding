@@ -9,7 +9,7 @@ class TestSpaceTimeAStar(unittest.TestCase):
     """
 
     def test_with_directed_graph(self):
-        graph = Graph(3, edges=[[0, 1], [1, 2]])
+        graph = Graph(3, edges=[[0, 0], [0, 1], [1, 2]])
         rt = ReservationTable(graph)
         rt.add_path([1, 1, 1])
 
@@ -85,7 +85,9 @@ class TestSpaceTimeAStar(unittest.TestCase):
         a = SpaceTimeAStar(grid)
         for d in range(8):
             with self.subTest(f"search_depth={d}"):
-                path = a.find_path_with_depth_limit(start, end, search_depth=d, reservation_table=rt)
+                path = a.find_path_with_depth_limit(
+                    start, end, search_depth=d, reservation_table=rt
+                )
                 path = path[1:]  # ignore start
                 self.assertEqual(len(path), min(d, 5))
 

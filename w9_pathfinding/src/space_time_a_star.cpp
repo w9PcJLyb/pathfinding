@@ -77,7 +77,6 @@ Path SpaceTimeAStar::find_path_with_depth_limit(
 
     int graph_size = graph->size();
     int max_terminal_time = start_time + search_depth;
-    double pause_action_cost = graph->get_pause_action_cost();
 
     typedef pair<double, Node*> key;
     priority_queue<key, vector<key>, std::greater<key>> openset;
@@ -136,11 +135,8 @@ Path SpaceTimeAStar::find_path_with_depth_limit(
                 nodes.at(goal + (t + 1) * graph_size).time = -1;
         }
         else {
-            if (!rt_.is_reserved(t + 1, n))
-                process_node(n, pause_action_cost, current);
-
             auto reserved_edges = rt_.get_reserved_edges(t, n);
-            for (auto &[node_id, cost] : graph->get_neighbors(n)) {
+            for (auto &[node_id, cost] : graph->get_neighbors(n, false, true)) {
                 if (!reserved_edges.count(node_id) && !rt_.is_reserved(t + 1, node_id))
                     process_node(node_id, cost, current);
             }
@@ -171,7 +167,6 @@ Path SpaceTimeAStar::find_path_with_exact_length(
     const ReservationTable& rt_ = *rt;
 
     int graph_size = graph->size();
-    double pause_action_cost = graph->get_pause_action_cost();
     int terminal_time = start_time + length;
 
     typedef pair<double, Node*> key;
@@ -216,11 +211,8 @@ Path SpaceTimeAStar::find_path_with_exact_length(
         if (nodes.count(h) && f > nodes.at(h).f)
             continue;
 
-        if (!rt_.is_reserved(time + 1, current->node_id))
-            process_node(current->node_id, pause_action_cost, current);
-
         auto reserved_edges = rt_.get_reserved_edges(time, current->node_id);
-        for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {
+        for (auto &[node_id, cost] : graph->get_neighbors(current->node_id, false, true)) {
             if (!reserved_edges.count(node_id) && !rt_.is_reserved(time + 1, node_id))
                 process_node(node_id, cost, current);
         }
@@ -260,7 +252,6 @@ Path SpaceTimeAStar::find_path_with_length_limit(
     const ReservationTable& rt_ = *rt;
 
     int graph_size = graph->size();
-    double pause_action_cost = graph->get_pause_action_cost();
     int terminal_time = start_time + max_length;
 
     typedef pair<double, Node*> key;
@@ -305,11 +296,8 @@ Path SpaceTimeAStar::find_path_with_length_limit(
         if (nodes.count(h) && f > nodes.at(h).f)
             continue;
 
-        if (!rt_.is_reserved(time + 1, current->node_id))
-            process_node(current->node_id, pause_action_cost, current);
-
         auto reserved_edges = rt_.get_reserved_edges(time, current->node_id);
-        for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {
+        for (auto &[node_id, cost] : graph->get_neighbors(current->node_id, false, true)) {
             if (!reserved_edges.count(node_id) && !rt_.is_reserved(time + 1, node_id))
                 process_node(node_id, cost, current);
         }
