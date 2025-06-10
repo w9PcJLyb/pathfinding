@@ -90,14 +90,6 @@ class TestGraph(unittest.TestCase):
         self.assertTrue(graph.is_valid_path([2, 1, 0]))
         self.assertFalse(graph.is_valid_path([0, 2]))
 
-    def test_calc_cost_with_pause_action(self):
-        graph = Graph(5)
-        graph.pause_action_cost = 5
-        self.assertEqual(graph.calculate_cost([0, 0]), 5)
-
-        graph.add_edges([[0, 0, 2]])
-        self.assertEqual(graph.calculate_cost([0, 0]), 2)
-
     def test_find_components(self):
         graph = Graph(5, directed=False)
 
@@ -167,21 +159,18 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(new_graph.num_edges, 2)
 
     def test_copy(self):
-        graph = Graph(5, directed=False, pause_action_cost=5)
+        graph = Graph(5, directed=False)
         graph.add_edges([(0, 1, 10), (1, 2, 20)])
 
         graph_copy = copy.copy(graph)
-        graph_copy.pause_action_cost = 6
         graph_copy.add_edges([(2, 3, 30)])
 
         self.assertEqual(graph_copy.directed, False)
         self.assertEqual(graph_copy.num_edges, 3)
-        self.assertEqual(graph_copy.pause_action_cost, 6)
         self.assertEqual(graph_copy.edges, [[0, 1, 10], [1, 2, 20], [2, 3, 30]])
 
         self.assertEqual(graph_copy.directed, False)
         self.assertEqual(graph.num_edges, 2)
-        self.assertEqual(graph.pause_action_cost, 5)
         self.assertEqual(graph.edges, [[0, 1, 10], [1, 2, 20]])
 
     def test_init_with_numpy_edges(self):

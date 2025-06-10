@@ -64,24 +64,11 @@ class AbsGraph {
 
     // For multi agent path finding
     private:
-        // the cost of the pause action
-        double pause_action_cost_ = 1;
-
         // if edge_collision_ is true, two agents can not pass on the same edge
         // at the same time in two different directions
         bool edge_collision_ = false;
 
     public:
-        void set_pause_action_cost(double cost) {
-            if (cost < 0)
-                throw std::invalid_argument("Pause action cost must be non-negative");
-            pause_action_cost_ = cost;
-        }
-
-        double get_pause_action_cost() const {
-            return pause_action_cost_;
-        }
-
         virtual void set_edge_collision(bool b) {
             edge_collision_ = b;
         }

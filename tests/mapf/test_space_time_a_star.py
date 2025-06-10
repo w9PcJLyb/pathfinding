@@ -53,13 +53,13 @@ class TestSpaceTimeAStar(unittest.TestCase):
         rt = ReservationTable(grid)
         rt.add_path(path1)
 
-        grid.pause_action_cost = 5
+        grid.pause_weights = 5
         path2 = a.find_path((0, 0), (2, 2), reservation_table=rt)
         self.assertListEqual(
             path2, [(0, 0), (1, 0), (2, 0), (2, 1), (2, 0), (2, 1), (2, 2)]
         )
 
-        grid.pause_action_cost = 0.1
+        grid.pause_weights = 0.1
         path2 = a.find_path((0, 0), (2, 2), reservation_table=rt)
         self.assertListEqual(path2, [(0, 0), (0, 0), (0, 1), (0, 2), (1, 2), (2, 2)])
 

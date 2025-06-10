@@ -237,6 +237,7 @@ void AbsGrid::set_pause_weight(double w) {
     if (w < 0)
         throw std::invalid_argument("Pause weight must be non-negative");
     pause_weight_ = w;
+    pause_weights_.clear();
 }
 
 void AbsGrid::set_pause_weights(vector<double> &weights) {

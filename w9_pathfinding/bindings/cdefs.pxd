@@ -15,8 +15,6 @@ cdef extern from "core.h":
         vector[vector[int]] find_components()
         vector[vector[int]] find_scc()
         bool adjacent(int, int)
-        void set_pause_action_cost(double)
-        double get_pause_action_cost()
         void set_edge_collision(bool)
         bool edge_collision()
 
@@ -29,6 +27,10 @@ cdef extern from "core.h":
         void update_weight(int, double) except +
         double get_weight(int) except +
         vector[double] get_weights()
+        void set_pause_weight(double w) except +
+        void set_pause_weights(vector[double]&) except +
+        double get_pause_weight(int) except +
+        vector[double] get_pause_weights()
 
     cdef cppclass AbsPathFinder:
         AbsPathFinder() except +
