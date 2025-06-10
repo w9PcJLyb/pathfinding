@@ -75,8 +75,11 @@ vector<pair<int, double>> HexGrid::get_neighbors(int node, bool reversed, bool i
 
     nb.reserve(6 + include_self);
 
-    if (include_self)
-        nb.push_back({node, get_pause_weight(node)});
+    if (include_self) {
+        double weight = get_pause_weight(node);
+        if (weight != -1)
+            nb.push_back({node, weight});
+    }
 
     int offset = get_direction_offset(p0);
     for (int i = 0; i < 6; i++) {

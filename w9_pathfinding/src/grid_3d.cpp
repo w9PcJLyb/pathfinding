@@ -70,8 +70,11 @@ vector<pair<int, double>> Grid3D::get_neighbors(int node, bool reversed, bool in
     if (node_weight == -1)
         return nb;
 
-    if (include_self)
-        nb.push_back({node, get_pause_weight(node)});
+    if (include_self) {
+        double weight = get_pause_weight(node);
+        if (weight != -1)
+            nb.push_back({node, weight});
+    }
 
     Point p0 = get_coordinates(node);
 

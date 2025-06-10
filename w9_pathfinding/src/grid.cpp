@@ -114,8 +114,11 @@ vector<pair<int, double>> Grid::get_neighbors(int node, bool reversed, bool incl
     };
 
     // add center direction
-    if (include_self)
-        nb.push_back({node, get_pause_weight(node)});
+    if (include_self) {
+        double weight = get_pause_weight(node);
+        if (weight != -1)
+            nb.push_back({node, weight});
+    }
 
     // add cardinal directions
     int top = add_direction(0);
