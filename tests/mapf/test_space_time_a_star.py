@@ -121,3 +121,27 @@ class TestSpaceTimeAStar(unittest.TestCase):
             path,
             [(0, 0), (1, 0), (1, 1), (1, 2), (0, 2), (0, 3), (0, 4), (1, 4), (2, 4)],
         )
+
+    def test_path_with_exact_length(self):
+        """
+        + -  -  - +
+        | #     # |
+        | s     e |
+        |         |
+        + -  -  - +
+        """
+        grid = Grid(
+            weights=[[-1, 1, -1], [1, 1, 1], [1, 1, 1]],
+            pause_weights=[[1, 0.1, 1], [1, 1, 1], [1, 1, 1]],
+        )
+
+        a = SpaceTimeAStar(grid)
+        path = a.find_path_with_exact_length((0, 1), (2, 1), length=5)
+
+        # The direct path [(0,1), (1,1), (2,1)] has length 3 and cost 2.
+        # Extending it naively to length 5 by pausing at (2,1) results in:
+        #  - [(0,1), (1,1), (2,1), (2,1), (2,1)] with cost = 5.
+        # A better path uses the cheaper pause cost at (1,0), giving:
+        #  - [(0,1), (1,1), (1,0), (1,0), (1,1), (2,1)] with cost = 4.1.
+        self.assertEqual(path, [(0, 1), (1, 1), (1, 0), (1, 0), (1, 1), (2, 1)])
+        self.assertEqual(grid.calculate_cost(path), 4.1)

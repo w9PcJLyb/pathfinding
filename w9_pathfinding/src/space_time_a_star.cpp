@@ -154,18 +154,6 @@ Path SpaceTimeAStar::find_path_with_exact_length(
     const ReservationTable *rt,
     int start_time
 ) {
-    if (!rt || rt->empty()) {
-        Path path = find_path_with_length_limit__static(start, goal, length);
-        if (path.empty())
-            return path;
-
-        ensure_path_length(path, length);
-
-        return path;
-    }
-
-    const ReservationTable& rt_ = *rt;
-
     int graph_size = graph->size();
     int terminal_time = start_time + length;
 
@@ -211,10 +199,16 @@ Path SpaceTimeAStar::find_path_with_exact_length(
         if (nodes.count(h) && f > nodes.at(h).f)
             continue;
 
-        auto reserved_edges = rt_.get_reserved_edges(time, current->node_id);
-        for (auto &[node_id, cost] : graph->get_neighbors(current->node_id, false, true)) {
-            if (!reserved_edges.count(node_id) && !rt_.is_reserved(time + 1, node_id))
+        if (!rt) {
+            for (auto &[node_id, cost] : graph->get_neighbors(current->node_id, false, true))
                 process_node(node_id, cost, current);
+        }
+        else {
+            auto reserved_edges = rt->get_reserved_edges(time, current->node_id);
+            for (auto &[node_id, cost] : graph->get_neighbors(current->node_id, false, true)) {
+                if (!reserved_edges.count(node_id) && !rt->is_reserved(time + 1, node_id))
+                    process_node(node_id, cost, current);
+            }
         }
     }
 
