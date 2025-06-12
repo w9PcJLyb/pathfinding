@@ -45,11 +45,6 @@ bool AbsGraph::is_valid_path(Path& path) {
     for (size_t i = 1; i < path.size(); i++) {
         int next_node_id = path[i];
 
-        if (next_node_id == node_id) {
-            // pause action
-            continue;
-        }
-
         if (next_node_id < 0 || next_node_id >= graph_size || !adjacent(node_id, next_node_id))
             return false;
 
@@ -180,7 +175,7 @@ vector<vector<int>> AbsGraph::find_scc() {
 }
 
 bool AbsGraph::adjacent(int v1, int v2) {
-    for (auto &[node_id, cost] : get_neighbors(v1)) {
+    for (auto &[node_id, cost] : get_neighbors(v1, false, true)) {
         if (node_id == v2) {
             return true;
         }

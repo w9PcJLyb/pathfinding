@@ -77,18 +77,22 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(graph.calculate_cost([0, 1, 2]), 2 + 3)
 
     def test_is_valid_path(self):
-        graph = Graph(5, edges=[[0, 1, 2], [1, 2, 4]])
+        graph = Graph(5, edges=[[0, 1, 2], [1, 2, 4], [1, 1, 3]])
 
         self.assertTrue(graph.is_valid_path([0, 1, 2]))
         self.assertFalse(graph.is_valid_path([2, 1, 0]))
         self.assertFalse(graph.is_valid_path([0, 2]))
+        self.assertFalse(graph.is_valid_path([0, 0]))
+        self.assertTrue(graph.is_valid_path([1, 1]))
 
     def test_is_valid_path_with_undirected_graph(self):
-        graph = Graph(5, directed=False, edges=[[0, 1, 2], [1, 2, 4]])
+        graph = Graph(5, directed=False, edges=[[0, 1, 2], [1, 2, 4], [1, 1, 3]])
 
         self.assertTrue(graph.is_valid_path([0, 1, 2]))
         self.assertTrue(graph.is_valid_path([2, 1, 0]))
         self.assertFalse(graph.is_valid_path([0, 2]))
+        self.assertFalse(graph.is_valid_path([0, 0]))
+        self.assertTrue(graph.is_valid_path([1, 1]))
 
     def test_find_components(self):
         graph = Graph(5, directed=False)
