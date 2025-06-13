@@ -63,12 +63,18 @@ const std::array<Grid3D::Point, 6> Grid3D::directions_ = {{
     {0, 0, -1}, {0, 0, 1}, {0, -1, 0}, {0, 1, 0}, {-1, 0, 0}, {1, 0, 0}
 }};
 
-vector<pair<int, double>> Grid3D::get_neighbors(int node, bool reversed) {
+vector<pair<int, double>> Grid3D::get_neighbors(int node, bool reversed, bool include_self) {
     vector<pair<int, double>> nb;
 
     double node_weight = weights_.at(node);
     if (node_weight == -1)
         return nb;
+
+    if (include_self) {
+        double weight = get_pause_weight(node);
+        if (weight != -1)
+            nb.push_back({node, weight});
+    }
 
     Point p0 = get_coordinates(node);
 
@@ -133,7 +139,7 @@ double Grid3D::calculate_cost(Path& path) {
         Point next_point = get_coordinates(path[i]);
 
         if (point == next_point)
-            total_cost += get_pause_action_cost();
+            total_cost += get_pause_weight(path[i]);
         else {
             total_cost += weights_.at(path[i]);
             point = next_point;

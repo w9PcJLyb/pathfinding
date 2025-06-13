@@ -9,7 +9,7 @@ class TestSpaceTimeAStar(unittest.TestCase):
     """
 
     def test_with_directed_graph(self):
-        graph = Graph(3, edges=[[0, 1], [1, 2]])
+        graph = Graph(3, edges=[[0, 0], [0, 1], [1, 2]])
         rt = ReservationTable(graph)
         rt.add_path([1, 1, 1])
 
@@ -53,13 +53,13 @@ class TestSpaceTimeAStar(unittest.TestCase):
         rt = ReservationTable(grid)
         rt.add_path(path1)
 
-        grid.pause_action_cost = 5
+        grid.pause_weights = 5
         path2 = a.find_path((0, 0), (2, 2), reservation_table=rt)
         self.assertListEqual(
             path2, [(0, 0), (1, 0), (2, 0), (2, 1), (2, 0), (2, 1), (2, 2)]
         )
 
-        grid.pause_action_cost = 0.1
+        grid.pause_weights = 0.1
         path2 = a.find_path((0, 0), (2, 2), reservation_table=rt)
         self.assertListEqual(path2, [(0, 0), (0, 0), (0, 1), (0, 2), (1, 2), (2, 2)])
 
@@ -85,7 +85,9 @@ class TestSpaceTimeAStar(unittest.TestCase):
         a = SpaceTimeAStar(grid)
         for d in range(8):
             with self.subTest(f"search_depth={d}"):
-                path = a.find_path_with_depth_limit(start, end, search_depth=d, reservation_table=rt)
+                path = a.find_path_with_depth_limit(
+                    start, end, search_depth=d, reservation_table=rt
+                )
                 path = path[1:]  # ignore start
                 self.assertEqual(len(path), min(d, 5))
 
@@ -119,3 +121,27 @@ class TestSpaceTimeAStar(unittest.TestCase):
             path,
             [(0, 0), (1, 0), (1, 1), (1, 2), (0, 2), (0, 3), (0, 4), (1, 4), (2, 4)],
         )
+
+    def test_path_with_exact_length(self):
+        """
+        + -  -  - +
+        | #     # |
+        | s     e |
+        |         |
+        + -  -  - +
+        """
+        grid = Grid(
+            weights=[[-1, 1, -1], [1, 1, 1], [1, 1, 1]],
+            pause_weights=[[1, 0.1, 1], [1, 1, 1], [1, 1, 1]],
+        )
+
+        a = SpaceTimeAStar(grid)
+        path = a.find_path_with_exact_length((0, 1), (2, 1), length=5)
+
+        # The direct path [(0,1), (1,1), (2,1)] has length 3 and cost 2.
+        # Extending it naively to length 5 by pausing at (2,1) results in:
+        #  - [(0,1), (1,1), (2,1), (2,1), (2,1)] with cost = 5.
+        # A better path uses the cheaper pause cost at (1,0), giving:
+        #  - [(0,1), (1,1), (1,0), (1,0), (1,1), (2,1)] with cost = 4.1.
+        self.assertEqual(path, [(0, 1), (1, 1), (1, 0), (1, 0), (1, 1), (2, 1)])
+        self.assertEqual(grid.calculate_cost(path), 4.1)

@@ -27,7 +27,7 @@ class AbsGraph {
         AbsGraph() {};
         virtual ~AbsGraph() {};
         virtual size_t size() const = 0;
-        virtual vector<pair<int, double>> get_neighbors(int node, bool reversed=false) = 0;
+        virtual vector<pair<int, double>> get_neighbors(int node, bool reversed=false, bool include_self=false) = 0;
         virtual bool has_coordinates() const = 0;
 
         // returns a lower bound of the distance between two vertices
@@ -64,24 +64,11 @@ class AbsGraph {
 
     // For multi agent path finding
     private:
-        // the cost of the pause action
-        double pause_action_cost_ = 1;
-
         // if edge_collision_ is true, two agents can not pass on the same edge
         // at the same time in two different directions
         bool edge_collision_ = false;
 
     public:
-        void set_pause_action_cost(double cost) {
-            if (cost < 0)
-                throw std::invalid_argument("Pause action cost must be non-negative");
-            pause_action_cost_ = cost;
-        }
-
-        double get_pause_action_cost() const {
-            return pause_action_cost_;
-        }
-
         virtual void set_edge_collision(bool b) {
             edge_collision_ = b;
         }
@@ -133,12 +120,31 @@ class AbsGrid : public AbsGraph {
 
         void update_weight(int node, double w);
         void set_weights(vector<double> &weights);
+
+        void set_pause_weight(double w);
+        void set_pause_weights(vector<double> &weights);
+        double get_pause_weight(int node) const;
+        vector<double> get_pause_weights() const;
+
+        void clear_pause_weights() {
+            pause_weights_.clear();
+            pause_weight_ = 1;
+        }
+
         vector<vector<int>> find_components() override;
 
     protected:
-        // if weight == -1 - there is an impassable obstacle, the node is unreachable
-        // if weight >= 0 - weight is the cost of entering this node
+        // weights_[i] - cost to move to node i.
+        // If weights_[i] == -1, the node i is considered an impassable obstacle and is unreachable.
         vector<double> weights_;
+
+        // Default pause cost for all nodes.
+        // Used when pause_weights_ is empty.
+        double pause_weight_ = 1;
+
+        // pause_weights_[i] - cost to pause at node i.
+        // If pause_weights_[i] == -1, pausing is not allowed at node i.
+        vector<double> pause_weights_;
 };
 
 

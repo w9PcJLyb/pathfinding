@@ -71,31 +71,33 @@ vector<vector<double>> Graph::get_coordinates() const {
     return coordinates_;
 }
 
-vector<pair<int, double>> Graph::get_neighbors(int node, bool reversed) {
+vector<pair<int, double>> Graph::get_neighbors(int node, bool reversed, bool include_self) {
     vector<pair<int, double>> nb;
+
+    auto add_edges = [&] (vector<Edge> &edges) {
+        for (Edge &e : edges) {
+            if (include_self || e.node_id != node)
+                nb.push_back({e.node_id, e.cost});
+        }
+    };
 
     if (directed_) {
         if (!reversed) {
-            for (const Edge &e : edges_[node])
-                nb.push_back({e.node_id, e.cost});
+            add_edges(edges_[node]);
         }
         else {
             if (reversed_edges_.empty())
                 update_reversed_edges();
 
-            for (const Edge &e : reversed_edges_[node])
-                nb.push_back({e.node_id, e.cost});
+            add_edges(reversed_edges_[node]);
         }
     }
     else {
         if (reversed_edges_.empty())
             update_reversed_edges();
 
-        for (const Edge &e : edges_[node])
-            nb.push_back({e.node_id, e.cost});
-
-        for (const Edge &e : reversed_edges_[node])
-            nb.push_back({e.node_id, e.cost});
+        add_edges(edges_[node]);
+        add_edges(reversed_edges_[node]);
     }
 
     return nb;
@@ -126,7 +128,6 @@ Graph* Graph::create_reversed_graph() const {
             reversed_graph->add_edge(e.node_id, i, e.cost);
         }
     }
-    reversed_graph->set_pause_action_cost(get_pause_action_cost());
     return reversed_graph;
 }
 

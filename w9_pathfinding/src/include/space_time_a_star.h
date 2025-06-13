@@ -6,7 +6,7 @@
 #include "reservation_table.h"
 
 
-class SpaceTimeAStar {
+class SpaceTimeAStar : public AbsPathFinder {
 
     struct Node {
         Node* parent;

@@ -30,9 +30,10 @@ namespace maas {
     struct Agent {
         int start, goal;
         std::unique_ptr<ResumableSearch> rrs;
+        double goal_pause_cost;
 
-        Agent(int start, int goal, std::unique_ptr<ResumableSearch> rrs)
-            : start(start), goal(goal), rrs(std::move(rrs)) {}
+        Agent(int start, int goal, std::unique_ptr<ResumableSearch> rrs, double goal_pause_cost)
+            : start(start), goal(goal), rrs(std::move(rrs)), goal_pause_cost(goal_pause_cost) {}
     };
 
     struct Node {

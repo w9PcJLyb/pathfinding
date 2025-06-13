@@ -56,7 +56,16 @@ maas::AStarSolver::AStarSolver(AbsGraph* graph, vector<int>& starts, vector<int>
         int start = starts[agent_id];
         int goal = goals[agent_id];
         auto rrs = st_a_star.reverse_resumable_search(goal);
-        agents_.emplace_back(start, goal, std::move(rrs));
+
+        double goal_pause_cost = -1;
+        for (auto [node_id, cost] : graph->get_neighbors(goal, false, true)) {
+            if (node_id == goal) {
+                if (goal_pause_cost == -1 || cost < goal_pause_cost)
+                    goal_pause_cost = cost;
+            }
+        }
+
+        agents_.emplace_back(start, goal, std::move(rrs), goal_pause_cost);
     }
 
     num_agents_ = agents_.size();
@@ -168,31 +177,37 @@ vector<vector<pair<int, double>>> maas::AStarSolver::get_neighbors(Node& node) {
     vector<vector<pair<int, double>>> neighbors(num_agents_);
 
     int time = node.time;
-    double pause_action_cost = graph_->get_pause_action_cost();
 
     for (int i = 0; i < num_agents_; i++) {
         int p = node.positions[i];
+        auto &a = agents_[i];
 
-        double pause_cost_here = 0;
-        double additional_moving_cost_here = 0;
-        if (p != agents_[i].goal)
-            pause_cost_here = pause_action_cost;
-        else
-            additional_moving_cost_here = get_waiting_time(node.id, i) * pause_action_cost;
+        double mlt_pause_cost = 1;
+        double add_moving_cost = 0;
+        if (p == a.goal) {
+            // We are at a goal position
+
+            // Remaining at the goal is free of cost
+            mlt_pause_cost = 0;
+
+            // Moving to another node incurs a penalty,
+            // which depends on how many time steps we've spent at the goal.
+            add_moving_cost = get_waiting_time(node.id, i) * a.goal_pause_cost;
+        }
 
         if (!rt_) {
-            neighbors[i].push_back({p, pause_cost_here});
-            for (auto &[n, cost] : graph_->get_neighbors(p))
-                neighbors[i].push_back({n, cost + additional_moving_cost_here});
+            for (auto &[n, cost] : graph_->get_neighbors(p, false, true)) {
+                double w = n == p ? cost * mlt_pause_cost : cost + add_moving_cost;
+                neighbors[i].push_back({n, w});
+            }
         }
         else {
-            if (!rt_->is_reserved(time + 1, p))
-                neighbors[i].push_back({p, pause_cost_here});
-
             auto reserved_edges = rt_->get_reserved_edges(time, p);
-            for (auto &[n, cost] : graph_->get_neighbors(p)) {
-                if (!reserved_edges.count(n) && !rt_->is_reserved(time + 1, n))
-                    neighbors[i].push_back({n, cost + additional_moving_cost_here});
+            for (auto &[n, cost] : graph_->get_neighbors(p, false, true)) {
+                if (!reserved_edges.count(n) && !rt_->is_reserved(time + 1, n)) {
+                    double w = n == p ? cost * mlt_pause_cost : cost + add_moving_cost;
+                    neighbors[i].push_back({n, w});
+                }
             }
         }
 
@@ -362,33 +377,38 @@ maas::AStarODSolver::AStarODSolver(AbsGraph* graph, vector<int>& starts, vector<
 vector<pair<int, double>> maas::AStarODSolver::get_neighbors(Node& node) {
     int agent_id = node.time % num_agents_;
     int p = node.positions[agent_id];
+    auto &a = agents_[agent_id];
 
-    double pause_cost_here = 0;
-    double additional_moving_cost_here = 0;
-    if (p != agents_[agent_id].goal)
-        pause_cost_here = graph_->get_pause_action_cost();
-    else {
+    double mlt_pause_cost = 1;
+    double add_moving_cost = 0;
+    if (p == a.goal) {
+        // We are at a goal position
+
+        // Remaining at the goal is free of cost
+        mlt_pause_cost = 0;
+
+        // Moving to another node incurs a penalty,
+        // which depends on how many time steps we've spent at the goal.
         int parent = agent_id == 0 ? node.id : node.parent;
-        additional_moving_cost_here = get_waiting_time(parent, agent_id) * graph_->get_pause_action_cost();
+        add_moving_cost = get_waiting_time(parent, agent_id) * a.goal_pause_cost;
     }
 
     vector<pair<int, double>> neighbors;
 
     if (!rt_) {
-        neighbors.push_back({p, pause_cost_here});
-        for (auto &[n, cost] : graph_->get_neighbors(p))
-            neighbors.push_back({n, cost + additional_moving_cost_here});
+        for (auto &[n, cost] : graph_->get_neighbors(p, false, true)) {
+            double w = n == p ? cost * mlt_pause_cost : cost + add_moving_cost;
+            neighbors.push_back({n, w});
+        }
     }
     else {
         int time = node.time / num_agents_;
-
-        if (!rt_->is_reserved(time + 1, p))
-            neighbors.push_back({p, pause_cost_here});
-
         auto reserved_edges = rt_->get_reserved_edges(time, p);
-        for (auto &[n, cost] : graph_->get_neighbors(p)) {
-            if (!reserved_edges.count(n) && !rt_->is_reserved(time + 1, n))
-                neighbors.push_back({n, cost + additional_moving_cost_here});
+        for (auto &[n, cost] : graph_->get_neighbors(p, false, true)) {
+            if (!reserved_edges.count(n) && !rt_->is_reserved(time + 1, n)) {
+                double w = n == p ? cost * mlt_pause_cost : cost + add_moving_cost;
+                neighbors.push_back({n, w});
+            }
         }
     }
 

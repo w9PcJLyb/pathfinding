@@ -137,10 +137,7 @@ cdef class _AbsGraph:
     def __cinit__(self):
         pass
 
-    def _base_init(self, pause_action_cost=1, edge_collision=False):
-        if pause_action_cost != 1:
-            self.pause_action_cost = pause_action_cost
-
+    def _base_init(self, edge_collision=False):
         if edge_collision:
             self.edge_collision = edge_collision
 
@@ -161,27 +158,17 @@ cdef class _AbsGraph:
         cdef vector[int] nodes = self._node_mapper.to_ids(path)
         return self._baseobj.is_valid_path(nodes)
 
-    def get_neighbors(self, node):
+    def get_neighbors(self, node, include_self=False):
         # return [[neighbour_id, cost], ...]
         map = self._node_mapper
         node_id = map.to_id(node)
-        neighbors = self._baseobj.get_neighbors(node_id)
+        neighbors = self._baseobj.get_neighbors(node_id, False, include_self)
         return [(map.from_id(node_id), weight) for node_id, weight in neighbors]
 
     def adjacent(self, v1, v2):
         v1 = self._node_mapper.to_id(v1)
         v2 = self._node_mapper.to_id(v2)
         return self._baseobj.adjacent(v1, v2)
-
-    @property
-    def pause_action_cost(self):
-        return self._baseobj.get_pause_action_cost()
-
-    @pause_action_cost.setter
-    def pause_action_cost(self, double cost):
-        if cost < 0:
-            raise ValueError("pause_action_cost must be non-negative.")
-        self._baseobj.set_pause_action_cost(cost)
 
     @property
     def edge_collision(self):
@@ -192,7 +179,7 @@ cdef class _AbsGraph:
         self._baseobj.set_edge_collision(b)
 
     def to_dict(self):
-        return {"edge_collision": self.edge_collision, "pause_action_cost": self.pause_action_cost}
+        return {"edge_collision": self.edge_collision}
 
     def __copy__(self):
         return self.__class__(**self.to_dict())
@@ -344,6 +331,11 @@ cdef class Graph(_AbsGraph):
 
 cdef class _AbsGrid(_AbsGraph):
 
+    def _base_init(self, pause_weights=None, **kwargs):
+        if pause_weights is not None:
+            self.pause_weights = pause_weights
+        return super()._base_init(**kwargs)
+
     @property
     def shape(self):
         raise NotImplementedError()
@@ -393,6 +385,30 @@ cdef class _AbsGrid(_AbsGraph):
             raise ValueError("Weights have an inhomogeneous shape")
 
         self._basegridobj.set_weights(vector)
+
+    def get_pause_weight(self, point):
+        node_id = self._node_mapper.to_id(point)
+        return self._basegridobj.get_pause_weight(node_id)
+
+    @property
+    def pause_weights(self):
+        return self._convert(self._basegridobj.get_pause_weights(), self.shape)
+
+    @pause_weights.setter
+    def pause_weights(self, data):
+        if not hasattr(data, '__iter__'):
+            self._basegridobj.set_pause_weight(data)
+            return
+
+        if self._get_shape(data) != self.shape:
+            shape_str = "x".join([str(x) for x in self.shape])
+            raise ValueError(f"Weights must have shape {shape_str}")
+
+        vector = self._convert(data)
+        if len(vector) != self.size:
+            raise ValueError("Weights have an inhomogeneous shape")
+
+        self._basegridobj.set_pause_weights(vector)
 
     @property
     def obstacle_map(self):
@@ -467,6 +483,12 @@ cdef class _AbsGrid(_AbsGraph):
                 ]
 
         return create_matrix(data, shape)
+
+    def to_dict(self):
+        d = super().to_dict()
+        d["weights"] = self.weights
+        d["pause_weights"] = self.pause_weights
+        return d
 
 
 cdef class Grid(_AbsGrid):
@@ -604,7 +626,6 @@ cdef class Grid(_AbsGrid):
         return {
             "width": self.width,
             "height": self.height,
-            "weights": self.weights,
             "diagonal_movement": self.diagonal_movement.value,
             "passable_left_right_border": self.passable_left_right_border,
             "passable_up_down_border": self.passable_up_down_border,
@@ -683,7 +704,6 @@ cdef class Grid3D(_AbsGrid):
             "width": self.width,
             "height": self.height,
             "depth": self.depth,
-            "weights": self.weights,
             "passable_borders": self.passable_borders,
             **super().to_dict(),
         }
@@ -784,7 +804,6 @@ cdef class HexGrid(_AbsGrid):
         return {
             "width": self.width,
             "height": self.height,
-            "weights": self.weights,
             "layout": self.layout.value,
             "passable_left_right_border": self.passable_left_right_border,
             "passable_up_down_border": self.passable_up_down_border,
