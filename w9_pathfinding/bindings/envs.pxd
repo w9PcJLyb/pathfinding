@@ -15,8 +15,8 @@ cdef class _AbsGraph:
 
 cdef class Graph(_AbsGraph):
     cdef cdefs.Graph* _obj
-    cdef readonly int num_vertices
-    cdef readonly bool directed
+    cdef int _num_vertices
+    cdef bool _directed
 
 
 cdef class _AbsGrid(_AbsGraph):
