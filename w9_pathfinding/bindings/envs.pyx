@@ -133,6 +133,13 @@ cdef class _Grid3DMapper(_NodeMapper):
 
 
 cdef class _AbsGraph:
+    """
+    Abstract base class for all graph and grid structures.
+
+    This class defines the core interface and behaviors expected of any
+    graph representation used in the pathfinding engine, including neighbor
+    access, cost calculations, and edge collision handling.
+    """
 
     def __cinit__(self):
         pass
@@ -142,43 +149,169 @@ cdef class _AbsGraph:
             self.edge_collision = edge_collision
 
     @property
-    def size(self):
+    def size(self) -> int:
+        """
+        Total number of nodes in the graph.
+
+        Returns
+        -------
+        int
+            Number of nodes.
+        """
         return self._baseobj.size()
 
-    def contains(self, node):
+    def contains(self, node) -> bool:
+        """
+        Check if the graph contains a given node.
+
+        Parameters
+        ----------
+        node
+            The node to check.
+
+        Returns
+        -------
+        bool
+            True if the node is in the graph, False otherwise.
+        """
         return self._node_mapper.contains(node)
 
-    def calculate_cost(self, path):
+    def calculate_cost(self, path) -> double:
+        """
+        Calculate the total cost of a given path through the graph.
+
+        If the path is invalid (e.g. contains non-adjacent nodes), this will return `-1`.
+
+        Parameters
+        ----------
+        path : iterable of nodes
+            A sequence of nodes representing the path to evaluate.
+
+        Returns
+        -------
+        float
+            Total cost of traversing the path, or -1 if the path is invalid.
+
+        Raises
+        ------
+        ValueError
+            If one of the nodes in the path is not present in the graph.
+        """
         cdef vector[int] nodes = self._node_mapper.to_ids(path)
         if not self._baseobj.is_valid_path(nodes):
             return -1
         return self._baseobj.calculate_cost(nodes)
 
-    def is_valid_path(self, path):
+    def is_valid_path(self, path) -> bool:
+        """
+        Check if a given path is valid within the graph.
+
+        Parameters
+        ----------
+        path : iterable of nodes
+            A sequence of nodes representing the path
+
+        Returns
+        -------
+        bool
+            True if the path is valid, False otherwise.
+
+        Raises
+        ------
+        ValueError
+            If one of the nodes in the path is not present in the graph.
+        """
         cdef vector[int] nodes = self._node_mapper.to_ids(path)
         return self._baseobj.is_valid_path(nodes)
 
-    def get_neighbors(self, node, include_self=False):
-        # return [[neighbour_id, cost], ...]
+    def get_neighbors(self, node, include_self=False) -> list:
+        """
+        Get neighboring nodes of a given node, along with the cost of moving to each.
+
+        Each neighbor is returned as a tuple of `(neighbor_node, cost)`.
+        For example: `[(n1, 1.0), (n2, 2.5)]`
+
+        Parameters
+        ----------
+        node
+            The target node.
+
+        include_self : bool, default False
+            Whether to include the node itself in the results.
+
+        Returns
+        -------
+        List[Tuple[node, float]]
+            List of neighbors with movement costs.
+
+        Raises
+        ------
+        ValueError
+            If the node is not present in the graph.
+        """
         map = self._node_mapper
         node_id = map.to_id(node)
         neighbors = self._baseobj.get_neighbors(node_id, False, include_self)
         return [(map.from_id(node_id), weight) for node_id, weight in neighbors]
 
-    def adjacent(self, v1, v2):
+    def adjacent(self, v1, v2) -> bool:
+        """
+        Check whether two nodes are directly connected.
+
+        Parameters
+        ----------
+        v1 : node
+            First node.
+        v2 : node
+            Second node.
+
+        Returns
+        -------
+        bool
+            True if there is a direct edge from `v1` to `v2`.
+
+        Raises
+        ------
+        ValueError
+            If either `v1` or `v2` is not present in the graph.
+        """
         v1 = self._node_mapper.to_id(v1)
         v2 = self._node_mapper.to_id(v2)
         return self._baseobj.adjacent(v1, v2)
 
     @property
-    def edge_collision(self):
+    def edge_collision(self) -> bool:
+        """
+        Whether edge collision checks are enabled.
+
+        Returns
+        -------
+        bool
+            True if edge collisions are checked.
+        """
         return self._baseobj.edge_collision()
 
     @edge_collision.setter
     def edge_collision(self, bool b):
+        """
+        Enable or disable edge collision checking.
+
+        Parameters
+        ----------
+        b : bool
+            True to enable, False to disable.
+        """
         self._baseobj.set_edge_collision(b)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """
+        Convert graph settings to a serializable dictionary.
+
+        Returns
+        -------
+        dict
+            Dictionary of graph configuration options.
+        """
         return {"edge_collision": self.edge_collision}
 
     def __copy__(self):
@@ -193,6 +326,47 @@ def _construct(cls, kw):
 
 
 cdef class Graph(_AbsGraph):
+    """
+    A basic graph implementation with optional coordinates and edge support.
+
+    This class supports both directed and undirected graphs. Nodes can be
+    optionally associated with coordinates.
+
+    Parameters
+    ----------
+    num_vertices : int
+        The number of vertices (nodes) in the graph.
+
+    directed : bool, default True
+        Whether the graph is directed (`True`) or undirected (`False`).
+
+    edges : iterable of tuple, optional
+        Initial edges to populate the graph. Each edge can be either:
+
+        - (from_node, to_node)
+        - (from_node, to_node, weight)
+
+        If the weight is omitted, it defaults to 1.0.
+
+    coordinates : list of list of float, optional
+        A list of coordinates for each node. Coordinates can be in 2D, 3D, or higher dimensions.
+        Used to enable distance-based heuristics (e.g. Euclidean distance) in A*-like pathfinding algorithms.
+        If not provided, heuristic-based algorithms that depend on node positions will not function.
+
+    edge_collision : bool, default False
+        Whether to enable edge collision checks.
+        If set to `True`, prevents two agents from using the same edge simultaneously,
+        even if they are moving in opposite directions.
+        This helps avoid edge conflicts (e.g. node swapping) in multi-agent pathfinding scenarios.
+
+
+    Example
+    -------
+    Create a directed graph with 3 nodes and 2 edges (0 → 1 → 2):
+
+    >>>  graph = Graph(3, edges=[(0, 1), (1, 2)])
+
+    """
 
     def __cinit__(
         self,
@@ -205,9 +379,9 @@ cdef class Graph(_AbsGraph):
     ):
         self._obj = new cdefs.Graph(num_vertices, directed)
         self._baseobj = self._obj
-        self.num_vertices = num_vertices
-        self.directed = directed
-        self._node_mapper = _SimpleMapper(self.num_vertices)
+        self._num_vertices = num_vertices
+        self._directed = directed
+        self._node_mapper = _SimpleMapper(self._num_vertices)
         if coordinates is not None:
             self.set_coordinates(coordinates)
         if edges is not None:
@@ -220,7 +394,51 @@ cdef class Graph(_AbsGraph):
     def __repr__(self):
         return f"Graph(num_vertices={self.num_vertices}, num_edges={self.num_edges})"
 
+    @property
+    def num_vertices(self) -> int:
+        """
+        Total number of vertices in the graph. Equivalent to calling the `size` property.
+
+        Returns
+        -------
+        int
+            Number of vertices (nodes).
+        """
+        return self._num_vertices
+
+    @property
+    def directed(self) -> bool:
+        """
+        Whether the graph is directed.
+
+        Returns
+        -------
+        bool
+            True if the graph is directed.
+        """
+        return self._directed
+
     def set_coordinates(self, vector[vector[double]] coordinates):
+        """
+        Set spatial coordinates for each node in the graph.
+
+        Each coordinate defines the position of a node in space and enables
+        distance-based heuristics (e.g. Euclidean distance) in A*-like algorithms.
+
+        Parameters
+        ----------
+        coordinates : list of list of float
+            A list of coordinates, one per node. All coordinates must have the
+            same number of dimensions (e.g. 2D, 3D, etc.).
+
+        Raises
+        ------
+        ValueError
+            If the number of coordinates does not match the number of vertices.
+
+        ValueError
+            If coordinates have inconsistent dimensionality (e.g. some are 2D, others 3D).
+        """
         if (len(coordinates) != self.num_vertices):
             raise ValueError(
                 "Number of elements must be equal to the number of vertices"
@@ -240,22 +458,71 @@ cdef class Graph(_AbsGraph):
 
         self._obj.set_coordinates(coordinates)
 
-    def has_coordinates(self):
+    def has_coordinates(self) -> bool:
+        """
+        Check whether node coordinates are defined.
+
+        Returns
+        -------
+        bool
+            True if coordinates have been set.
+        """
         return self._obj.has_coordinates()
 
-    def estimate_distance(self, int v1, int v2):
+    def estimate_distance(self, int v1, int v2) -> double:
+        """
+        Estimate the geometric (Euclidean) distance between two nodes.
+
+        Requires that node coordinates are set using `set_coordinates()` beforehand.
+        If coordinates are not available, a `RuntimeError` is raised.
+
+        Parameters
+        ----------
+        v1 : int
+            ID of the first node.
+        v2 : int
+            ID of the second node.
+
+        Returns
+        -------
+        float
+            Euclidean distance between the two nodes.
+
+        Raises
+        ------
+        RuntimeError
+            If coordinates have not been set.
+        ValueError
+            If one of the nodes is not present in the graph.
+        """
         if not self.has_coordinates():
-            return
+            raise RuntimeError("estimate_distance requires node coordinates to be set")
         v1 = self._node_mapper.to_id(v1)
         v2 = self._node_mapper.to_id(v2)
         return self._obj.estimate_distance(v1, v2)
 
     @property
-    def num_edges(self):
+    def num_edges(self) -> int:
+        """
+        Number of edges in the graph.
+
+        Returns
+        -------
+        int
+            Total edge count.
+        """
         return self._obj.num_edges()
 
     @property
     def edges(self):
+        """
+        Get all edges in the graph.
+
+        Returns
+        -------
+        List[Tuple[int, int, float]]
+            List of edges as (from, to, weight).
+        """
         map = self._node_mapper
         data = []
         for (start, end, cost) in self._obj.get_edges():
@@ -264,11 +531,36 @@ cdef class Graph(_AbsGraph):
 
     @property
     def coordinates(self):
+        """
+        Get the coordinates of all nodes in the graph.
+
+        Returns
+        -------
+        List[List[float]] or None
+            A list of coordinate vectors, one per node,
+            or `None` if coordinates have not been set.
+        """
         if not self.has_coordinates():
             return None
         return self._obj.get_coordinates()
 
     def add_edges(self, edges):
+        """
+        Add multiple edges to the graph.
+
+        Each edge can be a 2-tuple `(from_node, to_node)` or a 3-tuple
+        `(from_node, to_node, weight)`. If weight is omitted, a default of `1.0` is used.
+
+        Parameters
+        ----------
+        edges : Iterable[Tuple[int, int] or Tuple[int, int, float]]
+            Iterable of edges to add.
+
+        Raises
+        ------
+        ValueError
+            If an edge contains a node not present in the graph.
+        """
         map = self._node_mapper
         starts, ends, costs = [], [], []
         for edge in edges:
@@ -287,6 +579,20 @@ cdef class Graph(_AbsGraph):
         self._obj.add_edges(starts, ends, costs)
 
     def reverse(self, *, bool inplace=False):
+        """
+        Reverse the direction of all edges.
+
+        Parameters
+        ----------
+        inplace : bool, default False
+            If True, modify the graph in-place; otherwise return a new reversed graph.
+
+        Returns
+        -------
+        Graph or None
+            Reversed graph if not in-place; otherwise None.
+        """
+
         if inplace:
             self._obj.reverse_inplace()
             return
@@ -298,19 +604,52 @@ cdef class Graph(_AbsGraph):
         return reversed_graph
 
     def find_components(self):
+        """
+        Find connected components (only for undirected graphs).
+
+        Returns
+        -------
+        List[List[int]]
+            List of components, each as a list of nodes.
+
+        Raises
+        ------
+        ValueError
+            If called on a directed graph.
+        """
         if self.directed:
             raise ValueError("find_components only works for an undirected graph")
         return self._obj.find_components()
 
     def find_scc(self):
-        # find the strongly connected components of a directed graph
+        """
+        Find strongly connected components (only for directed graphs).
+
+        Returns
+        -------
+        List[List[int]]
+            List of strongly connected components.
+
+        Raises
+        ------
+        ValueError
+            If called on an undirected graph.
+        """
         if not self.directed:
             raise ValueError("find_scc only works for a directed graph")
 
         return self._obj.find_scc()
 
     @property
-    def edge_collision(self):
+    def edge_collision(self) -> bool:
+        """
+        Whether edge collision checks are enabled.
+
+        Returns
+        -------
+        bool
+            True if edge collisions are checked.
+        """
         return self._baseobj.edge_collision()
 
     @edge_collision.setter

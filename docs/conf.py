@@ -26,6 +26,7 @@ extensions = [
     "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx_copybutton",
 ]
 
 source_suffix = {
@@ -54,3 +55,7 @@ autodoc_default_options = {
     "inherited-members": True,
     "undoc-members": True,
 }
+
+# copybutton
+copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_is_regexp = True
