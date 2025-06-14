@@ -8,7 +8,7 @@ W9-Pathfinding is a versatile pathfinding library written in C++ with a Python i
 ### Key Features:
 
 - Pathfinding Algorithms: Implements classical algorithms like BFS, Dijkstra, and A*, as well as multi-agent pathfinding algorithms like CBS and ICTS.
-- Multiple Map Types: Works with different map structures, including Graphs (directed and undirected), Grids (4-connected and 8-connected), Hexagonal Grids (pointy top and flat top), and 3D Grids.
+- Multiple Map Types: Works with different map structures, including Graphs (directed and undirected), Grids (2D and 3D), Hexagonal Grids (pointy top and flat top).
 - Weighted and Unweighted Maps: Supports both weighted and non-weighted maps (graphs and grids).
 - Pathfinding with Dynamic Obstacles: Allows pathfinding in environments where some agents are dynamic obstacles—you know their paths but cannot control them. It computes optimal paths for the remaining agents while avoiding collisions with both dynamic obstacles and each other.
 
