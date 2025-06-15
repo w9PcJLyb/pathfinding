@@ -150,7 +150,9 @@ cdef class _AbsGraph:
 
     @property
     def size(self) -> int:
-        """Total number of nodes in the graph."""
+        """
+        Total number of nodes in the graph.
+        """
         return self._baseobj.size()
 
     def contains(self, node) -> bool:
@@ -274,7 +276,9 @@ cdef class _AbsGraph:
 
     @property
     def edge_collision(self) -> bool:
-        """Whether edge collision checks are enabled."""
+        """
+        Whether edge collision checks are enabled.
+        """
         return self._baseobj.edge_collision()
 
     @edge_collision.setter
@@ -380,12 +384,16 @@ cdef class Graph(_AbsGraph):
 
     @property
     def num_vertices(self) -> int:
-        """Number of vertices in the graph. Equivalent to the `size` property."""
+        """
+        Number of vertices in the graph. Equivalent to the `size` property.
+        """
         return self._obj.size()
 
     @property
     def directed(self) -> bool:
-        """Whether the graph is directed."""
+        """
+        Whether the graph is directed.
+        """
         return self._obj.is_directed_graph()
 
     def set_coordinates(self, vector[vector[double]] coordinates):
@@ -473,7 +481,9 @@ cdef class Graph(_AbsGraph):
 
     @property
     def num_edges(self) -> int:
-        """Number of edges in the graph."""
+        """
+        Number of edges in the graph.
+        """
         return self._obj.num_edges()
 
     @property
@@ -605,7 +615,9 @@ cdef class Graph(_AbsGraph):
 
     @property
     def edge_collision(self) -> bool:
-        """Whether edge collision checks are enabled."""
+        """
+        Whether edge collision checks are enabled.
+        """
         return self._baseobj.edge_collision()
 
     @edge_collision.setter
@@ -799,11 +811,6 @@ cdef class _AbsGrid(_AbsGraph):
         """
         A grid-shaped array representing movement cost to enter each node.
 
-        Returns
-        -------
-        array-like
-            Weights
-
         Notes
         -----
         This is a read-only snapshot of internal weights; modifying it won't change the grid.
@@ -865,11 +872,6 @@ cdef class _AbsGrid(_AbsGraph):
     def pause_weights(self):
         """
         A grid-shaped array representing the cost of pausing (waiting in place) at each node
-
-        Returns
-        -------
-        array-like
-            Pause weights
 
         Notes
         -----
@@ -1193,17 +1195,23 @@ cdef class Grid(_AbsGrid):
 
     @property
     def width(self) -> int:
-        """Number of columns in the grid."""
+        """
+        Number of columns in the grid.
+        """
         return self._obj.width
 
     @property
     def height(self) -> int:
-        """Number of rows in the grid."""
+        """
+        Number of rows in the grid.
+        """
         return self._obj.height
 
     @property
     def shape(self):
-        """Shape of the grid, (height, width)."""
+        """
+        Shape of the grid, (height, width).
+        """
         return self.height, self.width
 
     @property
@@ -1238,7 +1246,9 @@ cdef class Grid(_AbsGrid):
 
     @property
     def passable_left_right_border(self) -> bool:
-        """Whether the grid wraps horizontally (left/right edges connect)."""
+        """
+        Whether the grid wraps horizontally (left/right edges connect).
+        """
         return self._obj.passable_left_right_border
 
     @passable_left_right_border.setter
@@ -1255,7 +1265,9 @@ cdef class Grid(_AbsGrid):
 
     @property
     def passable_up_down_border(self) -> bool:
-        """Whether the grid wraps vertically (top/bottom edges connect)."""
+        """
+        Whether the grid wraps vertically (top/bottom edges connect).
+        """
         return self._obj.passable_up_down_border
 
     @passable_up_down_border.setter
@@ -1272,7 +1284,9 @@ cdef class Grid(_AbsGrid):
 
     @property
     def diagonal_movement_cost_multiplier(self) -> double:
-        """Multiplier applied to the cost of diagonal movement."""
+        """
+        Multiplier applied to the cost of diagonal movement.
+        """
         return self._obj.diagonal_movement_cost_multiplier
 
     @diagonal_movement_cost_multiplier.setter
@@ -1363,6 +1377,65 @@ cdef class Grid(_AbsGrid):
 
 
 cdef class Grid3D(_AbsGrid):
+    """
+    A 3D grid environment for pathfinding with support for obstacles, weighted traversal,
+    and edge-wrapping.
+
+    The grid can be initialized either with an explicit size (width, height and depth) or from
+    a nested list of weights.
+
+    Each cell in the grid represents a node, which may have:
+    - a movement cost (`weights`),
+    - a pause cost (`pause_weights`),
+    - an obstacle status (using weight -1).
+
+    Parameters
+    ----------
+    weights : nested list of float, optional
+        A grid-shaped array representing movement cost to enter each node.
+        Each value must be a non-negative float or exactly `-1`.
+
+        - A positive value indicates the movement cost for that node.
+        - A value of `-1` marks the node as an obstacle (impassable).
+
+    width : int, optional
+        Width of the grid (X-axis). Required if `weights` is not provided.
+
+    height : int, optional
+        Height of the grid (Y-axis). Required if `weights` is not provided.
+
+    depth : int, optional
+        Depth of the grid (Z-axis). Required if `weights` is not provided.
+
+    passable_borders : bool, default False
+        Whether the grid allows wraparound movement across opposite borders (along any axis).
+
+    pause_weights : nested list of float, optional
+        A grid-shaped array representing the cost of pausing (waiting in place) at each node.
+        Each value must be a non-negative float or exactly `-1`.
+
+        - A non-negative value indicates the cost to pause at that node.
+        - A value of `-1` means pausing is not allowed at that node.
+
+    edge_collision : bool, default False
+        Whether to enable edge collision checks.
+        If set to `True`, prevents two agents from using the same edge simultaneously,
+        even if they are moving in opposite directions.
+        This helps avoid edge conflicts (e.g. node swapping) in multi-agent pathfinding scenarios.
+
+    Examples
+    --------
+    Create a 3x3x3 grid with one obstacle in the middle:
+
+    >>> grid = Grid3D(width=3, height=3, depth=3)  # all weights will default to 1.0
+    >>> grid.add_obstacle((1, 1, 1))
+
+    Create a 3x4x5 grid with random weights:
+
+    >>> import numpy as np
+    >>> grid = Grid3D(np.random.random(size=(3,4,5)))
+
+    """
 
     def __cinit__(
         self,
@@ -1410,30 +1483,49 @@ cdef class Grid3D(_AbsGrid):
 
     @property
     def width(self) -> int:
+        """
+        The number of columns in the grid (X-axis).
+        """
         return self._obj.width
 
     @property
     def height(self) -> int:
+        """
+        The number of rows in the grid (Y-axis).
+        """
         return self._obj.height
 
     @property
     def depth(self) -> int:
+        """
+        The number of layers (or slices) in the grid (Z-axis).
+        """
         return self._obj.depth
 
     @property
-    def diagonal_movement(self):
-        return 0
-
-    @property
-    def passable_borders(self):
+    def passable_borders(self) -> bool:
+        """
+        Whether the grid allows wraparound movement across opposite borders (along any axis).
+        """
         return self._obj.passable_borders
 
     @passable_borders.setter
     def passable_borders(self, bool _b):
+        """
+        Enable or disable wraparound movement across opposite borders.
+
+        Parameters
+        ----------
+        _b : bool
+            Whether to allow movement across opposite borders.
+        """
         self._obj.passable_borders = _b
 
     @property
     def shape(self):
+        """
+        Shape of the grid, (depth, height, width).
+        """
         return self.depth, self.height, self.width
 
     def to_dict(self):
@@ -1497,28 +1589,40 @@ cdef class HexGrid(_AbsGrid):
 
     @property
     def width(self) -> int:
+        """
+        Number of columns in the grid.
+        """
         return self._obj.width
 
     @property
     def height(self) -> int:
+        """
+        Number of rows in the grid.
+        """
         return self._obj.height
 
     @property
     def shape(self):
+        """
+        Shape of the grid, (height, width).
+        """
         return self.height, self.width
 
     @property
     def layout(self):
         return HexLayout(self._obj.layout)
 
-    def is_flat_top_layout(self):
+    def is_flat_top_layout(self) -> bool:
         return self.layout.is_flat_top()
 
-    def is_pointy_top_layout(self):
+    def is_pointy_top_layout(self) -> bool:
         return self.layout.is_pointy_top()
 
     @property
-    def passable_left_right_border(self):
+    def passable_left_right_border(self) -> bool:
+        """
+        Whether the grid wraps horizontally (left/right edges connect).
+        """
         return self._obj.passable_left_right_border
 
     @passable_left_right_border.setter
@@ -1531,7 +1635,10 @@ cdef class HexGrid(_AbsGrid):
         self._obj.passable_left_right_border = _b
 
     @property
-    def passable_up_down_border(self):
+    def passable_up_down_border(self) -> bool:
+        """
+        Whether the grid wraps vertically (top/bottom edges connect).
+        """
         return self._obj.passable_up_down_border
 
     @passable_up_down_border.setter
