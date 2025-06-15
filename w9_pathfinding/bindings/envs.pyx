@@ -669,6 +669,37 @@ cdef class Graph(_AbsGraph):
 
 
 cdef class _AbsGrid(_AbsGraph):
+    """
+    Abstract base class for grid-based environments.
+
+    This class defines the core interface for grid representations,
+    including support for obstacles, variable traversal costs, and pausing logic.
+    It does not implement the dimensionality or layout of the grid itself —
+    those are handled by concrete subclasses (e.g., 2D or 3D grids).
+
+    Attributes
+    ----------
+    shape : tuple of int
+        The dimensions of the grid.
+        All grid-related data structures (such as `weights` and `pause_weights`)
+        must conform to this shape.
+
+    weights : nested list of float
+        A grid-shaped array representing movement cost to enter each node.
+        Each value must be a non-negative float or exactly `-1`.
+
+        - A positive value indicates the movement cost for that node.
+        - A value of `-1` marks the node as an obstacle (impassable).
+
+        For example, moving from `(0, 0)` to `(1, 0)` incurs the cost `weights[1][0]`.
+
+    pause_weights : nested list of float
+        A grid-shaped array representing the cost of pausing (waiting in place) at each node.
+        Each value must be a non-negative float or exactly `-1`.
+
+        - A non-negative value indicates the cost to pause at that node.
+        - A value of `-1` means pausing is not allowed at that node.
+    """
 
     def _base_init(self, pause_weights=None, **kwargs):
         if pause_weights is not None:
@@ -677,33 +708,130 @@ cdef class _AbsGrid(_AbsGraph):
 
     @property
     def shape(self):
+        """
+        Shape of the grid as a tuple of dimensions.
+
+        Returns
+        -------
+        tuple of int
+            Grid dimensions. For a 2D grid, should returns (width, height);
+            for a 3D grid - (width, height, depth), and so on.
+        """
         raise NotImplementedError()
 
     def __repr__(self):
         shape_str = "x".join([str(x) for x in self.shape])
         return f"{self.__class__.__name__}({shape_str})"
 
-    def has_obstacle(self, point):
-        node_id = self._node_mapper.to_id(point)
+    def has_obstacle(self, node) -> bool:
+        """
+        Check whether the specified node is marked as an obstacle.
+
+        Parameters
+        ----------
+        node : tuple of int
+            The grid coordinate to check.
+
+        Returns
+        -------
+        bool
+            True if the node is an obstacle; False otherwise.
+
+        Raises
+        ------
+        ValueError
+            If the node is outside the bounds of the grid.
+        """
+        node_id = self._node_mapper.to_id(node)
         return self._basegridobj.has_obstacle(node_id)
 
-    def add_obstacle(self, point):
-        node_id = self._node_mapper.to_id(point)
+    def add_obstacle(self, node):
+        """
+        Mark the specified node as an obstacle.
+
+        Parameters
+        ----------
+        node : tuple of int
+            The coordinate to mark as an obstacle.
+
+        Raises
+        ------
+        ValueError
+            If the node is outside the bounds of the grid.
+        """
+        node_id = self._node_mapper.to_id(node)
         self._basegridobj.add_obstacle(node_id)
 
-    def remove_obstacle(self, point):
-        node_id = self._node_mapper.to_id(point)
-        self._basegridobj.remove_obstacle(node_id)
+    def remove_obstacle(self, node):
+        """
+        Remove the obstacle status from the specified node.
 
-    def update_weight(self, point, new_value):
-        node_id = self._node_mapper.to_id(point)
+        Parameters
+        ----------
+        node : tuple of int
+            The coordinate to unmark as an obstacle.
+
+        Raises
+        ------
+        ValueError
+            If the node is outside the bounds of the grid.
+        """
+        if self.has_obstacle(node):
+            node_id = self._node_mapper.to_id(node)
+            self._basegridobj.remove_obstacle(node_id)
+
+    def update_weight(self, node, new_value):
+        """
+        Update the movement cost (weight) of a specific node in the grid.
+
+        Parameters
+        ----------
+        node : tuple of int
+            The coordinate whose weight should be updated.
+        new_value : float
+            The new cost value for moving into this node.
+
+        Raises
+        ------
+        ValueError
+            If the node is outside the bounds of the grid
+        ValueError
+            If `new_value` is negative and not equal to -1.
+        """
+        node_id = self._node_mapper.to_id(node)
         self._basegridobj.update_weight(node_id, new_value)
 
-    def get_weight(self, point):
-        node_id = self._node_mapper.to_id(point)
+    def get_weight(self, node) -> double:
+        """
+        Get the movement cost to enter a node in the grid.
+
+        Parameters
+        ----------
+        node : tuple of int
+            The coordinate to query.
+
+        Returns
+        -------
+        float
+            The movement cost to enter the specified node.
+
+        Raises
+        ------
+        ValueError
+            If the node is outside the bounds of the grid.
+        """
+        node_id = self._node_mapper.to_id(node)
         return self._basegridobj.get_weight(node_id)
 
     def find_components(self):
+        """
+        Find connected components.
+
+        Returns
+        -------
+        List[List[node]]
+            List of components, each as a list of nodes.
+        """
         return [
             self._node_mapper.from_ids(component)
             for component in self._baseobj.find_components()
@@ -711,10 +839,39 @@ cdef class _AbsGrid(_AbsGraph):
 
     @property
     def weights(self):
+        """
+        A grid-shaped array representing movement cost to enter each node.
+
+        Returns
+        -------
+        array-like
+            Weights
+
+        Notes
+        -----
+        This is a read-only snapshot of internal weights; modifying it won't change the grid.
+        """
         return self._convert(self._basegridobj.get_weights(), self.shape)
 
     @weights.setter
     def weights(self, data):
+        """
+        Set the movement cost (weight) for each grid node.
+
+        Parameters
+        ----------
+        data : array-like
+            A nested structure (e.g., list of lists) with the same shape
+            as the grid, where each value is the movement cost.
+
+        Raises
+        ------
+        ValueError
+            If the shape does not match the grid's shape,
+            or if the structure is inconsistent (inhomogeneous).
+        ValueError
+            If some value in data is negative and not equal to -1.
+        """
         if self._get_shape(data) != self.shape:
             shape_str = "x".join([str(x) for x in self.shape])
             raise ValueError(f"Weights must have shape {shape_str}")
@@ -725,16 +882,63 @@ cdef class _AbsGrid(_AbsGraph):
 
         self._basegridobj.set_weights(vector)
 
-    def get_pause_weight(self, point):
-        node_id = self._node_mapper.to_id(point)
+    def get_pause_weight(self, node) -> double:
+        """
+        Get the pause cost at a specific node.
+
+        Parameters
+        ----------
+        node : tuple of int
+            The coordinate to query.
+
+        Returns
+        -------
+        float
+            The cost of remaining at the specified node.
+
+        Raises
+        ------
+        ValueError
+            If the node is outside the bounds of the grid.
+        """
+        node_id = self._node_mapper.to_id(node)
         return self._basegridobj.get_pause_weight(node_id)
 
     @property
     def pause_weights(self):
+        """
+        A grid-shaped array representing the cost of pausing (waiting in place) at each node
+
+        Returns
+        -------
+        array-like
+            Pause weights
+
+        Notes
+        -----
+        This is a read-only snapshot of internal weights; modifying it won't change the grid.
+        """
         return self._convert(self._basegridobj.get_pause_weights(), self.shape)
 
     @pause_weights.setter
     def pause_weights(self, data):
+        """
+        Set the cost of staying in place at each node.
+
+        Parameters
+        ----------
+        data : array-like or float
+            - A single float: applies the same pause weight to all nodes.
+            - A nested structure (e.g., list of lists): must match the grid's shape.
+
+        Raises
+        ------
+        ValueError
+            If a nested structure is provided and its shape does not match
+            the grid, or if the structure is inconsistent (inhomogeneous).
+        ValueError
+            If some value in data is negative and not equal to -1.
+        """
         if not hasattr(data, '__iter__'):
             self._basegridobj.set_pause_weight(data)
             return
@@ -751,12 +955,46 @@ cdef class _AbsGrid(_AbsGraph):
 
     @property
     def obstacle_map(self):
+        """
+        Get a binary map of obstacles in the grid.
+
+        Returns
+        -------
+        array-like
+            A grid-shaped nested structure where each cell contains:
+
+            - `1` if the corresponding node is an obstacle (weight = -1)
+            - `0` otherwise
+        """
         weights = self._basegridobj.get_weights()
         weights = [int(w == -1) for w in weights]
         return self._convert(weights, self.shape)
 
     @staticmethod
     def _get_shape(data):
+        """
+        Find the shape of a nested list-like structure and ensure it is well-formed.
+
+        Parameters
+        ----------
+        data : array-like
+            A nested list-like structure.
+
+        Returns
+        -------
+        tuple of int
+            The shape of the structure as a tuple.
+
+        Raises
+        ------
+        ValueError
+            If the nested structure is inhomogeneous.
+
+        Examples
+        --------
+        >>> _AbsGrid._get_shape([[1, 2, 3], [3, 4, 5]])
+        (2, 3)
+        """
         shape = []
         d = data
         while hasattr(d, "__len__"):
@@ -786,6 +1024,42 @@ cdef class _AbsGrid(_AbsGraph):
 
     @staticmethod
     def _convert(data, shape=None):
+        """
+        Convert between flat and nested representations of grid weights.
+
+        - If `shape` is None, flattens a nested structure into a 1D list.
+        - If `shape` is provided, reshapes a flat list into a nested structure
+        matching that shape.
+
+        Parameters
+        ----------
+        data : array-like
+            Either a nested structure (to flatten), or a flat list (to reshape).
+
+        shape : tuple of int, optional
+            If given, defines the target shape for reshaping. Otherwise,
+            data is assumed to be a nested structure to flatten.
+
+        Returns
+        -------
+        list
+            - A flat list of values if `shape` is None.
+            - A nested list matching `shape` if `shape` is provided.
+
+        Raises
+        ------
+        ValueError
+            If reshaping is requested but the total number of elements in `data`
+            does not match the requested shape.
+
+        Examples
+        --------
+        >>> _AbsGrid._convert([[1, 2], [3, 4]])
+        [1, 2, 3, 4]
+
+        >>> _AbsGrid_convert([1, 2, 3, 4, 5, 6], shape=(2, 3))
+        [[1, 2, 3], [4, 5, 6]]
+        """
         if shape is None:
             # matrix -> vector
             vector = []
@@ -831,6 +1105,71 @@ cdef class _AbsGrid(_AbsGraph):
 
 
 cdef class Grid(_AbsGrid):
+    """
+    2D grid environment for pathfinding.
+
+    Parameters
+    ----------
+    weights : nested list of float, optional
+        A grid-shaped array representing movement cost to enter each node.
+        Each value must be a non-negative float or exactly `-1`.
+
+        - A positive value indicates the movement cost for that node.
+        - A value of `-1` marks the node as an obstacle (impassable).
+
+    width : int, optional
+        Width of the grid. Required if `weights` is not provided.
+
+    height : int, optional
+        Height of the grid. Required if `weights` is not provided.
+
+    diagonal_movement : int, default 0
+        Indicates whether diagonal movement is allowed.
+        Uses values from the `DiagonalMovement` enum.
+
+    passable_left_right_border : bool, default False
+        Whether the grid wraps horizontally (left/right edges connect).
+
+    passable_up_down_border : bool, default False
+        Whether the grid wraps vertically (top/bottom edges connect).
+
+    diagonal_movement_cost_multiplier : float, default 1.0
+        A multiplier for diagonal moves. Must be in the range [1.0, 2.0].
+        When diagonal movement is enabled, this value determines how much more expensive
+        diagonal steps are compared to orthogonal ones.
+        This parameter is usually 1.0 or sqrt(2).
+
+    pause_weights : nested list of float, optional
+        A grid-shaped array representing the cost of pausing (waiting in place) at each node.
+        Each value must be a non-negative float or exactly `-1`.
+
+        - A non-negative value indicates the cost to pause at that node.
+        - A value of `-1` means pausing is not allowed at that node.
+
+    edge_collision : bool, default False
+        Whether to enable edge collision checks.
+        If set to `True`, prevents two agents from using the same edge simultaneously,
+        even if they are moving in opposite directions.
+        This helps avoid edge conflicts (e.g. node swapping) in multi-agent pathfinding scenarios.
+
+    Examples
+    --------
+    Create a 3x3 grid with one obstacle in the middle:
+
+    >>> grid = Grid(width=3, height=3)  # all weights will default to 1.0
+    >>> grid.add_obstacle((1, 1))
+
+    Create a 3x3 grid with custom weights:
+
+    >>> grid = Grid(
+    ...     [
+    ...         [1, 2, 3],
+    ...         [0.1, 0.2, 0.3],
+    ...         [-1, -1, -1],  # -1 means obstacles; this row is impassable
+    ...     ]
+    ... )
+
+    """
 
     def __cinit__(
         self,
@@ -857,9 +1196,9 @@ cdef class Grid(_AbsGrid):
         if height <= 0:
             raise ValueError("Height must be greater than zero.")
 
-        self.width = width
-        self.height = height
-        self._node_mapper = _Grid2DMapper(self.width, self.height)
+        self._width = width
+        self._height = height
+        self._node_mapper = _Grid2DMapper(width, height)
 
         if weights is None:
             self._obj = new cdefs.Grid(width, height)
@@ -890,45 +1229,169 @@ cdef class Grid(_AbsGrid):
         self._basegridobj = NULL
 
     @property
+    def width(self) -> int:
+        """
+        The number of columns in the grid.
+
+        Returns
+        -------
+        int
+            Grid width.
+        """
+        return self._width
+
+    @property
+    def height(self) -> int:
+        """
+        The number of rows in the grid.
+
+        Returns
+        -------
+        int
+            Grid height.
+        """
+        return self._height
+
+    @property
     def shape(self):
+        """
+        Shape of the grid.
+
+        Returns
+        -------
+        tuple of int
+            (height, width)
+        """
         return self.height, self.width
 
     @property
     def diagonal_movement(self):
+        """
+        Diagonal movement policy.
+
+        Returns
+        -------
+        DiagonalMovement
+            Enum value representing how diagonal movement is handled.
+        """
         return DiagonalMovement(self._obj.get_diagonal_movement())
 
     @diagonal_movement.setter
     def diagonal_movement(self, int _x):
+        """
+        Set the diagonal movement policy.
+
+        Parameters
+        ----------
+        _x : int or DiagonalMovement
+            An integer corresponding to a `DiagonalMovement` enum value.
+
+        Raises
+        ------
+        ValueError
+            If `_x` is not a valid `DiagonalMovement` enum member.
+        """
         diagonal_movement = DiagonalMovement(_x)
         self._obj.set_diagonal_movement(diagonal_movement)
 
     @property
-    def passable_left_right_border(self):
+    def passable_left_right_border(self) -> bool:
+        """
+        Whether the left and right edges of the grid are connected.
+
+        Returns
+        -------
+        bool
+            True if movement is allowed from the left edge to the right edge and vice versa.
+        """
         return self._obj.passable_left_right_border
 
     @passable_left_right_border.setter
     def passable_left_right_border(self, bool _b):
+        """
+        Enable or disable horizontal wrapping at the left/right borders.
+
+        Parameters
+        ----------
+        _b : bool
+            Whether to allow movement across the left/right grid borders.
+        """
         self._obj.passable_left_right_border = _b
 
     @property
-    def passable_up_down_border(self):
+    def passable_up_down_border(self) -> bool:
+        """
+        Whether the top and bottom edges of the grid are connected.
+
+        Returns
+        -------
+        bool
+            True if movement is allowed from the top edge to the bottom edge and vice versa.
+        """
         return self._obj.passable_up_down_border
 
     @passable_up_down_border.setter
     def passable_up_down_border(self, bool _b):
+        """
+        Enable or disable vertical wrapping at the top/bottom borders.
+
+        Parameters
+        ----------
+        _b : bool
+            Whether to allow movement across the top/bottom grid borders.
+        """
         self._obj.passable_up_down_border = _b
 
     @property
-    def diagonal_movement_cost_multiplier(self):
+    def diagonal_movement_cost_multiplier(self) -> double:
+        """
+        Multiplier applied to the cost of diagonal movement.
+
+        Returns
+        -------
+        float
+            A float in the range [1.0, 2.0] representing the cost multiplier for diagonal steps.
+        """
         return self._obj.diagonal_movement_cost_multiplier
 
     @diagonal_movement_cost_multiplier.setter
     def diagonal_movement_cost_multiplier(self, double m):
+        """
+        Set the multiplier for diagonal movement cost.
+
+        Parameters
+        ----------
+        m : float
+            Must be between 1.0 and 2.0. A value of 1.0 treats diagonal movement as equal cost,
+            while 2.0 makes it twice as expensive.
+
+        Raises
+        ------
+        ValueError
+            If `m` is not in the range [1.0, 2.0].
+        """
         if not 1 <= m <= 2:
             raise ValueError("diagonal_movement_cost_multiplier must be in range [1, 2].")
         self._obj.diagonal_movement_cost_multiplier = m
 
     def show_path(self, path):
+        """
+        Print a visual representation of the grid with a path overlay.
+
+        The grid is printed to the console with symbols indicating path-related features:
+
+        - `s`: Start node (first in `path`)
+        - `e`: End node (last in `path`)
+        - `x`: Intermediate nodes on the path
+        - `#`: Obstacles (impassable cells)
+        - ` ` (space): Free cells
+
+        Parameters
+        ----------
+        path : list of tuple[int, int] or None
+            A sequence of nodes representing a valid path. If `None`, only the grid is shown
+            without any path annotations.
+        """
         if path:
             start = path[0]
             end = path[-1]
@@ -959,6 +1422,11 @@ cdef class Grid(_AbsGrid):
         print(str_grid)
 
     def show(self):
+        """
+        Print a plain visual representation of the grid.
+
+        Same as `show_path(None)` — shows only the obstacle layout.
+        """
         self.show_path(None)
 
     def to_dict(self):

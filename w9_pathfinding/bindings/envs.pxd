@@ -25,7 +25,7 @@ cdef class _AbsGrid(_AbsGraph):
 
 cdef class Grid(_AbsGrid):
     cdef cdefs.Grid* _obj
-    cdef readonly int width, height
+    cdef readonly int _width, _height
 
 
 cdef class Grid3D(_AbsGrid):
