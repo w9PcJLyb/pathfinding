@@ -379,9 +379,7 @@ cdef class Graph(_AbsGraph):
     ):
         self._obj = new cdefs.Graph(num_vertices, directed)
         self._baseobj = self._obj
-        self._num_vertices = num_vertices
-        self._directed = directed
-        self._node_mapper = _SimpleMapper(self._num_vertices)
+        self._node_mapper = _SimpleMapper(num_vertices)
         if coordinates is not None:
             self.set_coordinates(coordinates)
         if edges is not None:
@@ -404,7 +402,7 @@ cdef class Graph(_AbsGraph):
         int
             Number of vertices (nodes).
         """
-        return self._num_vertices
+        return self._obj.size()
 
     @property
     def directed(self) -> bool:
@@ -416,7 +414,7 @@ cdef class Graph(_AbsGraph):
         bool
             True if the graph is directed.
         """
-        return self._directed
+        return self._obj.is_directed_graph()
 
     def set_coordinates(self, vector[vector[double]] coordinates):
         """
@@ -1196,8 +1194,6 @@ cdef class Grid(_AbsGrid):
         if height <= 0:
             raise ValueError("Height must be greater than zero.")
 
-        self._width = width
-        self._height = height
         self._node_mapper = _Grid2DMapper(width, height)
 
         if weights is None:
@@ -1238,7 +1234,7 @@ cdef class Grid(_AbsGrid):
         int
             Grid width.
         """
-        return self._width
+        return self._obj.width
 
     @property
     def height(self) -> int:
@@ -1250,7 +1246,7 @@ cdef class Grid(_AbsGrid):
         int
             Grid height.
         """
-        return self._height
+        return self._obj.height
 
     @property
     def shape(self):
@@ -1469,10 +1465,7 @@ cdef class Grid3D(_AbsGrid):
         if depth <= 0:
             raise ValueError("Depth must be greater than zero.")
 
-        self.width = width
-        self.height = height
-        self.depth = depth
-        self._node_mapper = _Grid3DMapper(self.width, self.height, self.depth)
+        self._node_mapper = _Grid3DMapper(width, height, depth)
 
         if weights is None:
             self._obj = new cdefs.Grid3D(width, height, depth)
@@ -1489,6 +1482,18 @@ cdef class Grid3D(_AbsGrid):
 
     def __dealloc__(self):
         del self._obj
+
+    @property
+    def width(self) -> int:
+        return self._obj.width
+
+    @property
+    def height(self) -> int:
+        return self._obj.height
+
+    @property
+    def depth(self) -> int:
+        return self._obj.depth
 
     @property
     def diagonal_movement(self):
@@ -1543,10 +1548,8 @@ cdef class HexGrid(_AbsGrid):
         if height <= 0:
             raise ValueError("Height must be greater than zero.")
 
-        self.width = width
-        self.height = height
         layout = HexLayout(layout)
-        self._node_mapper = _Grid2DMapper(self.width, self.height)
+        self._node_mapper = _Grid2DMapper(width, height)
 
         if weights is None:
             self._obj = new cdefs.HexGrid(width, height, layout)
@@ -1566,6 +1569,14 @@ cdef class HexGrid(_AbsGrid):
 
     def __dealloc__(self):
         del self._obj
+
+    @property
+    def width(self) -> int:
+        return self._obj.width
+
+    @property
+    def height(self) -> int:
+        return self._obj.height
 
     @property
     def shape(self):
