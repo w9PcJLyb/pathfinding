@@ -232,7 +232,7 @@ cdef class _AbsGraph:
             The target node.
 
         include_self : bool, default False
-            Whether to include the node itself in the results.
+            Whether to include the node itself if there is an self loop.
 
         Returns
         -------
@@ -1071,11 +1071,6 @@ cdef class Grid(_AbsGrid):
     The grid can be initialized either with an explicit size (width and height) or from
     a nested list of weights.
 
-    Each cell in the grid represents a node, which may have:
-    - a movement cost (`weights`),
-    - a pause cost (`pause_weights`),
-    - an obstacle status (using weight -1).
-
     Parameters
     ----------
     weights : nested list of float, optional
@@ -1384,11 +1379,6 @@ cdef class Grid3D(_AbsGrid):
     The grid can be initialized either with an explicit size (width, height and depth) or from
     a nested list of weights.
 
-    Each cell in the grid represents a node, which may have:
-    - a movement cost (`weights`),
-    - a pause cost (`pause_weights`),
-    - an obstacle status (using weight -1).
-
     Parameters
     ----------
     weights : nested list of float, optional
@@ -1539,7 +1529,72 @@ cdef class Grid3D(_AbsGrid):
 
 
 cdef class HexGrid(_AbsGrid):
-    # Hexagonal Grid
+    """
+    A 2D grid environment with hexagonal tiles with support for obstacles, weighted traversal,
+    edge-wrapping and different hexagonal layouts (flat-topped and pointy-topped).
+
+    The grid can be initialized either with an explicit size (width and height) or from
+    a nested list of weights.
+
+    Parameters
+    ----------
+    weights : nested list of float, optional
+        A grid-shaped array representing movement cost to enter each node.
+        Each value must be a non-negative float or exactly `-1`.
+
+        - A positive value indicates the movement cost for that node.
+        - A value of `-1` marks the node as an obstacle (impassable).
+
+    width : int, optional
+        Width of the grid. Required if `weights` is not provided.
+
+    height : int, optional
+        Height of the grid. Required if `weights` is not provided.
+
+    layout : HexLayout, default HexLayout.odd_r
+        Orientation and offset pattern of the hex grid.
+        Determines whether the grid uses pointy-top or flat-top hexes and
+        how odd/even rows or columns are offset.
+
+    passable_left_right_border : bool, default False
+        Whether the grid wraps horizontally (left/right edges connect).
+        This wrapping is not supported for odd-width grids with flat-top layout.
+
+    passable_up_down_border : bool, default False
+        Whether the grid wraps vertically (top/bottom edges connect).
+        This wrapping is not supported for odd-height grids with pointy-top layout.
+
+    pause_weights : nested list of float, optional
+        A grid-shaped array representing the cost of pausing (waiting in place) at each node.
+        Each value must be a non-negative float or exactly `-1`.
+
+        - A non-negative value indicates the cost to pause at that node.
+        - A value of `-1` means pausing is not allowed at that node.
+
+    edge_collision : bool, default False
+        Whether to enable edge collision checks.
+        If set to `True`, prevents two agents from using the same edge simultaneously,
+        even if they are moving in opposite directions.
+        This helps avoid edge conflicts (e.g. node swapping) in multi-agent pathfinding scenarios.
+
+    Examples
+    --------
+    Create a 3x3 hex grid with one obstacle in the middle:
+
+    >>> grid = HexGrid(width=3, height=3)  # all weights will default to 1.0
+    >>> grid.add_obstacle((1, 1))
+
+    Create a 3x3 hex grid with custom weights:
+
+    >>> grid = HexGrid(
+    ...     [
+    ...         [1, 2, 3],
+    ...         [0.1, 0.2, 0.3],
+    ...         [-1, -1, -1],  # -1 means obstacles; this row is impassable
+    ...     ]
+    ... )
+
+    """
 
     def __cinit__(
         self,
@@ -1610,12 +1665,26 @@ cdef class HexGrid(_AbsGrid):
 
     @property
     def layout(self):
+        """
+        Hex layout of the grid.
+
+        Returns
+        -------
+        HexLayout
+            Enum value indicating the orientation and offset system.
+        """
         return HexLayout(self._obj.layout)
 
     def is_flat_top_layout(self) -> bool:
+        """
+        Whether the grid layout is a pointy-top (row-aligned) hex layout.
+        """
         return self.layout.is_flat_top()
 
     def is_pointy_top_layout(self) -> bool:
+        """
+        Whether the grid layout is a flat-top (column-aligned) hex layout.
+        """
         return self.layout.is_pointy_top()
 
     @property
@@ -1627,6 +1696,20 @@ cdef class HexGrid(_AbsGrid):
 
     @passable_left_right_border.setter
     def passable_left_right_border(self, bool _b):
+        """
+        Enable or disable horizontal wrapping at the left/right borders.
+
+        Parameters
+        ----------
+        _b : bool
+            Whether to allow movement across the left/right grid borders.
+
+        Raises
+        ------
+        ValueError
+            If the layout is flat-top and grid width is odd.
+            Wrapping in flat-top hex grids requires an even width.
+        """
         if _b and self.is_flat_top_layout() and self.width % 2 == 1:
             raise ValueError(
                 "With flat_top layout the left-right border can only be passable, "
@@ -1643,6 +1726,20 @@ cdef class HexGrid(_AbsGrid):
 
     @passable_up_down_border.setter
     def passable_up_down_border(self, bool _b):
+        """
+        Enable or disable vertical wrapping at the top/bottom borders.
+
+        Parameters
+        ----------
+        _b : bool
+            Whether to allow movement across the top/bottom grid borders.
+
+        Raises
+        ------
+        ValueError
+            If the layout is pointy-top and grid height is odd.
+            Wrapping in pointy-top hex grids requires an even height.
+        """
         if _b and self.is_pointy_top_layout() and self.height % 2 == 1:
             raise ValueError(
                 "With pointy_top layout the up-down border can only be passable, "
