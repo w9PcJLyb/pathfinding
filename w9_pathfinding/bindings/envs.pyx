@@ -150,14 +150,7 @@ cdef class _AbsGraph:
 
     @property
     def size(self) -> int:
-        """
-        Total number of nodes in the graph.
-
-        Returns
-        -------
-        int
-            Number of nodes.
-        """
+        """Total number of nodes in the graph."""
         return self._baseobj.size()
 
     def contains(self, node) -> bool:
@@ -281,14 +274,7 @@ cdef class _AbsGraph:
 
     @property
     def edge_collision(self) -> bool:
-        """
-        Whether edge collision checks are enabled.
-
-        Returns
-        -------
-        bool
-            True if edge collisions are checked.
-        """
+        """Whether edge collision checks are enabled."""
         return self._baseobj.edge_collision()
 
     @edge_collision.setter
@@ -394,26 +380,12 @@ cdef class Graph(_AbsGraph):
 
     @property
     def num_vertices(self) -> int:
-        """
-        Total number of vertices in the graph. Equivalent to calling the `size` property.
-
-        Returns
-        -------
-        int
-            Number of vertices (nodes).
-        """
+        """Number of vertices in the graph. Equivalent to the `size` property."""
         return self._obj.size()
 
     @property
     def directed(self) -> bool:
-        """
-        Whether the graph is directed.
-
-        Returns
-        -------
-        bool
-            True if the graph is directed.
-        """
+        """Whether the graph is directed."""
         return self._obj.is_directed_graph()
 
     def set_coordinates(self, vector[vector[double]] coordinates):
@@ -501,14 +473,7 @@ cdef class Graph(_AbsGraph):
 
     @property
     def num_edges(self) -> int:
-        """
-        Number of edges in the graph.
-
-        Returns
-        -------
-        int
-            Total edge count.
-        """
+        """Number of edges in the graph."""
         return self._obj.num_edges()
 
     @property
@@ -640,14 +605,7 @@ cdef class Graph(_AbsGraph):
 
     @property
     def edge_collision(self) -> bool:
-        """
-        Whether edge collision checks are enabled.
-
-        Returns
-        -------
-        bool
-            True if edge collisions are checked.
-        """
+        """Whether edge collision checks are enabled."""
         return self._baseobj.edge_collision()
 
     @edge_collision.setter
@@ -708,12 +666,13 @@ cdef class _AbsGrid(_AbsGraph):
     def shape(self):
         """
         Shape of the grid as a tuple of dimensions.
+        For a 2D grid, should returns (height, width);
+        for a 3D grid - (depth, height, width), and so on.
 
         Returns
         -------
         tuple of int
-            Grid dimensions. For a 2D grid, should returns (width, height);
-            for a 3D grid - (width, height, depth), and so on.
+            Grid dimensions.
         """
         raise NotImplementedError()
 
@@ -1104,7 +1063,16 @@ cdef class _AbsGrid(_AbsGraph):
 
 cdef class Grid(_AbsGrid):
     """
-    2D grid environment for pathfinding.
+    A 2D grid environment for pathfinding with support for obstacles, weighted traversal,
+    diagonal movement, and edge-wrapping.
+
+    The grid can be initialized either with an explicit size (width and height) or from
+    a nested list of weights.
+
+    Each cell in the grid represents a node, which may have:
+    - a movement cost (`weights`),
+    - a pause cost (`pause_weights`),
+    - an obstacle status (using weight -1).
 
     Parameters
     ----------
@@ -1121,9 +1089,8 @@ cdef class Grid(_AbsGrid):
     height : int, optional
         Height of the grid. Required if `weights` is not provided.
 
-    diagonal_movement : int, default 0
-        Indicates whether diagonal movement is allowed.
-        Uses values from the `DiagonalMovement` enum.
+    diagonal_movement : DiagonalMovement, default DiagonalMovement.never
+        Diagonal movement policy.
 
     passable_left_right_border : bool, default False
         Whether the grid wraps horizontally (left/right edges connect).
@@ -1226,38 +1193,17 @@ cdef class Grid(_AbsGrid):
 
     @property
     def width(self) -> int:
-        """
-        The number of columns in the grid.
-
-        Returns
-        -------
-        int
-            Grid width.
-        """
+        """Number of columns in the grid."""
         return self._obj.width
 
     @property
     def height(self) -> int:
-        """
-        The number of rows in the grid.
-
-        Returns
-        -------
-        int
-            Grid height.
-        """
+        """Number of rows in the grid."""
         return self._obj.height
 
     @property
     def shape(self):
-        """
-        Shape of the grid.
-
-        Returns
-        -------
-        tuple of int
-            (height, width)
-        """
+        """Shape of the grid, (height, width)."""
         return self.height, self.width
 
     @property
@@ -1292,14 +1238,7 @@ cdef class Grid(_AbsGrid):
 
     @property
     def passable_left_right_border(self) -> bool:
-        """
-        Whether the left and right edges of the grid are connected.
-
-        Returns
-        -------
-        bool
-            True if movement is allowed from the left edge to the right edge and vice versa.
-        """
+        """Whether the grid wraps horizontally (left/right edges connect)."""
         return self._obj.passable_left_right_border
 
     @passable_left_right_border.setter
@@ -1316,14 +1255,7 @@ cdef class Grid(_AbsGrid):
 
     @property
     def passable_up_down_border(self) -> bool:
-        """
-        Whether the top and bottom edges of the grid are connected.
-
-        Returns
-        -------
-        bool
-            True if movement is allowed from the top edge to the bottom edge and vice versa.
-        """
+        """Whether the grid wraps vertically (top/bottom edges connect)."""
         return self._obj.passable_up_down_border
 
     @passable_up_down_border.setter
@@ -1340,14 +1272,7 @@ cdef class Grid(_AbsGrid):
 
     @property
     def diagonal_movement_cost_multiplier(self) -> double:
-        """
-        Multiplier applied to the cost of diagonal movement.
-
-        Returns
-        -------
-        float
-            A float in the range [1.0, 2.0] representing the cost multiplier for diagonal steps.
-        """
+        """Multiplier applied to the cost of diagonal movement."""
         return self._obj.diagonal_movement_cost_multiplier
 
     @diagonal_movement_cost_multiplier.setter
