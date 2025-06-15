@@ -59,6 +59,7 @@ cdef extern from "graph.h":
     cdef cppclass Graph(AbsGraph):
         Graph(int, bool) except +
         Graph(int, bool, vector[vector[double]]) except +
+        bool is_directed_graph()
         void add_edges(vector[int], vector[int], vector[double])
         size_t num_edges()
         vector[vector[double]] get_edges()
@@ -72,6 +73,7 @@ cdef extern from "graph.h":
 cdef extern from "grid.h":
 
     cdef cppclass Grid(AbsGrid):
+        int width, height
         bool passable_left_right_border, passable_up_down_border
         double diagonal_movement_cost_multiplier
 
@@ -84,6 +86,7 @@ cdef extern from "grid.h":
 cdef extern from "grid_3d.h":
 
     cdef cppclass Grid3D(AbsGrid):
+        int width, height, depth
         bool passable_borders
 
         Grid3D(int, int, int) except +
@@ -93,6 +96,7 @@ cdef extern from "grid_3d.h":
 cdef extern from "hex_grid.h":
 
     cdef cppclass HexGrid(AbsGrid):
+        int width, height
         bool passable_left_right_border, passable_up_down_border
         int layout
 

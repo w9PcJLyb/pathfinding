@@ -162,3 +162,22 @@ class TestGrid(unittest.TestCase):
         self.assertEqual(grid.passable_left_right_border, True)
         self.assertEqual(grid.passable_up_down_border, True)
         self.assertEqual(grid.weights, weights)
+
+    def test_add_and_remove_obstacle(self):
+        grid = Grid([[4, 4], [4, 4]])
+
+        self.assertFalse(grid.has_obstacle((0, 0)))
+        self.assertEqual(grid.get_weight((0, 0)), 4)
+
+        grid.add_obstacle((0, 0))
+        self.assertTrue(grid.has_obstacle((0, 0)))
+        self.assertEqual(grid.get_weight((0, 0)), -1)
+
+        grid.remove_obstacle((0, 0))
+        self.assertFalse(grid.has_obstacle((0, 0)))
+        self.assertEqual(grid.get_weight((0, 0)), 1)  # 1 - is a default weight
+
+    def test_remove_obstacle_when_there_is_no_obstacle(self):
+        grid = Grid([[4, 4], [4, 4]])
+        grid.remove_obstacle((0, 0))
+        self.assertEqual(grid.get_weight((0, 0)), 4)
