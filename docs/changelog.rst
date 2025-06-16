@@ -5,7 +5,16 @@ Release history
 
 **0.1.0** (2025-06-07)
 
-- More organized Python API (see PR `#2 <https://github.com/w9PcJLyb/pathfinding/pull/2>`_)
+- Added `stay_at_goal` parameter to **Space-Time A\***.
+  (`commit 0534698 <https://github.com/w9PcJLyb/pathfinding/commit/053469863dfb350d8fdc92aa0bf178ce41ad2259>`_)
+- Added `Factory` utilities for generating test graphs and grids
+  (`PR#3 <https://github.com/w9PcJLyb/pathfinding/pull/3>`_).
+- Reorganized the Python API (`PR#2 <https://github.com/w9PcJLyb/pathfinding/pull/2>`_).
+- Reduced memory footprint when creating a large number of `Grid` environments.
+  (`commit ef8b3c3 <https://github.com/w9PcJLyb/pathfinding/commit/ef8b3c3dd2d2a4160f0aaac82e2f597c8139313b>`_)
+- Fixed a bug in **Space-Time A\*** where the goal could be temporarily
+  blocked by a dynamic obstacle
+  (`commit 091ac00 <https://github.com/w9PcJLyb/pathfinding/commit/091ac00324c897848e4d39a70851292511b18ec7>`_).
 
 **0.0.2** (2024-12-09)
 
