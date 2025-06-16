@@ -54,6 +54,7 @@ and a center movement (staying in place, which is crucial in multi-agent scenari
    Home <self>
    Installation <./installation.rst>
    Quickstart <./quickstart.md>
+   Changelog <./changelog.rst>
    Environments <./envs/index.rst>
    Pathfinding <./pf/index.rst>
    Multi-Agent Pathfinding <./mapf/index.rst>

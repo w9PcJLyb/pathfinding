@@ -36,7 +36,7 @@ Requirements
 PyPI
 ---------------------------
 
-The easiest way to install w9-pathfinding is via `pip`:
+The package is available on pypi, so you can install it with `pip`:
 
 .. code-block:: bash
 
