@@ -41,38 +41,38 @@ and MAPF algorithms provided by this library.
 
     - **size**
 
-        .. code-block:: c++
+      .. code-block:: c++
 
-            size_t size();
+        size_t size();
 
-        Returns the total number of nodes in the graph.
+      Returns the total number of nodes in the graph.
 
     - **get_neighbors**
 
-        .. code-block:: c++
+      .. code-block:: c++
 
-            std::vector<std::pair<int, double>> get_neighbors(
-                int node_id, bool reversed = false, bool include_self = false
-            );
+        std::vector<std::pair<int, double>> get_neighbors(
+            int node_id, bool reversed = false, bool include_self = false
+        );
 
-        Given a node_id, returns a list of neighboring nodes and the cost to reach each of them.
+      Given a node_id, returns a list of neighboring nodes and the cost to reach each of them.
 
-        Parameters:
+      Parameters:
 
-        * node_id - the ID of the node whose neighbors are requested
-        * reversed - if true, returns neighbors with all edges reversed
-          (used in bidirectional search algorithms like Bi-A*)
-        * include_self - if true, includes a self-loop to the node itself,
-          if it exists (used in MAPF to allow the "pause" action)
+      * node_id - the ID of the node whose neighbors are requested
+      * reversed - if true, returns neighbors with all edges reversed
+        (used in bidirectional search algorithms like Bi-A*)
+      * include_self - if true, includes a self-loop to the node itself,
+        if it exists (used in MAPF to allow the "pause" action)
 
     - **estimate_distance**
 
-        .. code-block:: c++
+      .. code-block:: c++
 
-            double estimate_distance(int n1, int n2);
+        double estimate_distance(int n1, int n2);
 
-        Returns an estimate of the minimum possible distance
-        between two nodes. This is typically used as a heuristic in A*-like algorithms.
+      Returns an estimate of the minimum possible distance
+      between two nodes. This is typically used as a heuristic in A*-like algorithms.
 
-        This method is optional. If an environment does not implement it,
-        A*-based algorithms (which rely on heuristics) will not be available for that environment.
+      This method is optional. If an environment does not implement it,
+      A*-based algorithms (which rely on heuristics) will not be available for that environment.
