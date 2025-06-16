@@ -52,7 +52,7 @@ and a center movement (staying in place, which is crucial in multi-agent scenari
    :caption: Table of Contents:
 
    Home <self>
-   Installation <./installation.md>
+   Installation <./installation.rst>
    Quickstart <./quickstart.md>
    Environments <./envs/index.rst>
    Pathfinding <./pf/index.rst>

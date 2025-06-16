@@ -1,3 +1,0 @@
-# Installation
-
-how to install
