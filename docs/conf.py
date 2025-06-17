@@ -28,6 +28,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_design",
+    "sphinxmermaid",
+    "sphinx.ext.autosectionlabel",
 ]
 
 source_suffix = {
