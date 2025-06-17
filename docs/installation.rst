@@ -6,8 +6,6 @@ Requirements
 
 - **Python 3.10 or higher**
 
-  It should work with earlier versions of Python, but this has not been tested.
-
 - **C++ Toolchain**
 
   Currently, w9-pathfinding is distributed as **source code**.  
@@ -50,26 +48,26 @@ Alternatively, you can install it manually:
 
 1. Clone the library:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    git clone https://github.com/w9PcJLyb/pathfinding.git
+     git clone https://github.com/w9PcJLyb/pathfinding.git
 
 2. Setup virtual environment (optional but recommended)
 
 3. Install Cython:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    pip install cython
+     pip install cython
 
 4. Build the Cython extensions:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    python setup.py build_ext --inplace
+     python setup.py build_ext --inplace
 
 5. Finally, install the package:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    pip install -e .
+     pip install -e .
