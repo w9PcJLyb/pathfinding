@@ -78,7 +78,8 @@ def _pathfinding(func):
 def _mapf(func):
     @wraps(func)
     def wrap(finder, starts, goals, **kwargs):
-        assert len(starts) == len(goals)
+        if len(starts) != len(goals):
+            raise ValueError("The lengths of `starts` and `goals` must be the same.")
 
         map = finder.graph._node_mapper
         starts = map.to_ids(starts)
@@ -308,6 +309,10 @@ cdef class SpaceTimeAStar:
 
 
 cdef class _AbsMAPF():
+    """
+    Abstract base class for multi-agent pathfinding algorithms
+    """
+
     cdef cdefs.AbsMAPF* _baseobj
     cdef readonly _AbsGraph graph
 
@@ -318,6 +323,10 @@ cdef class _AbsMAPF():
         return f"{self.__class__.__name__}(graph={self.graph})"
 
     cdef cdefs.ReservationTable* _to_crt(self, ReservationTable reservation_table):
+        """
+        Convert a Python ReservationTable into a C++ object pointer,
+        or `NULL` if no reservation table is provided.
+        """
         cdef cdefs.ReservationTable* crt
         if reservation_table is None:
             crt = NULL
@@ -328,6 +337,32 @@ cdef class _AbsMAPF():
 
     @_mapf
     def mapf(self, vector[int] starts, vector[int] goals):
+        """
+        Solve the Multi-Agent Pathfinding (MAPF) problem .
+
+        This method finds non-colliding paths for all agents from their respective
+        start nodes to goal nodes. The result is a list of individual paths — one
+        per agent.
+
+        Parameters
+        ----------
+        starts : list[node]
+            A list of start nodes, one per agent.
+
+        goals : list[node]
+            A list of goal nodes, one per agent. Must be the same length as `starts`.
+
+        Returns
+        -------
+        list[list[node]]
+            A list of paths, one per agent.
+            If no collision-free paths are found, returns an empty list.
+
+        Raises
+        ------
+        ValueError
+            If the number of `starts` and `goals` is different, or if any node is invalid.
+        """
         return self._baseobj.mapf(starts, goals)
 
 
@@ -388,6 +423,41 @@ cdef class WHCAStar(_AbsMAPF):
 
 
 cdef class CBS(_AbsMAPF):
+    """
+    Conflict-Based Search (CBS) algorithm for multi-agent pathfinding.
+
+    CBS is a two-level search algorithm that finds optimal, collision-free paths
+    for multiple agents by incrementally resolving conflicts between them.
+
+    1. High-level search — Constructs a Constraint Tree (CT), where each node represents
+       a set of constraints and corresponding agent paths. The root node has no constraints.
+       The algorithm then performs a Best-First Search over this tree, prioritizing
+       nodes by their Sum-of-Costs (SoC) — the total cost of all agents' current paths.
+
+    2. Low-level search - For each high-level CT node, the algorithm finds a path
+       for each individual agent using :class:`~w9_pathfinding.mapf.SpaceTimeAStar`,
+       respecting all constraints associated with that CT node. If a conflict is
+       detected between agents' paths, the node is expanded by branching on the
+       conflicting agents and adding new constraints to avoid the collision.
+
+    This algorithm is **optimal and complete** — it is guaranteed to find a solution
+    if one exists, and the solution will be optimal with respect to the Sum-of-Costs
+    objective (i.e., the total cost across all agents' paths).
+
+    While CBS is relatively fast in practice, especially in sparse environments,
+    performance may degrade on large graphs or with many agents.
+
+    Parameters
+    ----------
+    graph : _AbsGraph
+        The environment in which to search for paths.
+
+    References
+    ----------
+    - Sharon et al. 2012 Conflict-Based Search For Optimal Multi-Agent Path Finding
+    - Li et al. 2019 Disjoint Splitting for Multi-Agent Path Finding with Conflict-Based Search
+    """
+
     cdef cdefs.CBS* _obj
 
     def __cinit__(self, _AbsGraph graph):
@@ -399,11 +469,17 @@ cdef class CBS(_AbsMAPF):
         del self._obj
 
     @property
-    def num_generated_nodes(self):
+    def num_generated_nodes(self) -> int:
+        """
+        Total number of Constraint Tree (CT) nodes generated during the last search.
+        """
         return self._obj.num_generated_nodes
 
     @property
-    def num_closed_nodes(self):
+    def num_closed_nodes(self) -> int:
+        """
+        Number of Constraint Tree (CT) nodes expanded (processed) during the last search.
+        """
         return self._obj.num_closed_nodes
 
     @_mapf
@@ -416,6 +492,47 @@ cdef class CBS(_AbsMAPF):
         bool disjoint_splitting=True,
         ReservationTable reservation_table=None,
     ):
+        """
+        Finds non-colliding paths for all agents from their respective
+        start nodes to goal nodes. The result is a list of individual paths — one
+        per agent.
+
+        Parameters
+        ----------
+        starts : list[node]
+            A list of start nodes, one per agent.
+
+        goals : list[node]
+            A list of goal nodes, one per agent. Must be the same length as `starts`.
+
+        max_length : int, default=100
+            The maximum allowed length of any individual agent's path.
+
+        max_time : float, default=1.0
+            The maximum amount of time (in seconds) allowed for CBS to find a solution.
+            If the time limit is exceeded, a `RuntimeError` is raised.
+
+        disjoint_splitting : bool, default=True
+            If `True`, enables disjoint splitting to improve CBS efficiency and performance.
+            If `False`, standard collision splitting is used.
+
+        reservation_table : ReservationTable, optional
+            A time-based structure that holds pre-existing reservations in the environment.
+            This is used to model additional moving obstacles that must be avoided.
+
+        Returns
+        -------
+        list[list[node]]
+            A list of paths, one per agent.
+            If no collision-free paths are found, returns an empty list.
+
+        Raises
+        ------
+        ValueError
+            If the number of `starts` and `goals` is different, or if any node is invalid.
+        RuntimeError
+            If no solution is found within the time constraint.
+        """
         return self._obj.mapf(
             starts,
             goals,
@@ -427,6 +544,35 @@ cdef class CBS(_AbsMAPF):
 
 
 cdef class ICTS(_AbsMAPF):
+    """
+    Increasing Cost Tree Search (ICTS) algorithm for multi-agent pathfinding.
+
+    ICTS is a two-level search algorithm that explores combinations of path costs
+    to find collision-free solutions.
+
+    1. High-level search - Performs a top-down search over combinations of
+       individual path costs, forming an Increasing Cost Tree (ICT). The root of the tree
+       represents the minimal possible path costs for each agent.
+
+    2. Low-level search - For each high-level node, attempts to build a valid
+       joint plan using Multi-value Decision Diagrams (MDDs) to ensure that the agents'
+       paths do not conflict.
+
+    This algorithm is **complete** — it is guaranteed to find a solution if one exists.
+    It is also **optimal** with respect to the Sum-of-Costs objective, but only
+    in unweighted graphs (i.e. where all edges have equal cost). In weighted graphs,
+    it may still find valid solutions, but they are not guaranteed to be optimal.
+
+    Parameters
+    ----------
+    graph : _AbsGraph
+        The environment in which to search for paths.
+
+    References
+    ----------
+    Sharon, G., Stern, R., Goldenberg, M., Felner, A.: The increasing cost tree search
+    for optimal multi-agent pathfinding. Artificial Intelligence 195, 470-495 (2013)
+    """
     cdef cdefs.ICTS* _obj
 
     def __cinit__(self, _AbsGraph graph):
@@ -438,11 +584,17 @@ cdef class ICTS(_AbsMAPF):
         del self._obj
 
     @property
-    def num_generated_nodes(self):
+    def num_generated_nodes(self) -> int:
+        """
+        Total number of Increasing Cost Tree (ICT) nodes generated during the last search.
+        """
         return self._obj.num_generated_nodes
 
     @property
     def num_closed_nodes(self):
+        """
+        Number of Constraint Tree (CT) nodes expanded (processed) during the last search.
+        """
         return self._obj.num_closed_nodes
 
     @_mapf
@@ -455,6 +607,46 @@ cdef class ICTS(_AbsMAPF):
         bool ict_pruning=True,
         ReservationTable reservation_table=None,
     ):
+        """
+        Finds non-colliding paths for all agents from their respective
+        start nodes to goal nodes. The result is a list of individual paths — one
+        per agent.
+
+        Parameters
+        ----------
+        starts : list[node]
+            A list of start nodes, one per agent.
+
+        goals : list[node]
+            A list of goal nodes, one per agent. Must be the same length as `starts`.
+
+        max_length : int, default=100
+            The maximum allowed length of any individual agent's path.
+
+        max_time : float, default=1.0
+            The maximum amount of time (in seconds) allowed for CBS to find a solution.
+            If the time limit is exceeded, a `RuntimeError` is raised.
+
+        ict_pruning : bool, default=True
+            If `True`, enables enhanced pairwise pruning.
+
+        reservation_table : ReservationTable, optional
+            A time-based structure that holds pre-existing reservations in the environment.
+            This is used to model additional moving obstacles that must be avoided.
+
+        Returns
+        -------
+        list[list[node]]
+            A list of paths, one per agent.
+            If no collision-free paths are found, returns an empty list.
+
+        Raises
+        ------
+        ValueError
+            If the number of `starts` and `goals` is different, or if any node is invalid.
+        RuntimeError
+            If no solution is found within the time constraint.
+        """
         return self._obj.mapf(
             starts,
             goals,
@@ -466,6 +658,29 @@ cdef class ICTS(_AbsMAPF):
 
 
 cdef class MultiAgentAStar(_AbsMAPF):
+    """
+    Multi-Agent A* (MAA*) algorithm for multi-agent pathfinding.
+
+    This algorithm performs a joint search in the combined state space of all agents,
+    treating the multi-agent configuration as a single search node.
+
+    It is **optimal and complete** — it is guaranteed to find a solution
+    if one exists, and the solution will be optimal with respect to the Sum-of-Costs
+    objective (i.e., the total cost across all agents' paths).
+
+    This algorithm typically scales poorly due to the size of the joint state space.
+    Can be suitable only for a small number of agents or simple environments.
+
+    Parameters
+    ----------
+    graph : _AbsGraph
+        The environment in which to search for paths.
+
+    References
+    ----------
+    Standley, T.S.: Finding optimal solutions to cooperative pathfinding problems.
+    In: AAAI Conference on Artificial Intelligence. pp. 173-178 (2010)
+    """
     cdef cdefs.MultiAgentAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
@@ -486,6 +701,46 @@ cdef class MultiAgentAStar(_AbsMAPF):
         bool operator_decomposition=True,
         ReservationTable reservation_table=None,
     ):
+        """
+        Finds non-colliding paths for all agents from their respective
+        start nodes to goal nodes. The result is a list of individual paths — one
+        per agent.
+
+        Parameters
+        ----------
+        starts : list[node]
+            A list of start nodes, one per agent.
+
+        goals : list[node]
+            A list of goal nodes, one per agent. Must be the same length as `starts`.
+
+        max_length : int, default=100
+            The maximum allowed length of any individual agent's path.
+
+        max_time : float, default=1.0
+            The maximum amount of time (in seconds) allowed for CBS to find a solution.
+            If the time limit is exceeded, a `RuntimeError` is raised.
+
+        operator_decomposition : bool, default=True
+            If `True`, enables Operator Decomposition to reduce branching in joint space.
+
+        reservation_table : ReservationTable, optional
+            A time-based structure that holds pre-existing reservations in the environment.
+            This is used to model additional moving obstacles that must be avoided.
+
+        Returns
+        -------
+        list[list[node]]
+            A list of paths, one per agent.
+            If no collision-free paths are found, returns an empty list.
+
+        Raises
+        ------
+        ValueError
+            If the number of `starts` and `goals` is different, or if any node is invalid.
+        RuntimeError
+            If no solution is found within the time constraint.
+        """
         return self._obj.mapf(
             starts,
             goals,

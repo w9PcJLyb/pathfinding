@@ -500,7 +500,7 @@ cdef class ResumableDijkstra:
     Parameters
     ----------
     graph : _AbsGraph
-        The environment in which the BFS traversal is performed.
+        The environment in which the Dijkstra's traversal is performed.
 
     start_node : node
         The source node to start Dijkstra's algorithm from.
