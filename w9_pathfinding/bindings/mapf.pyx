@@ -10,6 +10,18 @@ from w9_pathfinding.bindings.envs cimport _AbsGraph
 
 
 cdef class ReservationTable:
+    """
+    Data structure to manage dynamic obstacles.
+
+    Can be used to simulate obstacles that move along a known path or
+    agents with precomputed paths.
+
+    Parameters
+    ----------
+    graph : _AbsGraph
+        The environment (graph or grid).
+    """
+
     cdef cdefs.ReservationTable* _obj
     cdef readonly _AbsGraph graph
 
@@ -26,10 +38,52 @@ cdef class ReservationTable:
         return f"ReservationTable(graph={self.graph})"
 
     def is_reserved(self, int time, node):
+        """
+        Check if a node is reserved at a given time.
+
+        Parameters
+        ----------
+        time : int
+            The time step to query.
+        node : node
+            The node to check
+
+        Returns
+        -------
+        bool
+            True if the node is reserved at the given time.
+
+        Raises
+        ------
+        ValueError
+            If `node` is not a valid node in the environment.
+        """
         cdef int node_id = self.graph._node_mapper.to_id(node)
         return self._obj.is_reserved(time, node_id)
 
     def is_edge_reserved(self, int time, n1, n2):
+        """
+        Check if moving from node `n1` to `n2` is reserved at a given time.
+
+        Parameters
+        ----------
+        time : int
+            The time step of the movement.
+        n1 : node
+            The start node of the edge.
+        n2 : node
+            The end node of the edge.
+
+        Returns
+        -------
+        bool
+            True if the edge is reserved at the given time.
+
+        Raises
+        ------
+        ValueError
+            If either `n1` or `n2` is not a valid node in the environment.
+        """
         cdef int n1_id = self.graph._node_mapper.to_id(n1)
         cdef int n2_id = self.graph._node_mapper.to_id(n2)
         return self._obj.is_reserved_edge(time, n1_id, n2_id)
@@ -40,11 +94,46 @@ cdef class ReservationTable:
         int start_time=0,
         bool reserve_destination=False,
     ):
+        """
+        Reserve all nodes along a given path starting at a specified time.
+        If edge_collision is enabled in the environment, this method will
+        also reserve edges along the path.
+
+        Parameters
+        ----------
+        path : List[node]
+            The list of nodes representing the path.
+        start_time : int, default 0
+            The time step at which the path starts.
+        reserve_destination : bool, default False
+            If True, the destination node remains reserved after arrival.
+
+        Raises
+        ------
+        ValueError
+            If any node in the path is not a valid node in the environment.
+        """
         cdef vector[int] node_ids = self.graph._node_mapper.to_ids(path)
         self._obj.add_path(start_time, node_ids, reserve_destination, self.graph.edge_collision)
 
     def add_vertex_constraint(self, int time, node, bool permanent=False):
-        # if permanent - the node is permanently reserved from the moment time, inclusive
+        """
+        Add a vertex constraint to block access to a node at a specific time.
+
+        Parameters
+        ----------
+        time : int
+            The time step at which the node should be blocked.
+        node : node
+            The node to constrain.
+        permanent : bool, default False
+            If True, the node is permanently blocked from `time` onward.
+
+        Raises
+        ------
+        ValueError
+            If `node` is not a valid node in the environment.
+        """
         cdef int node_id = self.graph._node_mapper.to_id(node)
         if not permanent:
             self._obj.add_vertex_constraint(time, node_id)
@@ -52,6 +141,23 @@ cdef class ReservationTable:
             self._obj.add_semi_static_constraint(time, node_id)
 
     def add_edge_constraint(self, int time, n1, n2):
+        """
+        Add a constraint that prevents movement along a specific edge at a given time.
+
+        Parameters
+        ----------
+        time : int
+            The time step of the movement.
+        n1 : node
+            The starting node of the edge.
+        n2 : node
+            The ending node of the edge.
+
+        Raises
+        ------
+        ValueError
+            If either `n1` or `n2` is not a valid node in the environment.
+        """
         cdef int n1_id, n2_id
         n1_id = self.graph._node_mapper.to_id(n1)
         n2_id = self.graph._node_mapper.to_id(n2)
@@ -147,7 +253,7 @@ cdef class SpaceTimeAStar:
         max_length : int, default=100
             Maximum allowed path length (number of time steps).
         reservation_table : ReservationTable, optional
-            Provides time-dependent obstacle reservations.
+            Dynamic obstacles.
 
         Returns
         -------
@@ -191,7 +297,7 @@ cdef class SpaceTimeAStar:
             If True, the agent must remain safely at the goal after arrival.
             If False, the agent disappears upon reaching the goal.
         reservation_table : ReservationTable, optional
-            A time-based structure containing obstacle reservations
+            Dynamic obstacles.
 
         Returns
         -------
@@ -238,7 +344,7 @@ cdef class SpaceTimeAStar:
         length : int
             Required number of time steps for the path
         reservation_table : ReservationTable, optional
-            A time-based structure containing obstacle reservations
+            Dynamic obstacles.
 
         Returns
         -------
@@ -285,7 +391,7 @@ cdef class SpaceTimeAStar:
         stay_at_goal : bool, default=True
             If True, ensures safety at the goal for all future steps.
         reservation_table : ReservationTable, optional
-            A time-based structure containing obstacle reservations
+            Dynamic obstacles.
 
         Returns
         -------
@@ -367,6 +473,26 @@ cdef class _AbsMAPF():
 
 
 cdef class HCAStar(_AbsMAPF):
+    """
+    Hierarchical Cooperative A* (HCA*) algorithm for multi-agent pathfinding.
+
+    HCA* plans paths for each agent individually using
+    :class:`~w9_pathfinding.mapf.SpaceTimeAStar`, while avoiding collisions
+    with previously planned agents by reserving their space-time paths.
+
+    This algorithm is neither optimal nor complete, but it is fast and often
+    works well in practice.
+
+    Parameters
+    ----------
+    graph : _AbsGraph
+        The environment in which to search for paths.
+
+    References
+    ----------
+    Silver, D. 2005. Cooperative pathfinding. In AIIDE, 117-122.
+    """
+
     cdef cdefs.HCAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
@@ -385,6 +511,36 @@ cdef class HCAStar(_AbsMAPF):
         int max_length=100,
         ReservationTable reservation_table=None,
     ):
+        """
+        Finds non-colliding paths for all agents from their respective
+        start nodes to goal nodes. The result is a list of individual paths — one
+        per agent.
+
+        Parameters
+        ----------
+        starts : list[node]
+            A list of start nodes, one per agent.
+
+        goals : list[node]
+            A list of goal nodes, one per agent. Must be the same length as `starts`.
+
+        max_length : int, default=100
+            The maximum allowed length of any individual agent's path.
+
+        reservation_table : ReservationTable, optional
+            Dynamic obstacles.
+
+        Returns
+        -------
+        list[list[node]]
+            A list of paths, one per agent.
+            If no collision-free paths are found, returns an empty list.
+
+        Raises
+        ------
+        ValueError
+            If the number of `starts` and `goals` is different, or if any node is invalid.
+        """
         return self._obj.mapf(
             starts,
             goals,
@@ -394,6 +550,27 @@ cdef class HCAStar(_AbsMAPF):
 
 
 cdef class WHCAStar(_AbsMAPF):
+    """
+    Windowed Hierarchical Cooperative A* (WHCA*) for multi-agent pathfinding.
+
+    WHCA* improves upon HCA* by introducing a fixed time window for planning.
+    Within this window, it plans paths for each agent individually using
+    :class:`~w9_pathfinding.mapf.SpaceTimeAStar`, while avoiding collisions
+    with other agents.
+
+    This algorithm is neither optimal nor complete, but it is fast and often
+    works well in practice
+
+    Parameters
+    ----------
+    graph : _AbsGraph
+        The environment in which to search for paths.
+
+    References
+    ----------
+    Silver, D. 2005. Cooperative pathfinding. In AIIDE, 117-122.
+    """
+
     cdef cdefs.WHCAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
@@ -413,6 +590,39 @@ cdef class WHCAStar(_AbsMAPF):
         int window_size=16,
         ReservationTable reservation_table=None,
     ):
+        """
+        Finds non-colliding paths for all agents from their respective
+        start nodes to goal nodes. The result is a list of individual paths — one
+        per agent.
+
+        Parameters
+        ----------
+        starts : list[node]
+            A list of start nodes, one per agent.
+
+        goals : list[node]
+            A list of goal nodes, one per agent. Must be the same length as `starts`.
+
+        max_length : int, default=100
+            The maximum allowed length of any individual agent's path.
+
+        window_size : int, default=16
+            Time window size for path planning.
+
+        reservation_table : ReservationTable, optional
+            Dynamic obstacles.
+
+        Returns
+        -------
+        list[list[node]]
+            A list of paths, one per agent.
+            If no collision-free paths are found, returns an empty list.
+
+        Raises
+        ------
+        ValueError
+            If the number of `starts` and `goals` is different, or if any node is invalid.
+        """
         return self._obj.mapf(
             starts,
             goals,
@@ -517,8 +727,7 @@ cdef class CBS(_AbsMAPF):
             If `False`, standard collision splitting is used.
 
         reservation_table : ReservationTable, optional
-            A time-based structure that holds pre-existing reservations in the environment.
-            This is used to model additional moving obstacles that must be avoided.
+            Dynamic obstacles.
 
         Returns
         -------
@@ -631,8 +840,7 @@ cdef class ICTS(_AbsMAPF):
             If `True`, enables enhanced pairwise pruning.
 
         reservation_table : ReservationTable, optional
-            A time-based structure that holds pre-existing reservations in the environment.
-            This is used to model additional moving obstacles that must be avoided.
+            Dynamic obstacles.
 
         Returns
         -------
@@ -725,8 +933,7 @@ cdef class MultiAgentAStar(_AbsMAPF):
             If `True`, enables Operator Decomposition to reduce branching in joint space.
 
         reservation_table : ReservationTable, optional
-            A time-based structure that holds pre-existing reservations in the environment.
-            This is used to model additional moving obstacles that must be avoided.
+            Dynamic obstacles.
 
         Returns
         -------
