@@ -4,6 +4,37 @@ Pathfinding
 Pathfinding is the process of finding the shortest or most efficient path between
 two points in a defined environment.
 
+.. list-table:: Pathfinding algorithms
+   :header-rows: 1
+
+   * - Algorithm
+     - Class names
+     - Optimal
+   * - Depth-first search
+     - DFS
+     - False
+   * - Greedy Best-First Search
+     - GBS
+     - False
+   * - Breadth-first search
+     - | BFS
+       | BiBFS
+       | ResumableBFS
+     - | True
+       | (only in an unweighted graph)
+   * - Dijkstra
+     - | Dijkstra
+       | BiDijkstra
+       | ResumableDijkstra
+     - True
+   * - A*
+     - | AStar
+       | BiAStar
+     - True
+   * - Iterative deepening A*
+     - IDAStar
+     - True
+
 .. note::
 
   All pathfinding algorithms in w9-pathfinding are environment-agnostic.

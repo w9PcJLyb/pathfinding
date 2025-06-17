@@ -29,7 +29,7 @@ This repository includes several pathfinding algorithms:
 | Algorithm   | Class name  | Optimal |
 | ----------- | ----------- |----------- |
 | Depth-first search | DFS | False |
-| Best-first search | GBS | False |
+| Greedy Best-First Search | GBS | False |
 | Breadth-first search | BFS | True (only in an unweighted graph) |
 | Bidirectional Breadth-first search | BiBFS | True (only in an unweighted graph) |
 | Dijkstra | Dijkstra | True |
