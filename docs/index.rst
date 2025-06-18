@@ -57,4 +57,5 @@ and a center movement (staying in place, which is crucial in multi-agent scenari
    Environments <./envs/index.rst>
    Pathfinding <./pf/index.rst>
    Multi-Agent Pathfinding <./mapf/index.rst>
+   Visualization <./visualization>
    Changelog <./changelog.rst>
