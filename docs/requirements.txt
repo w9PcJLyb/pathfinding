@@ -10,4 +10,3 @@ sphinxcontrib-serializinghtml==2.0.0
 sphinx-rtd-theme==3.0.2
 sphinxcontrib-jquery==4.1
 myst_parser==4.0.1
-sphinx-mermaid==0.0.8

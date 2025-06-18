@@ -28,7 +28,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_design",
-    "sphinxmermaid",
+    "sphinx.ext.graphviz",
     "sphinx.ext.autosectionlabel",
 ]
 
@@ -62,3 +62,6 @@ autodoc_default_options = {
 # copybutton
 copybutton_prompt_text = r">>> |\.\.\. "
 copybutton_prompt_is_regexp = True
+
+# graphviz
+graphviz_output_format = "svg"

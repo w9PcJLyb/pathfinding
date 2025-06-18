@@ -20,13 +20,15 @@ First, we create a small weighted directed graph:
 
 This graph looks like the following:
 
-.. mermaid::
+.. graphviz::
 
-     graph LR;
-         0 -- 2.0 --> 1;
-         0 -- 0.1 -->2;
-         1 -- 1 --> 3;
-         2 -- 1 -->3;
+    digraph G {
+        rankdir=LR;
+        0 -> 1 [label="2.0"];
+        0 -> 2 [label="0.1"];
+        1 -> 3 [label="1"];
+        2 -> 3 [label="1"];
+    }
 
 We want to find the optimal path from node `0` to node `3`.
 Since the graph is **weighted**, we need to choose an algorithm that guarantees
@@ -102,8 +104,16 @@ Resumable Search
 
 What if we want to find the optimal path from one node (`start_node`) to many other nodes?
 Sure, we could create a Dijkstra finder (or use any other pathfinding algorithm)
-and call `[find_path(start_node, n) for n in nodes]`. But this would be inefficient,
-because each call would re-run the entire search from scratch.
+and call `find_path` many times:
+
+.. code-block:: python
+
+    paths = []
+    for n in nodes:
+        path = finder.find_path(start_node, n)
+        paths.append(path)
+
+But this would be inefficient, because each call would re-run the entire search from scratch.
 
 Instead, we can use **Resumable Search**, which reuses intermediate results efficiently
 for multiple path queries from the same start node.
@@ -127,17 +137,94 @@ Let's look at how to use `ResumableDijkstra` on a weighted grid:
 
     finder = ResumableDijkstra(grid, start_node=(0, 0))
 
-    path1 = finder.find_path((3, 0))
-    path2 = finder.find_path((3, 1))
-    path3 = finder.find_path((3, 2))
+    nodes = [(3, 0), (3, 1), (3, 2)]
+    paths = []
+    for n in nodes:
+        path = finder.find_path(n)
+        paths.append(path)
 
-    print(path1)  # [(0, 0), (1, 0), (2, 0), (3, 0)]
-    print(path2)  # [(0, 0), (1, 0), (2, 0), (3, 0), (3, 1)]
-    print(path3)  # [(0, 0), (0, 1), (0, 2), (1, 2), (2, 2), (3, 2)]
+    print(paths[0])  # [(0, 0), (1, 0), (2, 0), (3, 0)]
+    print(paths[1])  # [(0, 0), (1, 0), (2, 0), (3, 0), (3, 1)]
+    print(paths[2])  # [(0, 0), (0, 1), (0, 2), (1, 2), (2, 2), (3, 2)]
 
 
-Multi-Agent Pathfinding (MAPF)
+Multi-Agent Pathfinding in a Graph
 ------------------------------------
+
+Multi-Agent Pathfinding (MAPF) is the problem of finding collision-free paths for multiple agents
+moving simultaneously in a shared environment.
+
+Let's create a simple graph environment for two agents:
+
+.. code-block:: python
+
+    from w9_pathfinding.envs import Graph
+
+    graph = Graph(num_vertices=5, edges=[(0, 2), (1, 2), (2, 3), (2, 4)])
+
+.. graphviz::
+
+    digraph G {
+        rankdir=LR;
+        0 -> 2 [label="1"];
+        1 -> 2 [label="1"];
+        2 -> 3 [label="1"];
+        2 -> 4 [label="1"];
+    }
+
+We have two agents:
+
+- Agent 1 starts at node 0 and wants to move to node 3.
+- Agent 2 starts at node 1 and wants to move to node 4.
+
+We can use the :ref:`CBS` algorithm to find collision-free paths:
+
+.. code-block:: python
+
+    from w9_pathfinding.mapf import CBS
+
+    finder = CBS(graph)
+    paths = finder.mapf(starts=[0, 1], goals=[3, 4])
+    print(paths)  # []
+
+We get an empty list, which means that CBS was unable to find a collision-free solution.
+The reason is that on the first step, both agents can only move to node 2,
+leading to an unavoidable collision.
+
+The agents can't perform a wait (pause) action at their start positions,
+because in the Graph environment, waiting requires explicit self-loops.
+
+So let's add self-loops to help our agents:
+
+.. code-block:: python
+
+    graph.add_edges([(0, 0, 0.5), (1, 1, 2)])
+
+.. graphviz::
+
+    digraph G {
+        rankdir=LR;
+        0 -> 2 [label="1"];
+        1 -> 2 [label="1"];
+        2 -> 3 [label="1"];
+        2 -> 4 [label="1"];
+        0 -> 0 [label="0.5"];
+        1 -> 1 [label="2"];
+    }
+
+Now the agents can wait if necessary, and we should be able to find a valid solution:
+
+.. code-block:: python
+
+    paths = finder.mapf(starts=[0, 1], goals=[3, 4])
+    print(paths)  # [[0, 0, 2, 3], [1, 2, 4]]
+
+Note that Agent 1 waits in place at the first step while Agent 2 moves.
+It's not the other way around because the pause action for Agent 1 is cheaper than for Agent 2.
+And since CBS is an optimal algorithm, it selects the solution with the lowest total cost.
+
+Multi-Agent Pathfinding in a Hex Grid
+-------------------------------------
 
 todo
 
