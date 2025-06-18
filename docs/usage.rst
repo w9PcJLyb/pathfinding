@@ -22,7 +22,7 @@ This graph looks like the following:
 
 .. graphviz::
 
-    digraph G {
+    digraph directed_graph {
         rankdir=LR;
         0 -> 1 [label="2.0"];
         0 -> 2 [label="0.1"];
@@ -164,7 +164,7 @@ Let's create a simple graph environment for two agents:
 
 .. graphviz::
 
-    digraph G {
+    digraph directed_graph {
         rankdir=LR;
         0 -> 2 [label="1"];
         1 -> 2 [label="1"];
@@ -202,7 +202,7 @@ So let's add self-loops to help our agents:
 
 .. graphviz::
 
-    digraph G {
+    digraph directed_graph {
         rankdir=LR;
         0 -> 2 [label="1"];
         1 -> 2 [label="1"];
@@ -223,10 +223,74 @@ Note that Agent 1 waits in place at the first step while Agent 2 moves.
 It's not the other way around because the pause action for Agent 1 is cheaper than for Agent 2.
 And since CBS is an optimal algorithm, it selects the solution with the lowest total cost.
 
+
 Multi-Agent Pathfinding in a Hex Grid
 -------------------------------------
 
-todo
+In a Grid environment, agents can pause (i.e., wait in place) at any cell by default,
+with a pause cost of `1.0`. However, this behavior is fully customizable — you can:
+
+- Make certain cells impassable
+- Set different pause costs per cell
+- Disallow pause actions entirely for specific cell
+
+Let's explore how this works using a :doc:`Hexagonal Grid </envs/HexGrid>`,
+with custom cell weights and pause costs. As a result we'll try to find a collision-free
+plan for multiple agents.
+
+.. code-block:: python
+
+    from w9_pathfinding.envs import HexGrid, HexLayout
+    from w9_pathfinding.mapf import CBS
+
+    # Cost to enter each cell (-1 = impassable)
+    weights = [
+        [1, 1, -1, 1.2, 1.2, 1, 1],
+        [1, 1, -1, 1.2, 1.2, 1, 1],
+        [1, 1, -1, -1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 1, -1, -1, -1, 1, 1],
+    ]
+
+    # Cost of waiting at each cell (with the same shape as weights)
+    pause_weights = [
+        [1, 1, 1, 0.1, 0.1, 1, 1],
+        [1, 1, 1, 0.1, 0.1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+    ]
+
+    # Create a grid
+    grid = HexGrid(
+        weights=weights,
+        pause_weights=pause_weights,
+        edge_collision=True,
+        layout=HexLayout.odd_r,
+    )
+
+    # Define start and goal positions for 6 agents
+    starts = ((1, 0), (1, 2), (1, 4), (5, 0), (5, 2), (5, 4))
+    goals = ((6, 0), (6, 2), (6, 4), (0, 0), (0, 2), (0, 4))
+
+    # Solve the mapf problem
+    finder = CBS(grid)
+    paths = finder.mapf(starts, goals)
+
+The result:
+
+.. image:: _static/hexgrid_mapf.gif
+   :width: 250px
+
+In this visualization:
+
+- **Gray cells** are impassable (`weight = -1`)
+- **White cells** are normal traversable cells (`weight = 1`, `pause_weight = 1`)
+- **Light green cells** are "waiting zones" (`weight = 1.2`, `pause_weight = 0.1`)
+
+Because the pause cost is lower in waiting zones, agents prefer to wait there when needed.
+This helps minimize the total travel cost.
+
 
 Pathfinding with dynamic obstacles
 ------------------------------------
