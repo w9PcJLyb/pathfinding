@@ -10,37 +10,32 @@ with one another.
    :header-rows: 1
 
    * - Algorithm
-     - Class name
+     - Class
      - Optimal
      - Complete
    * - Hierarchical Cooperative A*
-     - HCAStar
+     - :ref:`HCAStar`
      - False
      - False
    * - | Windowed Hierarchical
        | Cooperative A*
-     - WHCAStar
+     - :ref:`WHCAStar`
      - False
      - False
    * - Conflict Based Search
-     - CBS
+     - :ref:`CBS`
      - True
      - True
    * - Increasing Cost Tree Search
-     - ICTS
+     - :ref:`ICTS`
      - | True
        | (only in an unweighted graph)
      - True
    * - | A* with Operator
        | Decomposition
-     - MultiAgentAStar
+     - :ref:`MultiAgentAStar`
      - True
      - True
-
-.. note::
-
-  All pathfinding algorithms in w9-pathfinding are environment-agnostic.
-  This means they can operate on any :doc:`environment </envs/index>`.
 
 .. toctree::
    :maxdepth: 1

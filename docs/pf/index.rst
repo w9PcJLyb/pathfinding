@@ -8,37 +8,32 @@ two points in a defined environment.
    :header-rows: 1
 
    * - Algorithm
-     - Class names
+     - Class
      - Optimal
    * - Depth-first search
-     - DFS
+     - :ref:`DFS`
      - False
    * - Greedy Best-First Search
-     - GBS
+     - :ref:`GBS`
      - False
    * - Breadth-first search
-     - | BFS
-       | BiBFS
-       | ResumableBFS
+     - | :ref:`BFS`
+       | :ref:`BiBFS`
+       | :ref:`ResumableBFS`
      - | True
        | (only in an unweighted graph)
    * - Dijkstra
-     - | Dijkstra
-       | BiDijkstra
-       | ResumableDijkstra
+     - | :ref:`Dijkstra`
+       | :ref:`BiDijkstra`
+       | :ref:`ResumableDijkstra`
      - True
    * - A*
-     - | AStar
-       | BiAStar
+     - | :ref:`AStar`
+       | :ref:`BiAStar`
      - True
    * - Iterative deepening A*
-     - IDAStar
+     - :ref:`IDAStar`
      - True
-
-.. note::
-
-  All pathfinding algorithms in w9-pathfinding are environment-agnostic.
-  This means they can operate on any :doc:`environment </envs/index>`.
 
 BFS
 ------------------
