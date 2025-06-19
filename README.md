@@ -4,7 +4,7 @@ W9-Pathfinding is a versatile pathfinding library written in C++ with a Python i
 
 Full documentation is available at: https://w9-pathfinding.readthedocs.io/
 
-[![Apache-2.0 license](https://img.shields.io/github/license/w9PcJLyb/pathfinding)](https://github.com/w9PcJLyb/pathfinding/blob/main/LICENSE)
+[![Apache-2.0 license](https://img.shields.io/github/license/w9PcJLyb/w9-pathfinding)](https://github.com/w9PcJLyb/w9-pathfinding/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/w9-pathfinding)](https://pypi.org/project/w9-pathfinding/)
 
 ### Key Features:

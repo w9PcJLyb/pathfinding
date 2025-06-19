@@ -13,15 +13,15 @@ The library includes both classic pathfinding algorithms and multi-agent
 pathfinding algorithms.
 
 .. image:: https://img.shields.io/badge/source-GitHub-blue?logo=github
-   :target: https://github.com/w9PcJLyb/pathfinding
+   :target: https://github.com/w9PcJLyb/w9-pathfinding
    :alt: GitHub repository
 
 .. image:: https://img.shields.io/pypi/v/w9-pathfinding
     :target: https://pypi.org/project/w9-pathfinding/
     :alt: PyPI version
 
-.. image:: https://img.shields.io/github/license/w9PcJLyb/pathfinding
-    :target: https://github.com/w9PcJLyb/pathfinding/blob/main/LICENSE
+.. image:: https://img.shields.io/github/license/w9PcJLyb/w9-pathfinding
+    :target: https://github.com/w9PcJLyb/w9-pathfinding/blob/main/LICENSE
     :alt: License
 
 Key Features:

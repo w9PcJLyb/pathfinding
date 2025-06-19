@@ -90,9 +90,11 @@ setup(
     version=read_version(),
     author="w9PcJLyb",
     description="Implementation of some pathfinding algorithms",
-    url="https://github.com/w9PcJLyb/pathfinding",
+    url="https://github.com/w9PcJLyb/w9-pathfinding",
     project_urls={
-        "Bug Tracker": "https://github.com/w9PcJLyb/pathfinding/issues",
+        "Bug Tracker": "https://github.com/w9PcJLyb/w9-pathfinding/issues",
+        "Documentation": "https://w9-pathfinding.readthedocs.io/",
+        "Release Notes": "https://w9-pathfinding.readthedocs.io/latest/changelog.html",
     },
     license="Apache-2.0",
     keywords="pathfinding mapf",

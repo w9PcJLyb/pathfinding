@@ -50,7 +50,7 @@ Alternatively, you can install it manually:
 
    .. code-block:: bash
 
-     git clone https://github.com/w9PcJLyb/pathfinding.git
+     git clone https://github.com/w9PcJLyb/w9-pathfinding.git
 
 2. Setup virtual environment (optional but recommended)
 
@@ -70,4 +70,4 @@ Alternatively, you can install it manually:
 
    .. code-block:: bash
 
-     pip install -e .
+     pip install -e .[dev]
