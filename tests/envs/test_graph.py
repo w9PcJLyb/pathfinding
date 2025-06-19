@@ -183,3 +183,15 @@ class TestGraph(unittest.TestCase):
         graph = Graph(num_vertices, edges=edges)
         self.assertEqual(graph.num_vertices, 3)
         self.assertEqual(graph.num_edges, 10)
+
+    def test_estimate_distance(self):
+        graph = Graph(3, directed=False)
+
+        self.assertFalse(graph.has_coordinates())
+        with self.assertRaises(RuntimeError):
+            graph.estimate_distance(0, 1)
+
+        graph.set_coordinates([(0, 0), (3, 4), (1, 1)])
+        self.assertTrue(graph.has_coordinates())
+        distance = graph.estimate_distance(0, 1)
+        self.assertEqual(distance, 5)

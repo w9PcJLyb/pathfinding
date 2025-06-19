@@ -15,8 +15,6 @@ cdef class _AbsGraph:
 
 cdef class Graph(_AbsGraph):
     cdef cdefs.Graph* _obj
-    cdef readonly int num_vertices
-    cdef readonly bool directed
 
 
 cdef class _AbsGrid(_AbsGraph):
@@ -25,14 +23,11 @@ cdef class _AbsGrid(_AbsGraph):
 
 cdef class Grid(_AbsGrid):
     cdef cdefs.Grid* _obj
-    cdef readonly int width, height
 
 
 cdef class Grid3D(_AbsGrid):
     cdef cdefs.Grid3D* _obj
-    cdef readonly int width, height, depth
 
 
 cdef class HexGrid(_AbsGrid):
     cdef cdefs.HexGrid* _obj
-    cdef readonly int width, height
