@@ -2,7 +2,7 @@
 
 W9-Pathfinding is a versatile pathfinding library written in C++ with a Python interface provided by Cython. It offers a variety of pathfinding algorithms for navigating different types of maps, including grids, graphs, and 3D spaces. The library includes both classic pathfinding algorithms and multi-agent pathfinding algorithms.
 
-Full documentation is available at: https://w9-pathfinding.readthedocs.io/
+Full documentation is available at: https://w9-pathfinding.readthedocs.io/stable
 
 [![Apache-2.0 license](https://img.shields.io/github/license/w9PcJLyb/w9-pathfinding)](https://github.com/w9PcJLyb/w9-pathfinding/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/w9-pathfinding)](https://pypi.org/project/w9-pathfinding/)
@@ -30,7 +30,7 @@ path = finder.find_path((0, 0), (3, 2))
 print(path)
 ```
 
-See more examples in the [Usage Guide](https://w9-pathfinding.readthedocs.io/latest/usage.html).
+See more examples in the [Usage Guide](https://w9-pathfinding.readthedocs.io/stable/usage.html).
 
 ### Installation:
 

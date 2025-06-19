@@ -93,8 +93,8 @@ setup(
     url="https://github.com/w9PcJLyb/w9-pathfinding",
     project_urls={
         "Bug Tracker": "https://github.com/w9PcJLyb/w9-pathfinding/issues",
-        "Documentation": "https://w9-pathfinding.readthedocs.io/",
-        "Release Notes": "https://w9-pathfinding.readthedocs.io/latest/changelog.html",
+        "Documentation": "https://w9-pathfinding.readthedocs.io/stable",
+        "Release Notes": "https://w9-pathfinding.readthedocs.io/stable/changelog.html",
     },
     license="Apache-2.0",
     keywords="pathfinding mapf",
