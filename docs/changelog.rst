@@ -3,6 +3,13 @@ Release history
 
 `View on PyPI <https://pypi.org/project/w9-pathfinding/#history>`_
 
+**0.1.1** (2025-06-19)
+
+- Added more fine-grained control over pause action costs
+  (`PR#5 <https://github.com/w9PcJLyb/w9-pathfinding/pull/5>`_)
+- Added sphinx documentation
+  (`PR#6 <https://github.com/w9PcJLyb/w9-pathfinding/pull/6>`_)
+
 **0.1.0** (2025-06-07)
 
 - Added `stay_at_goal` parameter to `SpaceTimeAStar`.
