@@ -445,7 +445,7 @@ cdef class Graph(_AbsGraph):
         bool
             True if coordinates have been set.
         """
-        return self._obj.has_coordinates()
+        return self._obj.has_heuristic()
 
     def estimate_distance(self, int v1, int v2) -> double:
         """

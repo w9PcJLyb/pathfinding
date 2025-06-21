@@ -17,6 +17,7 @@ cdef extern from "core.h":
         bool adjacent(int, int)
         void set_edge_collision(bool)
         bool edge_collision()
+        bool has_heuristic()
 
     cdef cppclass AbsGrid(AbsGraph):
         bool has_obstacle(int)
@@ -65,7 +66,6 @@ cdef extern from "graph.h":
         vector[vector[double]] get_edges()
         vector[vector[double]] get_coordinates()
         void set_coordinates(vector[vector[double]])
-        bool has_coordinates()
         double estimate_distance(int v1, int v2)
         Graph* create_reversed_graph()
 
