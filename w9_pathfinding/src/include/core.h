@@ -44,9 +44,6 @@ class AbsGraph {
         // Only valid if `has_heuristic()` returns true.
         virtual double estimate_distance(int v1, int v2) const = 0;
 
-        // Returns true if the graph is directed, false if it is undirected.
-        virtual bool is_directed_graph() const = 0;
-
         // Computes the total cost of a path
         virtual double calculate_cost(Path& path);
 
@@ -93,10 +90,6 @@ class AbsGrid : public AbsGraph {
 
         bool has_heuristic() const {
             return true;
-        }
-
-        bool is_directed_graph() const {
-            return false;
         }
 
         double get_weight(int node) const {
