@@ -53,12 +53,6 @@ class AbsGraph {
         // Checks whether all consecutive node pairs in the path are connected by an edge.
         bool is_valid_path(Path& path);
 
-        // returns connected components in an undirected graph
-        virtual vector<vector<int>> find_components();
-
-        // returns Strongly Connected Components (SCC) in a directed graph
-        virtual vector<vector<int>> find_scc();
-
         // returns true if there is a path of length 1 from vertex v1 to vertex v2
         virtual bool adjacent(int v1, int v2);
 
@@ -72,9 +66,6 @@ class AbsGraph {
     protected:
         // the minimum value in weights, used in the heuristic function (estimate_distance)
         double min_weight_ = 1.0;
-
-    private:
-        vector<int> find_component_(vector<bool> &visited, int start);
 
     // For multi agent path finding
     private:
@@ -144,8 +135,6 @@ class AbsGrid : public AbsGraph {
             pause_weights_.clear();
             pause_weight_ = 1;
         }
-
-        vector<vector<int>> find_components() override;
 
     protected:
         // weights_[i] - cost to move to node i.
