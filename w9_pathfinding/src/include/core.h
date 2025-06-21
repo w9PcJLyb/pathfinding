@@ -26,24 +26,29 @@ class AbsGraph {
     public:
         AbsGraph() {};
         virtual ~AbsGraph() {};
-        virtual size_t size() const = 0;
-        virtual vector<pair<int, double>> get_neighbors(int node, bool reversed=false, bool include_self=false) = 0;
-        virtual bool has_coordinates() const = 0;
 
-        // returns a lower bound of the distance between two vertices
-        // used by A* algorithm
+        // Returns the number of nodes (vertices) in the graph.
+        virtual size_t size() const = 0;
+
+        // Returns the neighbors of a given node.
+        // Each neighbor is represented as a pair (neighbor_id, edge_cost).
+        virtual vector<pair<int, double>> get_neighbors(
+            int node, bool reversed=false, bool include_self=false
+        ) = 0;
+
+        // Indicates whether the graph implementation provides a heuristic function
+        virtual bool has_heuristic() const = 0;
+
+        // Estimates a lower bound on the cost between two vertices.
+        // This function is used as a heuristic in A*-like search algorithms.
+        // Only valid if `has_heuristic()` returns true.
         virtual double estimate_distance(int v1, int v2) const = 0;
 
-        virtual bool is_directed_graph() const = 0;
-
+        // Computes the total cost of a path
         virtual double calculate_cost(Path& path);
+
+        // Checks whether all consecutive node pairs in the path are connected by an edge.
         bool is_valid_path(Path& path);
-
-        // returns connected components in an undirected graph
-        virtual vector<vector<int>> find_components();
-
-        // returns Strongly Connected Components (SCC) in a directed graph
-        virtual vector<vector<int>> find_scc();
 
         // returns true if there is a path of length 1 from vertex v1 to vertex v2
         virtual bool adjacent(int v1, int v2);
@@ -58,9 +63,6 @@ class AbsGraph {
     protected:
         // the minimum value in weights, used in the heuristic function (estimate_distance)
         double min_weight_ = 1.0;
-
-    private:
-        vector<int> find_component_(vector<bool> &visited, int start);
 
     // For multi agent path finding
     private:
@@ -86,12 +88,8 @@ class AbsGrid : public AbsGraph {
             return weights_.size();
         }
 
-        bool has_coordinates() const {
+        bool has_heuristic() const {
             return true;
-        }
-
-        bool is_directed_graph() const {
-            return false;
         }
 
         double get_weight(int node) const {
@@ -130,8 +128,6 @@ class AbsGrid : public AbsGraph {
             pause_weights_.clear();
             pause_weight_ = 1;
         }
-
-        vector<vector<int>> find_components() override;
 
     protected:
         // weights_[i] - cost to move to node i.

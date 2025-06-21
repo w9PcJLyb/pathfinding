@@ -213,11 +213,10 @@ cdef class AStar(_AbsPathFinder):
     cdef cdefs.AStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
+        if not graph._baseobj.has_heuristic():
             raise ValueError(
-                "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
+                f"{self.__class__.__name__} requires a heuristic function. "
+                f"But {graph} does not support heuristic estimation."
             )
         self.graph = graph
         self._obj = new cdefs.AStar(graph._baseobj)
@@ -250,11 +249,10 @@ cdef class BiAStar(_AbsPathFinder):
     cdef cdefs.BiAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
+        if not graph._baseobj.has_heuristic():
             raise ValueError(
-                "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
+                f"{self.__class__.__name__} requires a heuristic function. "
+                f"But {graph} does not support heuristic estimation."
             )
         self.graph = graph
         self._obj = new cdefs.BiAStar(graph._baseobj)
@@ -287,11 +285,10 @@ cdef class GBS(_AbsPathFinder):
     cdef cdefs.GBS* _obj
 
     def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
+        if not graph._baseobj.has_heuristic():
             raise ValueError(
-                "GBS cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
+                f"{self.__class__.__name__} requires a heuristic function. "
+                f"But {graph} does not support heuristic estimation."
             )
         self.graph = graph
         self._obj = new cdefs.GBS(graph._baseobj)
@@ -325,11 +322,10 @@ cdef class IDAStar(_AbsPathFinder):
     cdef cdefs.IDAStar* _obj
 
     def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
+        if not graph._baseobj.has_heuristic():
             raise ValueError(
-                "IDA* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
+                f"{self.__class__.__name__} requires a heuristic function. "
+                f"But {graph} does not support heuristic estimation."
             )
         self.graph = graph
         self._obj = new cdefs.IDAStar(graph._baseobj)

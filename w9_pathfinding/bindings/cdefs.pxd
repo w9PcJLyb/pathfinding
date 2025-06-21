@@ -12,11 +12,10 @@ cdef extern from "core.h":
         bool is_valid_path(vector[int])
         void reverse_inplace()
         vector[pair[int, double]] get_neighbors(int, bool, bool)
-        vector[vector[int]] find_components()
-        vector[vector[int]] find_scc()
         bool adjacent(int, int)
         void set_edge_collision(bool)
         bool edge_collision()
+        bool has_heuristic()
 
     cdef cppclass AbsGrid(AbsGraph):
         bool has_obstacle(int)
@@ -39,6 +38,11 @@ cdef extern from "core.h":
     cdef cppclass AbsMAPF:
         AbsMAPF() except +
         vector[vector[int]] mapf(vector[int], vector[int])
+
+
+cdef extern from "components.h":
+    vector[vector[int]] find_components(AbsGraph*)
+    vector[vector[int]] find_scc(AbsGraph*)
 
 
 cdef extern from "reservation_table.h":
@@ -65,7 +69,6 @@ cdef extern from "graph.h":
         vector[vector[double]] get_edges()
         vector[vector[double]] get_coordinates()
         void set_coordinates(vector[vector[double]])
-        bool has_coordinates()
         double estimate_distance(int v1, int v2)
         Graph* create_reversed_graph()
 

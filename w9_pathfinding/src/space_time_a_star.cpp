@@ -15,7 +15,7 @@ Path SpaceTimeAStar::reconstruct_path(int start, Node* node) {
 }
 
 std::unique_ptr<ResumableSearch> SpaceTimeAStar::reverse_resumable_search(int node_id) {
-    if (graph->has_coordinates())
+    if (graph->has_heuristic())
         return std::make_unique<ResumableAStar>(graph, node_id, true);
     else
         return std::make_unique<ResumableDijkstra>(graph, node_id, true);
@@ -325,7 +325,7 @@ Path SpaceTimeAStar::find_path_with_length_limit__static(int start, int goal, in
         int time = current->time + 1;
         for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {
             double h = 0;
-            if (graph->has_coordinates())
+            if (graph->has_heuristic())
                 h = graph->estimate_distance(node_id, goal);
 
             double distance = current->distance + cost;

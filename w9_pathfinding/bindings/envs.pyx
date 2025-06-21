@@ -445,7 +445,7 @@ cdef class Graph(_AbsGraph):
         bool
             True if coordinates have been set.
         """
-        return self._obj.has_coordinates()
+        return self._obj.has_heuristic()
 
     def estimate_distance(self, int v1, int v2) -> double:
         """
@@ -592,7 +592,8 @@ cdef class Graph(_AbsGraph):
         """
         if self.directed:
             raise ValueError("find_components only works for an undirected graph")
-        return self._obj.find_components()
+
+        return cdefs.find_components(self._obj)
 
     def find_scc(self):
         """
@@ -611,7 +612,7 @@ cdef class Graph(_AbsGraph):
         if not self.directed:
             raise ValueError("find_scc only works for a directed graph")
 
-        return self._obj.find_scc()
+        return cdefs.find_scc(self._obj)
 
     @property
     def edge_collision(self) -> bool:
@@ -801,10 +802,14 @@ cdef class _AbsGrid(_AbsGraph):
         List[List[node]]
             List of components, each as a list of nodes.
         """
-        return [
-            self._node_mapper.from_ids(component)
-            for component in self._baseobj.find_components()
-        ]
+        components = []
+        for part in cdefs.find_components(self._baseobj):
+            if len(part) == 1 and self._basegridobj.has_obstacle(part[0]):
+                continue
+
+            components.append(self._node_mapper.from_ids(part))
+
+        return components
 
     @property
     def weights(self):

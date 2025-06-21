@@ -103,12 +103,12 @@ vector<pair<int, double>> Graph::get_neighbors(int node, bool reversed, bool inc
     return nb;
 }
 
-bool Graph::has_coordinates() const {
+bool Graph::has_heuristic() const {
     return (num_vertices_ == 0) || (coordinates_.size() > 0);
 }
 
 double Graph::estimate_distance(int v1, int v2) const {
-    assert(has_coordinates());
+    assert(has_heuristic());
 
     const vector<double> &c1 = coordinates_[v1];
     const vector<double> &c2 = coordinates_[v2];
