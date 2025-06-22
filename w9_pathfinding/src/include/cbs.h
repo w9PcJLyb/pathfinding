@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "env.h"
+#include "mapf.h"
 #include "space_time_a_star.h"
 #include "resumable_search.h"
 #include "reservation_table.h"

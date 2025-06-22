@@ -1,12 +1,12 @@
 #pragma once
 
 #include <memory>
-#include "env.h"
+#include "mapf.h"
 #include "resumable_search.h"
 #include "reservation_table.h"
 
 
-class SpaceTimeAStar : public AbsPathFinder {
+class SpaceTimeAStar {
 
     struct Node {
         Node* parent;

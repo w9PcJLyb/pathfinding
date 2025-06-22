@@ -31,21 +31,15 @@ cdef extern from "env.h":
         double get_pause_weight(int) except +
         vector[double] get_pause_weights()
 
-    cdef cppclass AbsPathFinder:
-        AbsPathFinder() except +
-        vector[int] find_path(int, int)
-
-    cdef cppclass AbsMAPF:
-        AbsMAPF() except +
-        vector[vector[int]] mapf(vector[int], vector[int])
-
 
 cdef extern from "components.h":
+
     vector[vector[int]] find_components(Env*)
     vector[vector[int]] find_scc(Env*)
 
 
 cdef extern from "reservation_table.h":
+
     cdef cppclass ReservationTable:
         ReservationTable(int)
         ReservationTable(const ReservationTable&)
@@ -105,6 +99,13 @@ cdef extern from "hex_grid.h":
 
         HexGrid(int, int, int) except +
         HexGrid(int, int, int, vector[double]) except +
+
+
+cdef extern from "pf.h":
+
+    cdef cppclass AbsPathFinder:
+        AbsPathFinder() except +
+        vector[int] find_path(int, int)
 
 
 cdef extern from "dfs.h":
@@ -183,6 +184,13 @@ cdef extern from "resumable_search.h":
 
     cdef cppclass ResumableDijkstra(ResumableSearch):
         ResumableDijkstra(Env*, int) except +
+
+
+cdef extern from "mapf.h":
+
+    cdef cppclass AbsMAPF:
+        AbsMAPF() except +
+        vector[vector[int]] mapf(vector[int], vector[int])
 
 
 cdef extern from "space_time_a_star.h":

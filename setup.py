@@ -22,9 +22,7 @@ ext_modules = [
         name="w9_pathfinding.bindings.envs",
         sources=[
             "w9_pathfinding/bindings/envs.pyx",
-            *sources(
-                "env", "graph", "grid", "grid_3d", "hex_grid", "components"
-            ),
+            *sources("env", "graph", "grid", "grid_3d", "hex_grid", "components"),
         ],
         include_dirs=include_dirs,
         language="c++",
@@ -58,6 +56,7 @@ ext_modules = [
             "w9_pathfinding/bindings/mapf.pyx",
             *sources(
                 "env",
+                "mapf",
                 "reservation_table",
                 "resumable_search",
                 "space_time_a_star",
