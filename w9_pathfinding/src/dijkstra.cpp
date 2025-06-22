@@ -1,8 +1,8 @@
 #include "include/dijkstra.h"
 
 
-Dijkstra::Dijkstra(AbsGraph *graph) : graph(graph) {
-    nodes_.resize(graph->size());
+Dijkstra::Dijkstra(Env* env) : env(env) {
+    nodes_.resize(env->size());
 }
 
 void Dijkstra::clear() {
@@ -41,7 +41,7 @@ vector<int> Dijkstra::find_path(int start, int end) {
             return reconstruct_path(start, end);
         }
 
-        for (auto& [n, cost] : graph->get_neighbors(top.second)) {
+        for (auto& [n, cost] : env->get_neighbors(top.second)) {
             double total_cost = distance + cost;
             Node &node = nodes_[n];
             if (node.distance < 0 || node.distance > total_cost) {

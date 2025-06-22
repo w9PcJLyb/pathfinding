@@ -1,9 +1,9 @@
 #pragma once
 
-#include "core.h"
+#include "env.h"
 
 
-class Graph : public AbsGraph {
+class Graph : public Env {
 
     struct Edge {
         int node_id;
@@ -27,7 +27,7 @@ class Graph : public AbsGraph {
         void set_coordinates(vector<vector<double>> &coordinates);
         bool has_heuristic() const;
         double estimate_distance(int v1, int v2) const;
-        AbsGraph* reverse() const;
+        Env* reverse() const;
         Graph* create_reversed_graph() const;
         void reverse_inplace();
         bool adjacent(int v1, int v2) const;

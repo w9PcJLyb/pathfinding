@@ -45,7 +45,7 @@ and MAPF algorithms provided by this library.
 
         size_t size();
 
-      Returns the total number of nodes in the graph.
+      Returns the total number of nodes in the environment.
 
     - **get_neighbors**
 

@@ -1,8 +1,8 @@
 #include "include/dfs.h"
 
 
-DFS::DFS(AbsGraph *graph) : graph(graph) {
-    came_from_.resize(graph->size(), -1);
+DFS::DFS(Env* env) : env(env) {
+    came_from_.resize(env->size(), -1);
 }
 
 void DFS::clear() {
@@ -32,7 +32,7 @@ vector<int> DFS::find_path(int start, int end) {
     while (!stack.empty()) {
         int x = stack.back();
         stack.pop_back();
-        for (auto& [n, cost] : graph->get_neighbors(x)) {
+        for (auto& [n, cost] : env->get_neighbors(x)) {
             if (came_from_[n] < 0) {
                 came_from_[n] = x;
                 if (n == end)

@@ -28,8 +28,8 @@ with one another.
      - True
    * - Increasing Cost Tree Search
      - :ref:`ICTS`
-     - | True
-       | (only in an unweighted graph)
+     - | True (only in an
+       | unweighted environment)
      - True
    * - | A* with Operator
        | Decomposition

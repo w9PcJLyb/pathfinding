@@ -3,7 +3,7 @@
 #include <chrono>
 #include "set"
 #include "map"
-#include "core.h"
+#include "env.h"
 #include "reservation_table.h"
 #include "space_time_a_star.h"
 
@@ -20,12 +20,12 @@ namespace icts {
             int start, goal;
             std::map<dint, vector<int>> data;
 
-            ResumableBFS(AbsGraph* graph, int start, int goal, const ReservationTable* rt);
+            ResumableBFS(Env* env, int start, int goal, const ReservationTable* rt);
             void set_depth(int depth);
             int depth() {return depth_;};
 
         private:
-            AbsGraph* graph_;
+            Env* env_;
             int depth_;
             const ReservationTable* rt_;
             std::queue<dint> queue_;
@@ -47,7 +47,7 @@ namespace icts {
             MDD() : start(-1), goal(-1), depth(-1) {};
             MDD(int start, int goal, int depth) : start(start), goal(goal), depth(depth) {};
             MDD(ResumableBFS& bfs);
-            void print(AbsGraph* graph);
+            void print(Env* env);
     };
 
     struct MDD2 {
@@ -63,7 +63,7 @@ namespace icts {
 
             MDD2(MDD& mdd1, MDD& mdd2, bool edge_collision);
             pair<MDD, MDD> unfold();
-            void print(AbsGraph* graph);
+            void print(Env* env);
 
         private:
             void prune();
@@ -86,7 +86,7 @@ namespace icts {
 
         public:
             LowLevel(
-                AbsGraph* graph,
+                Env* env,
                 vector<int>& starts,
                 vector<int>& goals,
                 bool ict_pruning,
@@ -96,7 +96,7 @@ namespace icts {
             vector<Path> search(vector<int>& costs);
 
         private:
-            AbsGraph* graph_;
+            Env* env_;
             vector<int> starts_, goals_;
             bool ict_pruning_;
             time_point<high_resolution_clock> terminate_time_;
@@ -119,8 +119,8 @@ namespace icts {
         // for optimal multi-agent pathfinding. Artificial Intelligence 195, 470–495 (2013)
 
         public:
-            AbsGraph* graph;
-            ICTS(AbsGraph* graph);
+            Env* env;
+            ICTS(Env* env);
             int num_generated_nodes = 0;
             int num_closed_nodes = 0;
 

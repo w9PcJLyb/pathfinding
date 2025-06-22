@@ -1,7 +1,7 @@
 #include "include/ida_star.h"
 
 
-IDAStar::IDAStar(AbsGraph *graph) : graph(graph) {
+IDAStar::IDAStar(Env* env) : env(env) {
 }
 
 vector<int> IDAStar::find_path(int start, int goal) {
@@ -11,7 +11,7 @@ vector<int> IDAStar::find_path(int start, int goal) {
 vector<int> IDAStar::find_path(int start, int goal, double max_distance) {
     goal_ = goal;
 
-    double bound = graph->estimate_distance(start, goal);
+    double bound = env->estimate_distance(start, goal);
     vector<int> path = {start};
     while (true) {
         if (bound > max_distance)
@@ -27,14 +27,14 @@ vector<int> IDAStar::find_path(int start, int goal, double max_distance) {
 
 double IDAStar::search(vector<int> &path, double g, double bound) {
     int node = path.back();
-    double f = g + graph->estimate_distance(node, goal_);
+    double f = g + env->estimate_distance(node, goal_);
     if (f > bound)
         return f;
     if (node == goal_)
         return -2;  // found
 
     double min = -1; // inf
-    for (auto &[succ, cost] : graph->get_neighbors(node)) {
+    for (auto &[succ, cost] : env->get_neighbors(node)) {
         if (std::find(path.begin(), path.end(), succ) == path.end()) {
             path.push_back(succ);
             double t = search(path, g + cost, bound);

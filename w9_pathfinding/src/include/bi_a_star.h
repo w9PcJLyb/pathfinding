@@ -1,6 +1,6 @@
 #pragma once
 
-#include "grid.h"
+#include "env.h"
 
 
 class BiAStar : public AbsPathFinder {
@@ -25,8 +25,8 @@ class BiAStar : public AbsPathFinder {
     };
 
     public:
-        AbsGraph* graph;
-        BiAStar(AbsGraph* graph);
+        Env* env;
+        BiAStar(Env* env);
 
         vector<int> find_path(int start, int end);
 

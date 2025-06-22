@@ -12,9 +12,9 @@ using std::vector;
 
 class ReservationTable {
     public:
-        const int graph_size;
+        const int env_size;
 
-        ReservationTable(int graph_size);
+        ReservationTable(int env_size);
         ReservationTable(const ReservationTable& rt);
 
         ReservationTable& operator=(const ReservationTable& rt);
@@ -46,6 +46,6 @@ class ReservationTable {
         std::unordered_map<int, std::unordered_set<int>> edge_constraints_;
 
         int st(int time, int node_id) const {
-            return time * graph_size + node_id;
+            return time * env_size + node_id;
         }
 };

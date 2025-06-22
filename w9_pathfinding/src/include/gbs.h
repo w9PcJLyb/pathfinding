@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graph.h"
+#include "env.h"
 
 
 class GBS : public AbsPathFinder {
@@ -10,8 +10,8 @@ class GBS : public AbsPathFinder {
     typedef priority_queue<key, vector<key>, std::greater<key>> Queue;
 
     public:
-        AbsGraph* graph;
-        GBS(AbsGraph *graph);
+        Env* env;
+        GBS(Env* env);
 
         vector<int> find_path(int start, int end);
 

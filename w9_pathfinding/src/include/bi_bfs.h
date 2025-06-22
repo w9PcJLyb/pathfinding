@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graph.h"
+#include "env.h"
 
 
 class BiBFS : public AbsPathFinder {
@@ -19,8 +19,8 @@ class BiBFS : public AbsPathFinder {
     };
 
     public:
-        AbsGraph* graph;
-        BiBFS(AbsGraph *graph);
+        Env* env;
+        BiBFS(Env* env);
 
         vector<int> find_path(int start, int end);
 

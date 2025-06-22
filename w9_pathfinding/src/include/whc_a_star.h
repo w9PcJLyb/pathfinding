@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "core.h"
+#include "env.h"
 #include "space_time_a_star.h"
 #include "resumable_search.h"
 #include "reservation_table.h"
@@ -35,8 +35,8 @@ class WHCAStar : public AbsMAPF {
     };
 
     public:
-        AbsGraph* graph;
-        WHCAStar(AbsGraph* graph);
+        Env* env;
+        WHCAStar(Env* env);
 
         vector<Path> mapf(vector<int> starts, vector<int> goals);
         vector<Path> mapf(

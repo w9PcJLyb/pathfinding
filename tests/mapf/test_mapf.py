@@ -96,9 +96,9 @@ class TestMAPF(unittest.TestCase):
         g1 = graph_factory()
         g2 = graph_factory()
 
-        finder = mapf.CBS(graph=g1)
+        finder = mapf.CBS(env=g1)
         with self.assertRaises(AttributeError):
-            finder.graph = g2  # error: the attribute 'graph' is read-only
+            finder.env = g2  # error: the attribute 'env' is read-only
 
     def test_without_agents(self):
         grid = Grid(width=5, height=5)

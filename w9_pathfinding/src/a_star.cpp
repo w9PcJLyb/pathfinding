@@ -1,8 +1,8 @@
 #include "include/a_star.h"
 
 
-AStar::AStar(AbsGraph *graph) : graph(graph) {
-    nodes_.resize(graph->size());
+AStar::AStar(Env *env) : env(env) {
+    nodes_.resize(env->size());
 }
 
 void AStar::clear() {
@@ -46,12 +46,12 @@ vector<int> AStar::find_path(int start, int end) {
         }
 
         double distance = nodes_[x].distance;
-        for (auto& [n, cost] : graph->get_neighbors(x)) {
+        for (auto& [n, cost] : env->get_neighbors(x)) {
             Node &node = nodes_[n];
             double new_distance = distance + cost;
             if (node.distance < 0) {
                 workset_.push_back(&node);
-                node.f = new_distance + graph->estimate_distance(n, end);
+                node.f = new_distance + env->estimate_distance(n, end);
                 node.distance = new_distance;
                 node.parent = x;
                 openset.push({node.f, n});

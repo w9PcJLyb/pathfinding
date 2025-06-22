@@ -3,7 +3,7 @@
 #include "include/whc_a_star.h"
 
 
-WHCAStar::WHCAStar(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
+WHCAStar::WHCAStar(Env* env) : env(env), st_a_star_(env) {
 }
 
 vector<Path> WHCAStar::mapf(vector<int> starts, vector<int> goals) {
@@ -22,7 +22,7 @@ vector<Path> WHCAStar::mapf(
     if (starts.size() == 0)
         return {};
 
-    ReservationTable reservation_table(graph->size());
+    ReservationTable reservation_table(env->size());
     if (rt)
         reservation_table = *rt;
 
@@ -44,7 +44,7 @@ vector<Path> WHCAStar::mapf_(
     int window_size,
     ReservationTable &rt
 ) {
-    bool edge_collision = graph->edge_collision();
+    bool edge_collision = env->edge_collision();
 
     priority_queue<pair<int, int>, vector<pair<int, int>>, std::greater<pair<int, int>>> agent_queue;
     for (size_t agent_id = 0; agent_id < agents.size(); agent_id++)

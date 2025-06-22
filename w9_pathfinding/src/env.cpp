@@ -1,7 +1,7 @@
-#include "include/core.h"
+#include "include/env.h"
 
 
-double AbsGraph::calculate_cost(Path& path) {
+double Env::calculate_cost(Path& path) {
     if (path.size() <= 1)
         return 0;
 
@@ -32,20 +32,20 @@ double AbsGraph::calculate_cost(Path& path) {
     return total_cost;
 }
 
-bool AbsGraph::is_valid_path(Path& path) {
+bool Env::is_valid_path(Path& path) {
     if (path.size() == 0)
         return true;
 
-    int graph_size = size();
+    int env_size = size();
     int node_id = path[0];
 
-    if (node_id < 0 || node_id >= graph_size)
+    if (node_id < 0 || node_id >= env_size)
         return false;
 
     for (size_t i = 1; i < path.size(); i++) {
         int next_node_id = path[i];
 
-        if (next_node_id < 0 || next_node_id >= graph_size || !adjacent(node_id, next_node_id))
+        if (next_node_id < 0 || next_node_id >= env_size || !adjacent(node_id, next_node_id))
             return false;
 
         node_id = next_node_id;
@@ -54,7 +54,7 @@ bool AbsGraph::is_valid_path(Path& path) {
     return true;
 }
 
-bool AbsGraph::adjacent(int v1, int v2) {
+bool Env::adjacent(int v1, int v2) {
     for (auto &[node_id, cost] : get_neighbors(v1, false, true)) {
         if (node_id == v2) {
             return true;
@@ -63,11 +63,11 @@ bool AbsGraph::adjacent(int v1, int v2) {
     return false;
 }
 
-std::string AbsGraph::node_to_string(int v) const {
+std::string Env::node_to_string(int v) const {
     return std::to_string(v);
 }
 
-void AbsGraph::print_path(const Path& path) const {
+void Env::print_path(const Path& path) const {
     std::string s;
     for (int node_id : path) {
         if(!s.empty())
@@ -77,7 +77,7 @@ void AbsGraph::print_path(const Path& path) const {
     cout << "[" << s << "]" << endl;
 }
 
-void AbsGrid::update_weight(int node, double w) {
+void GridEnv::update_weight(int node, double w) {
     if (w < 0 && w != -1)
         throw std::invalid_argument("Weight must be either non-negative or equal to -1");
 
@@ -90,7 +90,7 @@ void AbsGrid::update_weight(int node, double w) {
     weights_.at(node) = w;
 }
 
-void AbsGrid::set_weights(vector<double> &weights) {
+void GridEnv::set_weights(vector<double> &weights) {
     if (weights.size() != size())
         throw std::invalid_argument(
             "Weights must have exactly " + std::to_string(size()) + " elements"
@@ -108,14 +108,14 @@ void AbsGrid::set_weights(vector<double> &weights) {
     weights_ = weights;
 }
 
-void AbsGrid::set_pause_weight(double w) {
+void GridEnv::set_pause_weight(double w) {
     if (w < 0)
         throw std::invalid_argument("Pause weight must be non-negative");
     pause_weight_ = w;
     pause_weights_.clear();
 }
 
-void AbsGrid::set_pause_weights(vector<double> &weights) {
+void GridEnv::set_pause_weights(vector<double> &weights) {
     if (weights.size() != size())
         throw std::invalid_argument(
             "Weights must have exactly " + std::to_string(size()) + " elements"
@@ -129,13 +129,13 @@ void AbsGrid::set_pause_weights(vector<double> &weights) {
     pause_weights_ = weights;
 }
 
-double AbsGrid::get_pause_weight(int node) const {
+double GridEnv::get_pause_weight(int node) const {
     if (!pause_weights_.empty())
         return pause_weights_.at(node);
     return pause_weight_;
 }
 
-vector<double> AbsGrid::get_pause_weights() const {
+vector<double> GridEnv::get_pause_weights() const {
     if (!pause_weights_.empty())
         return pause_weights_;
 

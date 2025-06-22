@@ -1,8 +1,8 @@
 #include "include/icts.h"
 
 
-icts::ResumableBFS::ResumableBFS(AbsGraph* graph, int start, int goal, const ReservationTable* rt) :
-    start(start), goal(goal), graph_(graph), depth_(1), rt_(rt)
+icts::ResumableBFS::ResumableBFS(Env* env, int start, int goal, const ReservationTable* rt) :
+    start(start), goal(goal), env_(env), depth_(1), rt_(rt)
 {
     queue_.push({0, start});
     update_data(depth_);
@@ -24,14 +24,14 @@ void icts::ResumableBFS::update_data(int depth) {
                 add_record(time + 1, node_id, node_id);
 
             auto reserved_edges = rt_->get_reserved_edges(time, node_id);
-            for (auto& [neighbor_id, cost] : graph_->get_neighbors(node_id)) {
+            for (auto& [neighbor_id, cost] : env_->get_neighbors(node_id)) {
                 if (!reserved_edges.count(neighbor_id) && !rt_->is_reserved(time + 1, neighbor_id))
                     add_record(time + 1, neighbor_id, node_id);
             }
         }
         else {
             add_record(time + 1, node_id, node_id);
-            for (auto& [neighbor_id, cost] : graph_->get_neighbors(node_id))
+            for (auto& [neighbor_id, cost] : env_->get_neighbors(node_id))
                 add_record(time + 1, neighbor_id, node_id);
         }
 
@@ -70,9 +70,9 @@ icts::MDD::MDD(ResumableBFS& bfs) : start(bfs.start), goal(bfs.goal), depth(bfs.
     }
 }
 
-void icts::MDD::print(AbsGraph* graph) {
-    cout << "MDD(start=" << graph->node_to_string(start);
-    cout << ", goal=" << graph->node_to_string(goal);
+void icts::MDD::print(Env* env) {
+    cout << "MDD(start=" << env->node_to_string(start);
+    cout << ", goal=" << env->node_to_string(goal);
     cout << ", depth=" << depth << ":" << endl;
     if (data.empty())
         cout << " - empty" << endl;
@@ -80,9 +80,9 @@ void icts::MDD::print(AbsGraph* graph) {
         for (auto const& x : data) {
             int time = x.first.first;
             int node_id = x.first.second;
-            cout << " - node=" << graph->node_to_string(node_id) << ", time=" << time << " -> ";
+            cout << " - node=" << env->node_to_string(node_id) << ", time=" << time << " -> ";
             for (auto& n : x.second) {
-                cout << graph->node_to_string(n) << " ";
+                cout << env->node_to_string(n) << " ";
             }
             cout << endl;
         }
@@ -182,12 +182,12 @@ pair<icts::MDD, icts::MDD> icts::MDD2::unfold() {
     return {mdd1, mdd2};
 }
 
-void icts::MDD2::print(AbsGraph* graph) {
+void icts::MDD2::print(Env* env) {
 
     auto positions_to_str = [&] (dint positions) {
         std::string s;
-        s += "[" + graph->node_to_string(positions.first);
-        s += ", " + graph->node_to_string(positions.second) + "]";
+        s += "[" + env->node_to_string(positions.first);
+        s += ", " + env->node_to_string(positions.second) + "]";
         return s;
     };
 
@@ -278,20 +278,20 @@ std::string icts::ICTNode::to_str() {
 }
 
 icts::LowLevel::LowLevel(
-    AbsGraph* graph,
+    Env* env,
     vector<int>& starts,
     vector<int>& goals,
     bool ict_pruning,
     const ReservationTable *rt,
     time_point<high_resolution_clock> terminate_time
-) : graph_(graph), starts_(starts), goals_(goals), ict_pruning_(ict_pruning), terminate_time_(terminate_time)
+) : env_(env), starts_(starts), goals_(goals), ict_pruning_(ict_pruning), terminate_time_(terminate_time)
 {
     num_agents_ = starts_.size();
-    edge_collision_ = graph->edge_collision();
+    edge_collision_ = env->edge_collision();
 
     bfses_.reserve(num_agents_);
     for (int i = 0; i < num_agents_; i++)
-        bfses_.emplace_back(graph_, starts_[i], goals_[i], rt);
+        bfses_.emplace_back(env_, starts_[i], goals_[i], rt);
 
     mdds_.resize(num_agents_);
 }
@@ -405,7 +405,7 @@ bool icts::LowLevel::explore(int time, vector<int>& positions, int target_depth,
     return false;
 }
 
-icts::ICTS::ICTS(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
+icts::ICTS::ICTS(Env* env) : env(env), st_a_star_(env) {
 }
 
 vector<Path> icts::ICTS::mapf(vector<int> starts, vector<int> goals) {
@@ -441,7 +441,7 @@ vector<Path> icts::ICTS::mapf(
 
     std::queue<ICTNode> queue;
     std::unordered_set<std::string> visited;
-    LowLevel low_level(graph, starts, goals, ict_pruning, rt, terminate_time);
+    LowLevel low_level(env, starts, goals, ict_pruning, rt, terminate_time);
 
     {
         vector<int> min_depths(num_agents);

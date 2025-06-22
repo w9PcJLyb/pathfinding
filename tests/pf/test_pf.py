@@ -15,9 +15,9 @@ class TestPf(unittest.TestCase):
         g1 = graph_factory()
         g2 = graph_factory()
 
-        finder = pf.AStar(graph=g1)
+        finder = pf.AStar(env=g1)
         with self.assertRaises(AttributeError):
-            finder.graph = g2  # error: the attribute 'graph' is read-only
+            finder.env = g2  # error: the attribute 'env' is read-only
 
     def test_graph_lifetime(self):
         graph_factory = GridFactory(width=4, height=4, weighted=True)
@@ -28,7 +28,7 @@ class TestPf(unittest.TestCase):
         # Create a weakref to track when the Python object is garbage collected
         graph_ref = weakref.ref(graph)
 
-        finder = pf.AStar(graph=graph)
+        finder = pf.AStar(env=graph)
 
         # Delete the graph variable
         # The object should still exist because finder is holding a reference to it

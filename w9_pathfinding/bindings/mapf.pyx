@@ -6,7 +6,7 @@ from libcpp.vector cimport vector
 from cython.operator cimport dereference
 
 from w9_pathfinding.bindings cimport cdefs
-from w9_pathfinding.bindings.envs cimport _AbsGraph
+from w9_pathfinding.bindings.envs cimport _Env
 
 
 cdef class ReservationTable:
@@ -18,24 +18,24 @@ cdef class ReservationTable:
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment (graph or grid).
     """
 
     cdef cdefs.ReservationTable* _obj
-    cdef readonly _AbsGraph graph
+    cdef readonly _Env env
 
-    def __cinit__(self, _AbsGraph graph):
-        cdef int graph_size = graph.size
+    def __cinit__(self, _Env env):
+        cdef int env_size = env.size
 
-        self.graph = graph
-        self._obj = new cdefs.ReservationTable(graph_size)
+        self.env = env
+        self._obj = new cdefs.ReservationTable(env_size)
 
     def __dealloc__(self):
         del self._obj
 
     def __repr__(self):
-        return f"ReservationTable(graph={self.graph})"
+        return f"ReservationTable(env={self.env})"
 
     def is_reserved(self, int time, node):
         """
@@ -58,7 +58,7 @@ cdef class ReservationTable:
         ValueError
             If `node` is not a valid node in the environment.
         """
-        cdef int node_id = self.graph._node_mapper.to_id(node)
+        cdef int node_id = self.env._node_mapper.to_id(node)
         return self._obj.is_reserved(time, node_id)
 
     def is_edge_reserved(self, int time, n1, n2):
@@ -84,8 +84,8 @@ cdef class ReservationTable:
         ValueError
             If either `n1` or `n2` is not a valid node in the environment.
         """
-        cdef int n1_id = self.graph._node_mapper.to_id(n1)
-        cdef int n2_id = self.graph._node_mapper.to_id(n2)
+        cdef int n1_id = self.env._node_mapper.to_id(n1)
+        cdef int n2_id = self.env._node_mapper.to_id(n2)
         return self._obj.is_reserved_edge(time, n1_id, n2_id)
 
     def add_path(
@@ -113,8 +113,8 @@ cdef class ReservationTable:
         ValueError
             If any node in the path is not a valid node in the environment.
         """
-        cdef vector[int] node_ids = self.graph._node_mapper.to_ids(path)
-        self._obj.add_path(start_time, node_ids, reserve_destination, self.graph.edge_collision)
+        cdef vector[int] node_ids = self.env._node_mapper.to_ids(path)
+        self._obj.add_path(start_time, node_ids, reserve_destination, self.env.edge_collision)
 
     def add_vertex_constraint(self, int time, node, bool permanent=False):
         """
@@ -134,7 +134,7 @@ cdef class ReservationTable:
         ValueError
             If `node` is not a valid node in the environment.
         """
-        cdef int node_id = self.graph._node_mapper.to_id(node)
+        cdef int node_id = self.env._node_mapper.to_id(node)
         if not permanent:
             self._obj.add_vertex_constraint(time, node_id)
         else:
@@ -159,12 +159,12 @@ cdef class ReservationTable:
             If either `n1` or `n2` is not a valid node in the environment.
         """
         cdef int n1_id, n2_id
-        n1_id = self.graph._node_mapper.to_id(n1)
-        n2_id = self.graph._node_mapper.to_id(n2)
+        n1_id = self.env._node_mapper.to_id(n1)
+        n2_id = self.env._node_mapper.to_id(n2)
         self._obj.add_edge_constraint(time, n1_id, n2_id)
 
     def __copy__(self):
-        rt = ReservationTable(self.graph)
+        rt = ReservationTable(self.env)
         rt._obj = new cdefs.ReservationTable(dereference(self._obj))
         return rt
 
@@ -172,7 +172,7 @@ cdef class ReservationTable:
 def _pathfinding(func):
     @wraps(func)
     def wrap(finder, start, goal, **kwargs):
-        map = finder.graph._node_mapper
+        map = finder.env._node_mapper
         start = map.to_id(start)
         goal = map.to_id(goal)
         path = map.from_ids(func(finder, start, goal, **kwargs))
@@ -187,7 +187,7 @@ def _mapf(func):
         if len(starts) != len(goals):
             raise ValueError("The lengths of `starts` and `goals` must be the same.")
 
-        map = finder.graph._node_mapper
+        map = finder.env._node_mapper
         starts = map.to_ids(starts)
         goals = map.to_ids(goals)
         paths = [map.from_ids(p) for p in func(finder, starts, goals, **kwargs)]
@@ -205,16 +205,16 @@ cdef class SpaceTimeAStar:
 
     Parameters
     ----------
-    graph : _AbsGraph
-        The spatial structure of the environment
+    env : Environment
+        The environment in which to search for paths.
     """
 
     cdef cdefs.SpaceTimeAStar* _obj
-    cdef readonly _AbsGraph graph
+    cdef readonly _Env env
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.SpaceTimeAStar(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.SpaceTimeAStar(env._baseobj)
 
     def __dealloc__(self):
         del self._obj
@@ -224,7 +224,7 @@ cdef class SpaceTimeAStar:
         if reservation_table is None:
             crt = NULL
         else:
-            assert(reservation_table.graph == self.graph)
+            assert(reservation_table.env == self.env)
             crt = reservation_table._obj
         return crt
 
@@ -247,9 +247,9 @@ cdef class SpaceTimeAStar:
         Parameters
         ----------
         start : node
-            The starting node in the graph
+            The starting node.
         goal : node
-            The goal node in the graph
+            The goal node.
         max_length : int, default=100
             Maximum allowed path length (number of time steps).
         reservation_table : ReservationTable, optional
@@ -288,9 +288,9 @@ cdef class SpaceTimeAStar:
         Parameters
         ----------
         start : node
-            The starting node in the graph
+            The starting node.
         goal : node
-            The goal node in the graph
+            The goal node.
         max_length : int
             Maximum number of time steps (path length) allowed
         stay_at_goal : bool, default=True
@@ -338,9 +338,9 @@ cdef class SpaceTimeAStar:
         Parameters
         ----------
         start : node
-            The starting node in the graph
+            The starting node.
         goal : node
-            The goal node in the graph
+            The goal node.
         length : int
             Required number of time steps for the path
         reservation_table : ReservationTable, optional
@@ -372,7 +372,7 @@ cdef class SpaceTimeAStar:
         """
         Performs A* search with a limited planning depth, returning partial paths when needed.
 
-        This function explores the space-time graph up to `search_depth` time steps. If a full
+        This function explores the space-time environment up to `search_depth` time steps. If a full
         path to the goal is found within that depth, it is returned. Otherwise,
         a partial path is returned.
 
@@ -383,9 +383,9 @@ cdef class SpaceTimeAStar:
         Parameters
         ----------
         start : node
-            The starting node in the graph
+            The starting node.
         goal : node
-            The goal node in the graph
+            The goal node.
         search_depth : int, default=100
             Maximum number of time steps the planner is allowed to search
         stay_at_goal : bool, default=True
@@ -420,13 +420,13 @@ cdef class _AbsMAPF():
     """
 
     cdef cdefs.AbsMAPF* _baseobj
-    cdef readonly _AbsGraph graph
+    cdef readonly _Env env
 
     def __cinit__(self):
         pass
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(graph={self.graph})"
+        return f"{self.__class__.__name__}(env={self.env})"
 
     cdef cdefs.ReservationTable* _to_crt(self, ReservationTable reservation_table):
         """
@@ -437,7 +437,7 @@ cdef class _AbsMAPF():
         if reservation_table is None:
             crt = NULL
         else:
-            assert(reservation_table.graph == self.graph)
+            assert(reservation_table.env == self.env)
             crt = reservation_table._obj
         return crt
 
@@ -485,7 +485,7 @@ cdef class HCAStar(_AbsMAPF):
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
 
     References
@@ -495,9 +495,9 @@ cdef class HCAStar(_AbsMAPF):
 
     cdef cdefs.HCAStar* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.HCAStar(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.HCAStar(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -563,7 +563,7 @@ cdef class WHCAStar(_AbsMAPF):
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
 
     References
@@ -573,9 +573,9 @@ cdef class WHCAStar(_AbsMAPF):
 
     cdef cdefs.WHCAStar* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.WHCAStar(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.WHCAStar(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -655,11 +655,11 @@ cdef class CBS(_AbsMAPF):
     objective (i.e., the total cost across all agents' paths).
 
     While CBS is relatively fast in practice, especially in sparse environments,
-    performance may degrade on large graphs or with many agents.
+    performance may degrade in large environments or with many agents.
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
 
     References
@@ -670,9 +670,9 @@ cdef class CBS(_AbsMAPF):
 
     cdef cdefs.CBS* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.CBS(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.CBS(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -769,12 +769,12 @@ cdef class ICTS(_AbsMAPF):
 
     This algorithm is **complete** — it is guaranteed to find a solution if one exists.
     It is also **optimal** with respect to the Sum-of-Costs objective, but only
-    in unweighted graphs (i.e. where all edges have equal cost). In weighted graphs,
+    in unweighted environments (i.e. where all edges have equal cost). In weighted environments,
     it may still find valid solutions, but they are not guaranteed to be optimal.
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
 
     References
@@ -784,9 +784,9 @@ cdef class ICTS(_AbsMAPF):
     """
     cdef cdefs.ICTS* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.ICTS(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.ICTS(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -881,7 +881,7 @@ cdef class MultiAgentAStar(_AbsMAPF):
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
 
     References
@@ -891,9 +891,9 @@ cdef class MultiAgentAStar(_AbsMAPF):
     """
     cdef cdefs.MultiAgentAStar* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.MultiAgentAStar(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.MultiAgentAStar(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):

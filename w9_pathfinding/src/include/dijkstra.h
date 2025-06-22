@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graph.h"
+#include "env.h"
 
 
 class Dijkstra : public AbsPathFinder {
@@ -21,8 +21,8 @@ class Dijkstra : public AbsPathFinder {
     };
 
     public:
-        AbsGraph* graph;
-        Dijkstra(AbsGraph *graph);
+        Env* env;
+        Dijkstra(Env* env);
 
         vector<int> find_path(int start, int end);
 

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "graph.h"
+#include "env.h"
 
 
 class BFS : public AbsPathFinder {
     // Breadth-first search
     public:
-        AbsGraph* graph;
-        BFS(AbsGraph *graph);
+        Env* env;
+        BFS(Env *env);
 
         vector<int> find_path(int start, int end);
 

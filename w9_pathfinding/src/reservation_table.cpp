@@ -3,10 +3,10 @@
 using std::cout;
 using std::endl;
 
-ReservationTable::ReservationTable(int graph_size) : graph_size(graph_size) {
+ReservationTable::ReservationTable(int env_size) : env_size(env_size) {
 }
 
-ReservationTable::ReservationTable(const ReservationTable& rt) : ReservationTable(rt.graph_size) {
+ReservationTable::ReservationTable(const ReservationTable& rt) : ReservationTable(rt.env_size) {
     vertex_constraints_ = rt.vertex_constraints_;
     edge_constraints_ = rt.edge_constraints_;
     semi_static_constraints_ = rt.semi_static_constraints_;
@@ -14,8 +14,8 @@ ReservationTable::ReservationTable(const ReservationTable& rt) : ReservationTabl
 }
 
 ReservationTable& ReservationTable::operator=(const ReservationTable& rt) {
-    if (graph_size != rt.graph_size) {
-        throw std::invalid_argument("graph_size should be the same");
+    if (env_size != rt.env_size) {
+        throw std::invalid_argument("env_size should be the same");
     }
     vertex_constraints_ = rt.vertex_constraints_;
     edge_constraints_ = rt.edge_constraints_;
@@ -113,8 +113,8 @@ void ReservationTable::print() const {
     if (!vertex_constraints_.empty()) {
         cout << "Vertex constraints:" << endl;
         for (auto st : vertex_constraints_) {
-            int time = st / graph_size;
-            int node_id = st % graph_size;
+            int time = st / env_size;
+            int node_id = st % env_size;
             cout << "- time=" << time << ", node=" << node_id << endl;
         }
     }
@@ -122,8 +122,8 @@ void ReservationTable::print() const {
     if (!edge_constraints_.empty()) {
         cout << "Edge constraints:" << endl;
         for (auto &[st, d] : edge_constraints_) {
-            int time = st / graph_size;
-            int n1 = st % graph_size;
+            int time = st / env_size;
+            int n1 = st % env_size;
             for (auto n2 : d) {
                 cout << "- time=" << time << ", edge=" << n1 << "->" << n2 << endl;
             }

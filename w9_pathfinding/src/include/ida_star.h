@@ -1,14 +1,14 @@
 #pragma once
 
-#include "core.h"
+#include "env.h"
 
 
 class IDAStar : public AbsPathFinder {
     // Iterative deepening A*
 
     public:
-        AbsGraph* graph;
-        IDAStar(AbsGraph *graph);
+        Env* env;
+        IDAStar(Env* env);
 
         vector<int> find_path(int start, int goal);
         vector<int> find_path(int start, int goal, double max_distance);

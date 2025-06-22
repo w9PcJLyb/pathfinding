@@ -1,7 +1,7 @@
 #include "include/hc_a_star.h"
 
 
-HCAStar::HCAStar(AbsGraph *graph) : graph(graph), st_a_star_(graph) {
+HCAStar::HCAStar(Env* env) : env(env), st_a_star_(env) {
 }
 
 vector<vector<int>> HCAStar::mapf(vector<int> starts, vector<int> goals) {
@@ -19,11 +19,11 @@ vector<vector<int>> HCAStar::mapf(
     if (starts.size() == 0)
         return {};
 
-    ReservationTable reservation_table(graph->size());
+    ReservationTable reservation_table(env->size());
     if (rt)
         reservation_table = *rt;
 
-    bool edge_collision = graph->edge_collision();
+    bool edge_collision = env->edge_collision();
 
     vector<vector<int>> paths;
     for (size_t i = 0; i < starts.size(); i++) {

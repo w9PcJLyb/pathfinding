@@ -131,7 +131,7 @@ Graph* Graph::create_reversed_graph() const {
     return reversed_graph;
 }
 
-AbsGraph* Graph::reverse() const {
+Env* Graph::reverse() const {
     return create_reversed_graph();
 }
 
@@ -166,7 +166,7 @@ void Graph::set_edge_collision(bool b) {
     if (b && !is_directed_graph()) {
         throw std::invalid_argument("An undirected graph does not support edge collisions");
     }
-    AbsGraph::set_edge_collision(b);
+    Env::set_edge_collision(b);
 }
 
 void Graph::update_reversed_edges() {

@@ -22,12 +22,12 @@ using std::priority_queue;
 typedef vector<int> Path;
 
 
-class AbsGraph {
+class Env {
     public:
-        AbsGraph() {};
-        virtual ~AbsGraph() {};
+        Env() {};
+        virtual ~Env() {};
 
-        // Returns the number of nodes (vertices) in the graph.
+        // Returns the number of nodes (vertices) in the environment.
         virtual size_t size() const = 0;
 
         // Returns the neighbors of a given node.
@@ -36,7 +36,7 @@ class AbsGraph {
             int node, bool reversed=false, bool include_self=false
         ) = 0;
 
-        // Indicates whether the graph implementation provides a heuristic function
+        // Indicates whether the implementation provides a heuristic function (estimate_distance).
         virtual bool has_heuristic() const = 0;
 
         // Estimates a lower bound on the cost between two vertices.
@@ -81,7 +81,7 @@ class AbsGraph {
 };
 
 
-class AbsGrid : public AbsGraph {
+class GridEnv : public Env {
 
     public:
         size_t size() const {

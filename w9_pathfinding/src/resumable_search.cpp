@@ -1,8 +1,8 @@
 #include "include/resumable_search.h"
 
 
-ResumableBFS::ResumableBFS(AbsGraph *graph, int start, bool reverse) : ResumableSearch(graph, start, reverse) {
-    nodes_.resize(graph->size());
+ResumableBFS::ResumableBFS(Env* env, int start, bool reverse) : ResumableSearch(env, start, reverse) {
+    nodes_.resize(env->size());
 
     openset_.push(start);
     Node &n0 = nodes_[start];
@@ -64,7 +64,7 @@ void ResumableBFS::search(int node_id) {
 
         Node& current = nodes_[current_id];
 
-        for (auto& [n, cost] : graph->get_neighbors(current_id, reverse_)) {
+        for (auto& [n, cost] : env->get_neighbors(current_id, reverse_)) {
             Node &node = nodes_[n];
             if (node.distance < 0) {
                 node.parent = current_id;
@@ -78,8 +78,8 @@ void ResumableBFS::search(int node_id) {
     }
 }
 
-ResumableAStar::ResumableAStar(AbsGraph *graph, int start, bool reverse) : ResumableSearch(graph, start, reverse) {
-    nodes_.resize(graph->size());
+ResumableAStar::ResumableAStar(Env* env, int start, bool reverse) : ResumableSearch(env, start, reverse) {
+    nodes_.resize(env->size());
 
     openset_.push({0, start});
     Node &n0 = nodes_[start];
@@ -150,11 +150,11 @@ void ResumableAStar::search(int node_id) {
 
         current.closed = true;
 
-        for (auto& [n, cost] : graph->get_neighbors(current_id, reverse_)) {
+        for (auto& [n, cost] : env->get_neighbors(current_id, reverse_)) {
             Node &node = nodes_[n];
             double new_distance = current.distance + cost;
             if (node.distance < 0) {
-                node.f = new_distance + graph->estimate_distance(n, end_);
+                node.f = new_distance + env->estimate_distance(n, end_);
                 node.distance = new_distance;
                 node.parent = current_id;
                 openset_.push({node.f, n});
@@ -175,8 +175,8 @@ void ResumableAStar::search(int node_id) {
     node.closed = true;
 }
 
-ResumableDijkstra::ResumableDijkstra(AbsGraph *graph, int start, bool reverse) : ResumableSearch(graph, start, reverse) {
-    nodes_.resize(graph->size());
+ResumableDijkstra::ResumableDijkstra(Env* env, int start, bool reverse) : ResumableSearch(env, start, reverse) {
+    nodes_.resize(env->size());
 
     openset_.push({0, start});
     Node &n0 = nodes_[start]; 
@@ -243,7 +243,7 @@ void ResumableDijkstra::search(int node_id) {
 
         current.closed = true;
 
-        for (auto& [n, cost] : graph->get_neighbors(current_id, reverse_)) {
+        for (auto& [n, cost] : env->get_neighbors(current_id, reverse_)) {
             Node &node = nodes_[n];
             double new_distance = current.distance + cost;
             if (node.distance < 0 || node.distance > new_distance) {
