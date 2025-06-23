@@ -65,14 +65,20 @@ and MAPF algorithms provided by this library.
       * include_self - if true, includes a self-loop to the node itself,
         if it exists (used in MAPF to allow the "pause" action)
 
+    - **has_heuristic**
+
+      .. code-block:: c++
+
+        bool has_heuristic();
+
+      Indicates whether the environment provides a heuristic function (`estimate_distance`).
+      This is used to determine whether A*-like algorithms can be applied.
+
     - **estimate_distance**
 
       .. code-block:: c++
 
         double estimate_distance(int n1, int n2);
 
-      Returns an estimate of the minimum possible distance
-      between two nodes. This is typically used as a heuristic in A*-like algorithms.
-
-      This method is optional. If an environment does not implement it,
-      A*-based algorithms (which rely on heuristics) will not be available for that environment.
+      Returns an estimate (a lower bound) of the minimal cost between two nodes.
+      This function is typically used as a heuristic in A*-like search algorithms.
