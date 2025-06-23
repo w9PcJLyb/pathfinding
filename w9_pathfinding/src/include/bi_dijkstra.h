@@ -1,6 +1,6 @@
  #pragma once
 
-#include "graph.h"
+#include "pf.h"
 
 
 class BiDijkstra : public AbsPathFinder {
@@ -22,8 +22,8 @@ class BiDijkstra : public AbsPathFinder {
     };
 
     public:
-        AbsGraph* graph;
-        BiDijkstra(AbsGraph *graph);
+        Env* env;
+        BiDijkstra(Env* env);
 
         vector<int> find_path(int start, int end);
 

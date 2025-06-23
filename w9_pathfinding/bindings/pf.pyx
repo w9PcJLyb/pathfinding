@@ -2,13 +2,13 @@
 
 from functools import wraps
 from w9_pathfinding.bindings cimport cdefs
-from w9_pathfinding.bindings.envs cimport _AbsGraph, Graph
+from w9_pathfinding.bindings.envs cimport _Env
 
 
 def _pathfinding(func):
     @wraps(func)
     def wrap(finder, start, goal, **kwargs):
-        map = finder.graph._node_mapper
+        map = finder.env._node_mapper
         start = map.to_id(start)
         goal = map.to_id(goal)
         path = map.from_ids(func(finder, start, goal, **kwargs))
@@ -23,13 +23,13 @@ cdef class _AbsPathFinder():
     """
 
     cdef cdefs.AbsPathFinder* _baseobj
-    cdef readonly _AbsGraph graph
+    cdef readonly _Env env
 
     def __cinit__(self):
         pass
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(graph={self.graph})"
+        return f"{self.__class__.__name__}(env={self.env})"
 
     @_pathfinding
     def find_path(self, start, goal):
@@ -69,15 +69,15 @@ cdef class DFS(_AbsPathFinder):
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
     """
 
     cdef cdefs.DFS* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.DFS(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.DFS(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -90,20 +90,20 @@ cdef class BFS(_AbsPathFinder):
 
     BFS explores all nodes at the current depth before moving to the next level.
 
-    It guarantees to find the optimal path only in unweighted graphs
+    It guarantees to find the optimal path only in unweighted environments
     (when all edges have equal cost).
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
     """
 
     cdef cdefs.BFS* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.BFS(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.BFS(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -116,22 +116,22 @@ cdef class BiBFS(_AbsPathFinder):
 
     BiBFS performs two simultaneous BFS searches: one from the start and one
     from the goal. When the two frontiers meet, a valid path is reconstructed.
-    This algorithm can significantly reduce search time in large graphs compared to BFS.
+    This algorithm can significantly reduce search time in large environments compared to BFS.
 
-    It guarantees to find the optimal path only in unweighted graphs
+    It guarantees to find the optimal path only in unweighted environments
     (when all edges have equal cost).
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
     """
 
     cdef cdefs.BiBFS* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.BiBFS(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.BiBFS(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -140,24 +140,24 @@ cdef class BiBFS(_AbsPathFinder):
 
 cdef class Dijkstra(_AbsPathFinder):
     """
-    Dijkstra's algorithm for optimal pathfinding in weighted graphs.
+    Dijkstra's algorithm for optimal pathfinding in weighted environments.
 
     Dijkstra's algorithm computes the lowest-cost path between nodes by
     expanding nodes in order of increasing path cost.
 
-    It guarantees to find the optimal path in any graph.
+    It guarantees to find the optimal path in any environment.
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
     """
 
     cdef cdefs.Dijkstra* _obj
     
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.Dijkstra(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.Dijkstra(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -166,24 +166,24 @@ cdef class Dijkstra(_AbsPathFinder):
 
 cdef class BiDijkstra(_AbsPathFinder):
     """
-    Bidirectional Dijkstra's algorithm for optimal pathfinding in weighted graphs.
+    Bidirectional Dijkstra's algorithm for optimal pathfinding in weighted environments.
 
     This algorithm runs two simultaneous Dijkstra searches — one from the start,
     one from the goal — and stops when the frontiers meet. Often faster than regular Dijkstra.
 
-    It guarantees to find the optimal path in any graph.
+    It guarantees to find the optimal path in any environment.
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
     """
 
     cdef cdefs.BiDijkstra* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        self.graph = graph
-        self._obj = new cdefs.BiDijkstra(graph._baseobj)
+    def __cinit__(self, _Env env):
+        self.env = env
+        self._obj = new cdefs.BiDijkstra(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -195,32 +195,31 @@ cdef class AStar(_AbsPathFinder):
     A* search algorithm for optimal pathfinding.
 
     A* extends Dijkstra by using a heuristic function to estimate
-    the remaining cost to the goal, allowing faster search on many graphs.
+    the remaining cost to the goal, allowing faster search in many environments.
 
-    It guarantees to find the optimal path in any graph.
+    It guarantees to find the optimal path in any environment.
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
 
     Raises
     ------
     ValueError
-        If the graph does not support heuristics.
+        If the environment does not support heuristics.
     """
 
     cdef cdefs.AStar* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
+    def __cinit__(self, _Env env):
+        if not env._baseobj.has_heuristic():
             raise ValueError(
-                "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
+                f"{self.__class__.__name__} requires a heuristic function. "
+                f"But {env} does not support heuristic estimation."
             )
-        self.graph = graph
-        self._obj = new cdefs.AStar(graph._baseobj)
+        self.env = env
+        self._obj = new cdefs.AStar(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -234,30 +233,29 @@ cdef class BiAStar(_AbsPathFinder):
     This algorithm runs two simultaneous A* searches — one from the start,
     one from the goal — and stops when the frontiers meet. Often faster than regular A*.
 
-    It guarantees to find the optimal path in any graph.
+    It guarantees to find the optimal path in any environment.
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
 
     Raises
     ------
     ValueError
-        If the graph does not support heuristics.
+        If the environment does not support heuristics.
     """
 
     cdef cdefs.BiAStar* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
+    def __cinit__(self, _Env env):
+        if not env._baseobj.has_heuristic():
             raise ValueError(
-                "A* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
+                f"{self.__class__.__name__} requires a heuristic function. "
+                f"But {env} does not support heuristic estimation."
             )
-        self.graph = graph
-        self._obj = new cdefs.BiAStar(graph._baseobj)
+        self.env = env
+        self._obj = new cdefs.BiAStar(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -275,26 +273,25 @@ cdef class GBS(_AbsPathFinder):
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
 
     Raises
     ------
     ValueError
-        If the graph does not support heuristics.
+        If the environment does not support heuristics.
     """
 
     cdef cdefs.GBS* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
+    def __cinit__(self, _Env env):
+        if not env._baseobj.has_heuristic():
             raise ValueError(
-                "GBS cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
+                f"{self.__class__.__name__} requires a heuristic function. "
+                f"But {env} does not support heuristic estimation."
             )
-        self.graph = graph
-        self._obj = new cdefs.GBS(graph._baseobj)
+        self.env = env
+        self._obj = new cdefs.GBS(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -309,30 +306,29 @@ cdef class IDAStar(_AbsPathFinder):
     It performs repeated depth-limited searches, gradually increasing the
     limit based on estimated cost.
 
-    It guarantees to find the optimal path in any graph.
+    It guarantees to find the optimal path in any environment.
 
     Parameters
     ----------
-    graph : _AbsGraph
+    env : Environment
         The environment in which to search for paths.
 
     Raises
     ------
     ValueError
-        If the graph does not support heuristics.
+        If the environment does not support heuristics.
     """
 
     cdef cdefs.IDAStar* _obj
 
-    def __cinit__(self, _AbsGraph graph):
-        if isinstance(graph, Graph) and not graph.has_coordinates():
+    def __cinit__(self, _Env env):
+        if not env._baseobj.has_heuristic():
             raise ValueError(
-                "IDA* cannot work with a graph without coordinates. "
-                "You can add coordinates using graph.set_coordinates(), "
-                "or choose some non-heuristic algorithm."
+                f"{self.__class__.__name__} requires a heuristic function. "
+                f"But {env} does not support heuristic estimation."
             )
-        self.graph = graph
-        self._obj = new cdefs.IDAStar(graph._baseobj)
+        self.env = env
+        self._obj = new cdefs.IDAStar(env._baseobj)
         self._baseobj = self._obj
 
     def __dealloc__(self):
@@ -382,13 +378,13 @@ cdef class ResumableBFS:
     Useful in scenarios where multiple path or distance lookups are needed
     from the same source node.
 
-    It guarantees to find the optimal path only in unweighted graphs
+    It guarantees to find the optimal path only in unweighted environments
     (when all edges have equal cost).
 
     Parameters
     ----------
-    graph : _AbsGraph
-        The environment in which the BFS traversal is performed.
+    env : Environment
+        The environment in which to search for paths.
 
     start_node : node
         The source node to start BFS from.
@@ -400,15 +396,15 @@ cdef class ResumableBFS:
     """
 
     cdef cdefs.ResumableBFS* _obj
-    cdef readonly _AbsGraph graph
+    cdef readonly _Env env
 
-    def __cinit__(self, _AbsGraph graph, start_node):
-        self.graph = graph
-        node_id = graph._node_mapper.to_id(start_node)
-        self._obj = new cdefs.ResumableBFS(graph._baseobj, node_id)
+    def __cinit__(self, _Env env, start_node):
+        self.env = env
+        node_id = env._node_mapper.to_id(start_node)
+        self._obj = new cdefs.ResumableBFS(env._baseobj, node_id)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(graph={self.graph}, start_node={self.start_node})"
+        return f"{self.__class__.__name__}(env={self.env}, start_node={self.start_node})"
 
     def __dealloc__(self):
         del self._obj
@@ -423,14 +419,14 @@ cdef class ResumableBFS:
         reset internal state and rerun BFS's algorithm in the next query.
         """
         node_id = self._obj.start_node()
-        return self.graph._node_mapper.from_id(node_id)
+        return self.env._node_mapper.from_id(node_id)
 
     @start_node.setter
     def start_node(self, start_node):
         """
         Set a new start node for the BFS traversal.
         """
-        node_id = self.graph._node_mapper.to_id(start_node)
+        node_id = self.env._node_mapper.to_id(start_node)
         self._obj.set_start_node(node_id)
 
     def distance(self, node):
@@ -453,7 +449,7 @@ cdef class ResumableBFS:
         ValueError
             If `node` is not a valid node in the environment.
         """
-        node_id = self.graph._node_mapper.to_id(node)
+        node_id = self.env._node_mapper.to_id(node)
         d = self._obj.distance(node_id)
         return d if d >= 0 else float("inf")
 
@@ -480,7 +476,7 @@ cdef class ResumableBFS:
         ValueError
             If `node` is not a valid node in the environment.
         """
-        map = self.graph._node_mapper
+        map = self.env._node_mapper
         node_id = map.to_id(node)
         path = self._obj.find_path(node_id)
         return map.from_ids(path)
@@ -495,12 +491,12 @@ cdef class ResumableDijkstra:
     Unlike standard Dijkstra's algorithm, the results are cached and reused efficiently for
     multiple distance/path queries without re-running the full search.
 
-    It guarantees to find the optimal path in any graph.
+    It guarantees to find the optimal path in any environment.
 
     Parameters
     ----------
-    graph : _AbsGraph
-        The environment in which the Dijkstra's traversal is performed.
+    env : Environment
+        The environment in which to search for paths.
 
     start_node : node
         The source node to start Dijkstra's algorithm from.
@@ -512,15 +508,15 @@ cdef class ResumableDijkstra:
     """
 
     cdef cdefs.ResumableDijkstra* _obj
-    cdef readonly _AbsGraph graph
+    cdef readonly _Env env
 
-    def __cinit__(self, _AbsGraph graph, start_node):
-        self.graph = graph
-        node_id = graph._node_mapper.to_id(start_node)
-        self._obj = new cdefs.ResumableDijkstra(graph._baseobj, node_id)
+    def __cinit__(self, _Env env, start_node):
+        self.env = env
+        node_id = env._node_mapper.to_id(start_node)
+        self._obj = new cdefs.ResumableDijkstra(env._baseobj, node_id)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(graph={self.graph}, start_node={self.start_node})"
+        return f"{self.__class__.__name__}(env={self.env}, start_node={self.start_node})"
 
     def __dealloc__(self):
         del self._obj
@@ -535,14 +531,14 @@ cdef class ResumableDijkstra:
         reset internal state and rerun Dijkstra's algorithm in the next query..
         """
         node_id = self._obj.start_node()
-        return self.graph._node_mapper.from_id(node_id)
+        return self.env._node_mapper.from_id(node_id)
 
     @start_node.setter
     def start_node(self, start_node):
         """
         Set a new start node for the Dijkstra's traversal.
         """
-        node_id = self.graph._node_mapper.to_id(start_node)
+        node_id = self.env._node_mapper.to_id(start_node)
         self._obj.set_start_node(node_id)
 
     def distance(self, node):
@@ -565,7 +561,7 @@ cdef class ResumableDijkstra:
         ValueError
             If `node` is not a valid node in the environment.
         """
-        node_id = self.graph._node_mapper.to_id(node)
+        node_id = self.env._node_mapper.to_id(node)
         d = self._obj.distance(node_id)
         return d if d >= 0 else float("inf")
 
@@ -590,7 +586,7 @@ cdef class ResumableDijkstra:
         ValueError
             If `node` is not a valid node in the environment.
         """
-        map = self.graph._node_mapper
+        map = self.env._node_mapper
         node_id = map.to_id(node)
         path = self._obj.find_path(node_id)
         return map.from_ids(path)

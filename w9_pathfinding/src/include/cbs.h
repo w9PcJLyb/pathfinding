@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "core.h"
+#include "mapf.h"
 #include "space_time_a_star.h"
 #include "resumable_search.h"
 #include "reservation_table.h"
@@ -82,8 +82,8 @@ class CBS : public AbsMAPF {
     typedef vector<CTNode> ConstraintTree;
 
     public:
-        AbsGraph* graph;
-        CBS(AbsGraph* graph);
+        Env* env;
+        CBS(Env* env);
         int num_generated_nodes = 0;
         int num_closed_nodes = 0;
 

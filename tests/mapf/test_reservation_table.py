@@ -46,7 +46,7 @@ class TestReservationTable(unittest.TestCase):
         rt_copy = copy(rt)
         rt_copy.add_vertex_constraint(3, node=(0, 1))
 
-        self.assertEqual(id(rt.graph), id(rt_copy.graph))
+        self.assertEqual(id(rt.env), id(rt_copy.env))
 
         self.assertTrue(rt.is_reserved(2, (0, 1)))
         self.assertFalse(rt.is_reserved(3, (0, 1)))

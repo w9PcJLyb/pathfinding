@@ -1,12 +1,12 @@
 #pragma once
 
 #include <memory>
-#include "core.h"
+#include "mapf.h"
 #include "resumable_search.h"
 #include "reservation_table.h"
 
 
-class SpaceTimeAStar : public AbsPathFinder {
+class SpaceTimeAStar {
 
     struct Node {
         Node* parent;
@@ -20,8 +20,8 @@ class SpaceTimeAStar : public AbsPathFinder {
     };
 
     public:
-        AbsGraph* graph;
-        SpaceTimeAStar(AbsGraph* graph);
+        Env* env;
+        SpaceTimeAStar(Env* env);
 
         std::unique_ptr<ResumableSearch> reverse_resumable_search(int node_id);
         Path find_path(int start, int end);

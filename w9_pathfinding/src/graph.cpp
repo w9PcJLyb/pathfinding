@@ -103,12 +103,12 @@ vector<pair<int, double>> Graph::get_neighbors(int node, bool reversed, bool inc
     return nb;
 }
 
-bool Graph::has_coordinates() const {
+bool Graph::has_heuristic() const {
     return (num_vertices_ == 0) || (coordinates_.size() > 0);
 }
 
 double Graph::estimate_distance(int v1, int v2) const {
-    assert(has_coordinates());
+    assert(has_heuristic());
 
     const vector<double> &c1 = coordinates_[v1];
     const vector<double> &c2 = coordinates_[v2];
@@ -131,7 +131,7 @@ Graph* Graph::create_reversed_graph() const {
     return reversed_graph;
 }
 
-AbsGraph* Graph::reverse() const {
+Env* Graph::reverse() const {
     return create_reversed_graph();
 }
 
@@ -166,7 +166,7 @@ void Graph::set_edge_collision(bool b) {
     if (b && !is_directed_graph()) {
         throw std::invalid_argument("An undirected graph does not support edge collisions");
     }
-    AbsGraph::set_edge_collision(b);
+    Env::set_edge_collision(b);
 }
 
 void Graph::update_reversed_edges() {

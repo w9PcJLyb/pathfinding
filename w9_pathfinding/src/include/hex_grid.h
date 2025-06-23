@@ -1,9 +1,9 @@
 #pragma once
 
-#include "core.h"
+#include "env.h"
 
 
-class HexGrid : public AbsGrid {
+class HexGrid : public GridEnv {
 
     /*
     Hexagonal Grid

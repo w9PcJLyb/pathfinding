@@ -1,10 +1,10 @@
 #include "include/bi_bfs.h" 
 
 
-BiBFS::BiBFS(AbsGraph *graph) : graph(graph) {
-    forward_nodes_.resize(graph->size());
-    backward_nodes_.resize(graph->size());
-    closedset_.resize(graph->size(), 0);
+BiBFS::BiBFS(Env* env) : env(env) {
+    forward_nodes_.resize(env->size());
+    backward_nodes_.resize(env->size());
+    closedset_.resize(env->size(), 0);
 }
 
 void BiBFS::clear() {
@@ -66,7 +66,7 @@ bool BiBFS::step(int side, std::queue<int> &queue, vector<Node> &nodes) {
     queue.pop();
     int d = nodes[node_id].distance + 1;
 
-    for (auto& [n, cost] : graph->get_neighbors(node_id, side)) {
+    for (auto& [n, cost] : env->get_neighbors(node_id, side)) {
         Node &nb = nodes[n];
         if (nb.distance < 0) {
             nb.distance = d;

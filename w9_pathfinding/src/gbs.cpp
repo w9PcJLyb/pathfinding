@@ -1,8 +1,8 @@
 #include "include/gbs.h"
 
 
-GBS::GBS(AbsGraph *graph) : graph(graph) {
-    came_from_.resize(graph->size(), -1);
+GBS::GBS(Env* env) : env(env) {
+    came_from_.resize(env->size(), -1);
 }
 
 void GBS::clear() {
@@ -34,12 +34,12 @@ vector<int> GBS::find_path(int start, int end) {
         openset.pop();
 
         int node_id = top.second;
-        for (auto& [n, cost] : graph->get_neighbors(node_id)) {
+        for (auto& [n, cost] : env->get_neighbors(node_id)) {
             if (came_from_[n] < 0) {
                 came_from_[n] = node_id;
                 if (n == end)
                     return reconstruct_path(start, end);
-                double potential = graph->estimate_distance(n, end);
+                double potential = env->estimate_distance(n, end);
                 openset.push({potential, n});
             }
         }

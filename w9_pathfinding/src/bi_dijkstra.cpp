@@ -1,10 +1,10 @@
 #include "include/bi_dijkstra.h"
 
 
-BiDijkstra::BiDijkstra(AbsGraph *graph) : graph(graph) {
-    forward_nodes_.resize(graph->size());
-    backward_nodes_.resize(graph->size());
-    closedset_.resize(graph->size(), 0);
+BiDijkstra::BiDijkstra(Env* env) : env(env) {
+    forward_nodes_.resize(env->size());
+    backward_nodes_.resize(env->size());
+    closedset_.resize(env->size(), 0);
 }
 
 void BiDijkstra::clear() {
@@ -75,7 +75,7 @@ bool BiDijkstra::step(int side, Queue &queue, vector<Node> &nodes) {
 
     closedset_[node_id] = 1;
 
-    for (auto& [n, cost] : graph->get_neighbors(node_id, side)) {
+    for (auto& [n, cost] : env->get_neighbors(node_id, side)) {
         Node &nb = nodes[n];
         double new_cost = top.first + cost;
         if (nb.distance < 0 || nb.distance - new_cost > epsilon) {

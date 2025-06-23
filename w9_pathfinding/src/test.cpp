@@ -9,7 +9,6 @@
 #include "include/a_star.h"
 #include "include/bi_a_star.h"
 #include "include/gbs.h"
-#include "include/space_time_a_star.h"
 #include "include/hc_a_star.h"
 #include "include/whc_a_star.h"
 #include "include/cbs.h"
@@ -46,7 +45,6 @@ void test_graph() {
     BiBFS bibfs(&graph);
     Dijkstra dijkstra(&graph);
     BiDijkstra bidijkstra(&graph);
-    SpaceTimeAStar stastar(&graph);
 
     vector<pair<std::string, AbsPathFinder*>> finders = {
         {"DFS", &dfs},
@@ -54,7 +52,6 @@ void test_graph() {
         {"Bidirectional BFS", &bibfs},
         {"Dijkstra", &dijkstra},
         {"Bidirectional Dijkstra", &bidijkstra},
-        {"Space-Time A*", &stastar}
     };
 
     for (auto &[name, finder] : finders) {
@@ -105,7 +102,6 @@ void test_grid() {
     BiAStar biastar(&grid);
     GBS gbs(&grid);
     IDAStar idastar(&grid);
-    SpaceTimeAStar stastar(&grid);
 
     vector<pair<std::string, AbsPathFinder*>> finders = {
         {"DFS", &dfs},
@@ -117,7 +113,6 @@ void test_grid() {
         {"Bidirectional A*", &biastar},
         {"GBS", &gbs},
         {"IDA*", &idastar},
-        {"Space-Time A*", &stastar}
     };
 
     vector<int> path;

@@ -8,7 +8,7 @@ using std::chrono::duration;
 using std::chrono::high_resolution_clock;
 
 
-CBS::CBS(AbsGraph *graph) : graph(graph), st_a_star_(graph), generator_(std::random_device{}()) {
+CBS::CBS(Env* env) : env(env), st_a_star_(env), generator_(std::random_device{}()) {
 }
 
 vector<Path> CBS::mapf(vector<int> starts, vector<int> goals) {
@@ -22,7 +22,7 @@ void CBS::print_node(CTNode &node) {
     cout << "total=" << node.total_cost() << ", solutions:" << endl;
     for (auto & path : node.solutions) {
         cout << " - ";
-        graph->print_path(path);
+        env->print_path(path);
     }
 }
 
@@ -34,11 +34,11 @@ void CBS::print_constraint(Constraint &constraint) {
     cout << type << ": agent_id=" << constraint.agent_id;
     cout << ", time=" << conflict.time;
     if (conflict.is_edge_conflict()) {
-        cout << ", edge=" << graph->node_to_string(conflict.node1);
-        cout << "->" << graph->node_to_string(conflict.node2) << endl;
+        cout << ", edge=" << env->node_to_string(conflict.node1);
+        cout << "->" << env->node_to_string(conflict.node2) << endl;
     }
     else
-        cout << ", node=" << graph->node_to_string(conflict.node1) << endl;
+        cout << ", node=" << env->node_to_string(conflict.node1) << endl;
 }
 
 int CBS::random_int(int max_value) {
@@ -56,7 +56,7 @@ vector<CBS::Constraint> CBS::find_conflict(vector<Path> &paths, bool find_random
     int num_agents = paths.size();
     size_t time = 0;
     std::unordered_map<int, vector<int>> node_to_agents;
-    bool edge_collision = graph->edge_collision();
+    bool edge_collision = env->edge_collision();
     bool end = false;
 
     vector<pair<vector<int>, Conflict>> conflicts;  // [{conflicting agents, Conflict}, ...]
@@ -266,7 +266,7 @@ bool CBS::low_level(
         return false;
 
     node.solutions[agent_id] = path;
-    node.costs[agent_id] = graph->calculate_cost(path);
+    node.costs[agent_id] = env->calculate_cost(path);
     return true;
 }
 
@@ -285,7 +285,7 @@ bool CBS::low_level_with_disjoint_splitting(
         if (path.empty())
             return false;
         node.solutions[agent_id] = path;
-        node.costs[agent_id] = graph->calculate_cost(path);
+        node.costs[agent_id] = env->calculate_cost(path);
     }
     else {
         // a positive constraint, we run the low-level search for every agent
@@ -295,7 +295,7 @@ bool CBS::low_level_with_disjoint_splitting(
             if (path.empty())
                 return false;
             node.solutions[other_agent] = path;
-            node.costs[other_agent] = graph->calculate_cost(path);
+            node.costs[other_agent] = env->calculate_cost(path);
         }
     }
 
@@ -443,7 +443,7 @@ vector<Path> CBS::mapf(
         agents.emplace_back(start, goal, std::move(rrs));
     }
 
-    ReservationTable reservation_table(graph->size());
+    ReservationTable reservation_table(env->size());
     if (rt)
         reservation_table = *rt;
 
@@ -469,7 +469,7 @@ vector<Path> CBS::mapf_(
 
     Queue openset;
     ConstraintTree tree;
-    tree.reserve(graph->size());
+    tree.reserve(env->size());
 
     {
         CTNode root;
@@ -487,7 +487,7 @@ vector<Path> CBS::mapf_(
                 return {};
 
             root.solutions.push_back(path);
-            double cost = graph->calculate_cost(path);
+            double cost = env->calculate_cost(path);
             root.costs.push_back(cost);
         }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core.h"
+#include "mapf.h"
 #include "space_time_a_star.h"
 #include "resumable_search.h"
 #include "reservation_table.h"
@@ -11,8 +11,8 @@ class HCAStar : public AbsMAPF {
     // Silver, D. 2005. Cooperative pathfinding. In AIIDE, 117–122.
 
     public:
-        AbsGraph* graph;
-        HCAStar(AbsGraph* graph);
+        Env* env;
+        HCAStar(Env* env);
 
         vector<vector<int>> mapf(vector<int> starts, vector<int> goals);
         vector<vector<int>> mapf(

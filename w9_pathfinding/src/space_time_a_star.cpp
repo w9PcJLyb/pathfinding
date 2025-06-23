@@ -1,7 +1,7 @@
 #include "include/space_time_a_star.h"
 
 
-SpaceTimeAStar::SpaceTimeAStar(AbsGraph *graph) : graph(graph), rrs_(nullptr) {
+SpaceTimeAStar::SpaceTimeAStar(Env* env) : env(env), rrs_(nullptr) {
 }
 
 Path SpaceTimeAStar::reconstruct_path(int start, Node* node) {
@@ -15,10 +15,10 @@ Path SpaceTimeAStar::reconstruct_path(int start, Node* node) {
 }
 
 std::unique_ptr<ResumableSearch> SpaceTimeAStar::reverse_resumable_search(int node_id) {
-    if (graph->has_coordinates())
-        return std::make_unique<ResumableAStar>(graph, node_id, true);
+    if (env->has_heuristic())
+        return std::make_unique<ResumableAStar>(env, node_id, true);
     else
-        return std::make_unique<ResumableDijkstra>(graph, node_id, true);
+        return std::make_unique<ResumableDijkstra>(env, node_id, true);
 }
 
 ResumableSearch* SpaceTimeAStar::ensure_rrs(ResumableSearch* rrs, int goal) {
@@ -75,7 +75,7 @@ Path SpaceTimeAStar::find_path_with_depth_limit(
         return {};
     }
 
-    int graph_size = graph->size();
+    int env_size = env->size();
     int max_terminal_time = start_time + search_depth;
 
     typedef pair<double, Node*> key;
@@ -94,7 +94,7 @@ Path SpaceTimeAStar::find_path_with_depth_limit(
 
         double distance = current->distance + cost;
 
-        int st = node_id + time * graph_size;
+        int st = node_id + time * env_size;
         if (!nodes.count(st)) {
             nodes.emplace(st, Node(current, node_id, time, distance, distance + h));
             openset.push({distance + h, &nodes.at(st)});
@@ -125,18 +125,18 @@ Path SpaceTimeAStar::find_path_with_depth_limit(
             }
         }
 
-        int h = n + t * graph_size;
+        int h = n + t * env_size;
         if (nodes.count(h) && f > nodes.at(h).f)
             continue;
 
         if (t >= max_terminal_time) {
             // terminal node
             if (process_node(goal, rrs->distance(n), current))
-                nodes.at(goal + (t + 1) * graph_size).time = -1;
+                nodes.at(goal + (t + 1) * env_size).time = -1;
         }
         else {
             auto reserved_edges = rt_.get_reserved_edges(t, n);
-            for (auto &[node_id, cost] : graph->get_neighbors(n, false, true)) {
+            for (auto &[node_id, cost] : env->get_neighbors(n, false, true)) {
                 if (!reserved_edges.count(node_id) && !rt_.is_reserved(t + 1, node_id))
                     process_node(node_id, cost, current);
             }
@@ -154,7 +154,7 @@ Path SpaceTimeAStar::find_path_with_exact_length(
     const ReservationTable *rt,
     int start_time
 ) {
-    int graph_size = graph->size();
+    int env_size = env->size();
     int terminal_time = start_time + length;
 
     typedef pair<double, Node*> key;
@@ -166,10 +166,10 @@ Path SpaceTimeAStar::find_path_with_exact_length(
 
     auto process_node = [&] (int node_id, double cost, Node* current) {
         int time = current->time + 1;
-        double h = graph->estimate_distance(node_id, goal);
+        double h = env->estimate_distance(node_id, goal);
         double distance = current->distance + cost;
 
-        int st = node_id + time * graph_size;
+        int st = node_id + time * env_size;
         if (!nodes.count(st)) {
             nodes.emplace(st, Node(current, node_id, time, distance, distance + h));
             openset.push({distance + h, &nodes.at(st)});
@@ -195,17 +195,17 @@ Path SpaceTimeAStar::find_path_with_exact_length(
             continue;
         }
 
-        int h = current->node_id + time * graph_size;
+        int h = current->node_id + time * env_size;
         if (nodes.count(h) && f > nodes.at(h).f)
             continue;
 
         if (!rt) {
-            for (auto &[node_id, cost] : graph->get_neighbors(current->node_id, false, true))
+            for (auto &[node_id, cost] : env->get_neighbors(current->node_id, false, true))
                 process_node(node_id, cost, current);
         }
         else {
             auto reserved_edges = rt->get_reserved_edges(time, current->node_id);
-            for (auto &[node_id, cost] : graph->get_neighbors(current->node_id, false, true)) {
+            for (auto &[node_id, cost] : env->get_neighbors(current->node_id, false, true)) {
                 if (!reserved_edges.count(node_id) && !rt->is_reserved(time + 1, node_id))
                     process_node(node_id, cost, current);
             }
@@ -245,7 +245,7 @@ Path SpaceTimeAStar::find_path_with_length_limit(
 
     const ReservationTable& rt_ = *rt;
 
-    int graph_size = graph->size();
+    int env_size = env->size();
     int terminal_time = start_time + max_length;
 
     typedef pair<double, Node*> key;
@@ -260,7 +260,7 @@ Path SpaceTimeAStar::find_path_with_length_limit(
         double h = rrs_.distance(node_id);
         double distance = current->distance + cost;
 
-        int st = node_id + time * graph_size;
+        int st = node_id + time * env_size;
         if (!nodes.count(st)) {
             nodes.emplace(st, Node(current, node_id, time, distance, distance + h));
             openset.push({distance + h, &nodes.at(st)});
@@ -286,12 +286,12 @@ Path SpaceTimeAStar::find_path_with_length_limit(
         if (time >= terminal_time)
             continue;
 
-        int h = current->node_id + time * graph_size;
+        int h = current->node_id + time * env_size;
         if (nodes.count(h) && f > nodes.at(h).f)
             continue;
 
         auto reserved_edges = rt_.get_reserved_edges(time, current->node_id);
-        for (auto &[node_id, cost] : graph->get_neighbors(current->node_id, false, true)) {
+        for (auto &[node_id, cost] : env->get_neighbors(current->node_id, false, true)) {
             if (!reserved_edges.count(node_id) && !rt_.is_reserved(time + 1, node_id))
                 process_node(node_id, cost, current);
         }
@@ -323,10 +323,10 @@ Path SpaceTimeAStar::find_path_with_length_limit__static(int start, int goal, in
             continue;
 
         int time = current->time + 1;
-        for (auto &[node_id, cost] : graph->get_neighbors(current->node_id)) {
+        for (auto &[node_id, cost] : env->get_neighbors(current->node_id)) {
             double h = 0;
-            if (graph->has_coordinates())
-                h = graph->estimate_distance(node_id, goal);
+            if (env->has_heuristic())
+                h = env->estimate_distance(node_id, goal);
 
             double distance = current->distance + cost;
 

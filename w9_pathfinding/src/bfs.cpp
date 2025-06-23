@@ -1,8 +1,8 @@
 #include "include/bfs.h"
 
 
-BFS::BFS(AbsGraph *graph) : graph(graph) {
-    came_from_.resize(graph->size(), -1);
+BFS::BFS(Env *env) : env(env) {
+    came_from_.resize(env->size(), -1);
 }
 
 void BFS::clear() {
@@ -33,7 +33,7 @@ vector<int> BFS::find_path(int start, int end) {
     while (!queue.empty()) {
         int x = queue.front();
         queue.pop();
-        for (auto& [n, cost] : graph->get_neighbors(x)) {
+        for (auto& [n, cost] : env->get_neighbors(x)) {
             if (came_from_[n] < 0) {
                 came_from_[n] = x;
                 if (n == end)

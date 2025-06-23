@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "core.h"
+#include "mapf.h"
 #include "resumable_search.h"
 #include "space_time_a_star.h"
 
@@ -13,8 +13,8 @@ namespace maas {
         // In: AAAI Conference on Artificial Intelligence. pp. 173–178 (2010)
 
         public:
-            AbsGraph* graph;
-            MultiAgentAStar(AbsGraph* graph);
+            Env* env;
+            MultiAgentAStar(Env* env);
 
             vector<Path> mapf(vector<int> starts, vector<int> goals);
             vector<Path> mapf(
@@ -55,12 +55,12 @@ namespace maas {
 
     class AStarSolver {
         public:
-            AStarSolver(AbsGraph* graph, vector<int>& starts, vector<int>& goals, const ReservationTable* rt);
+            AStarSolver(Env* env, vector<int>& starts, vector<int>& goals, const ReservationTable* rt);
 
             vector<Path> find_paths(int max_length, double max_time);
 
         protected:
-            AbsGraph* graph_;
+            Env* env_;
             const ReservationTable* rt_;
             Tree tree_;
             vector<Agent> agents_;
@@ -91,7 +91,7 @@ namespace maas {
 
     class AStarODSolver : AStarSolver {
         public:
-            AStarODSolver(AbsGraph* graph, vector<int>& starts, vector<int>& goals, const ReservationTable* rt);
+            AStarODSolver(Env* env, vector<int>& starts, vector<int>& goals, const ReservationTable* rt);
 
             vector<Path> find_paths(int max_length, double max_time);
 

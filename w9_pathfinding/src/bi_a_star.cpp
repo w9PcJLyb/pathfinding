@@ -1,8 +1,8 @@
 #include "include/bi_a_star.h"
 
 
-BiAStar::BiAStar(AbsGraph *graph) : graph(graph) {
-    nodes_.resize(2, vector<Node>(graph->size()));
+BiAStar::BiAStar(Env *env) : env(env) {
+    nodes_.resize(2, vector<Node>(env->size()));
 }
 
 void BiAStar::clear() {
@@ -51,8 +51,8 @@ vector<int> BiAStar::reconstruct_path(int start, int end) {
 }
 
 double BiAStar::potential(int node_id, int side) {
-    double d1 = graph->estimate_distance(node_id, start_node_);
-    double d2 = graph->estimate_distance(node_id, end_node_);
+    double d1 = env->estimate_distance(node_id, start_node_);
+    double d2 = env->estimate_distance(node_id, end_node_);
     if (side == 0)
         return (d2 - d1) / 2;
     else
@@ -80,7 +80,7 @@ bool BiAStar::step(int side, Queue &queue) {
     nodes_[side][node_id].visited = true;
 
     double d = nodes_[side][node_id].distance;
-    for (auto& [n, cost] : graph->get_neighbors(node_id, side)) {
+    for (auto& [n, cost] : env->get_neighbors(node_id, side)) {
         Node &nb = nodes_[side][n];
         if (nb.visited)
             continue;

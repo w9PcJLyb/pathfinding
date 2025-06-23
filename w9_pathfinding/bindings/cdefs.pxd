@@ -3,22 +3,21 @@ from libcpp.pair cimport pair
 from libcpp.vector cimport vector
 
 
-cdef extern from "core.h":
+cdef extern from "env.h":
 
-    cdef cppclass AbsGraph:
-        AbsGraph() except +
+    cdef cppclass Env:
+        Env() except +
         size_t size()
         double calculate_cost(vector[int])
         bool is_valid_path(vector[int])
         void reverse_inplace()
         vector[pair[int, double]] get_neighbors(int, bool, bool)
-        vector[vector[int]] find_components()
-        vector[vector[int]] find_scc()
         bool adjacent(int, int)
         void set_edge_collision(bool)
         bool edge_collision()
+        bool has_heuristic()
 
-    cdef cppclass AbsGrid(AbsGraph):
+    cdef cppclass GridEnv(Env):
         bool has_obstacle(int)
         void add_obstacle(int)
         void remove_obstacle(int)
@@ -32,16 +31,15 @@ cdef extern from "core.h":
         double get_pause_weight(int) except +
         vector[double] get_pause_weights()
 
-    cdef cppclass AbsPathFinder:
-        AbsPathFinder() except +
-        vector[int] find_path(int, int)
 
-    cdef cppclass AbsMAPF:
-        AbsMAPF() except +
-        vector[vector[int]] mapf(vector[int], vector[int])
+cdef extern from "components.h":
+
+    vector[vector[int]] find_components(Env*)
+    vector[vector[int]] find_scc(Env*)
 
 
 cdef extern from "reservation_table.h":
+
     cdef cppclass ReservationTable:
         ReservationTable(int)
         ReservationTable(const ReservationTable&)
@@ -56,7 +54,7 @@ cdef extern from "reservation_table.h":
 
 cdef extern from "graph.h":
 
-    cdef cppclass Graph(AbsGraph):
+    cdef cppclass Graph(Env):
         Graph(int, bool) except +
         Graph(int, bool, vector[vector[double]]) except +
         bool is_directed_graph()
@@ -65,14 +63,13 @@ cdef extern from "graph.h":
         vector[vector[double]] get_edges()
         vector[vector[double]] get_coordinates()
         void set_coordinates(vector[vector[double]])
-        bool has_coordinates()
         double estimate_distance(int v1, int v2)
         Graph* create_reversed_graph()
 
 
 cdef extern from "grid.h":
 
-    cdef cppclass Grid(AbsGrid):
+    cdef cppclass Grid(GridEnv):
         int width, height
         bool passable_left_right_border, passable_up_down_border
         double diagonal_movement_cost_multiplier
@@ -85,7 +82,7 @@ cdef extern from "grid.h":
 
 cdef extern from "grid_3d.h":
 
-    cdef cppclass Grid3D(AbsGrid):
+    cdef cppclass Grid3D(GridEnv):
         int width, height, depth
         bool passable_borders
 
@@ -95,7 +92,7 @@ cdef extern from "grid_3d.h":
 
 cdef extern from "hex_grid.h":
 
-    cdef cppclass HexGrid(AbsGrid):
+    cdef cppclass HexGrid(GridEnv):
         int width, height
         bool passable_left_right_border, passable_up_down_border
         int layout
@@ -104,66 +101,73 @@ cdef extern from "hex_grid.h":
         HexGrid(int, int, int, vector[double]) except +
 
 
+cdef extern from "pf.h":
+
+    cdef cppclass AbsPathFinder:
+        AbsPathFinder() except +
+        vector[int] find_path(int, int)
+
+
 cdef extern from "dfs.h":
 
     cdef cppclass DFS(AbsPathFinder):
-        DFS(AbsGraph*) except + 
+        DFS(Env*) except +
         vector[int] find_path(int, int)
 
 
 cdef extern from "bfs.h":
 
     cdef cppclass BFS(AbsPathFinder):
-        BFS(AbsGraph*) except +
+        BFS(Env*) except +
         vector[int] find_path(int, int)
 
 
 cdef extern from "bi_bfs.h":
 
     cdef cppclass BiBFS(AbsPathFinder):
-        BiBFS(AbsGraph*) except +
+        BiBFS(Env*) except +
         vector[int] find_path(int, int)
 
 
 cdef extern from "dijkstra.h":
 
     cdef cppclass Dijkstra(AbsPathFinder):
-        Dijkstra(AbsGraph*) except +
+        Dijkstra(Env*) except +
         vector[int] find_path(int, int)
 
 
 cdef extern from "bi_dijkstra.h":
 
     cdef cppclass BiDijkstra(AbsPathFinder):
-        BiDijkstra(AbsGraph*) except +
+        BiDijkstra(Env*) except +
         vector[int] find_path(int, int)
 
 
 cdef extern from "a_star.h":
 
     cdef cppclass AStar(AbsPathFinder):
-        AStar(AbsGraph*) except +
+        AStar(Env*) except +
         vector[int] find_path(int, int)
 
 
 cdef extern from "bi_a_star.h":
 
     cdef cppclass BiAStar(AbsPathFinder):
-        BiAStar(AbsGraph*) except +
+        BiAStar(Env*) except +
         vector[int] find_path(int, int)
 
 
 cdef extern from "gbs.h":
 
     cdef cppclass GBS(AbsPathFinder):
-        GBS(AbsGraph*) except +
+        GBS(Env*) except +
         vector[int] find_path(int, int)
 
 
 cdef extern from "ida_star.h":
 
     cdef cppclass IDAStar(AbsPathFinder):
-        IDAStar(AbsGraph*) except +
+        IDAStar(Env*) except +
         vector[int] find_path(int, int, double)
 
 
@@ -176,16 +180,23 @@ cdef extern from "resumable_search.h":
         void set_start_node(int)
 
     cdef cppclass ResumableBFS(ResumableSearch):
-        ResumableBFS(AbsGraph*, int) except +
+        ResumableBFS(Env*, int) except +
 
     cdef cppclass ResumableDijkstra(ResumableSearch):
-        ResumableDijkstra(AbsGraph*, int) except +
+        ResumableDijkstra(Env*, int) except +
+
+
+cdef extern from "mapf.h":
+
+    cdef cppclass AbsMAPF:
+        AbsMAPF() except +
+        vector[vector[int]] mapf(vector[int], vector[int])
 
 
 cdef extern from "space_time_a_star.h":
 
     cdef cppclass SpaceTimeAStar:
-        SpaceTimeAStar(AbsGraph*) except +
+        SpaceTimeAStar(Env*) except +
         vector[int] find_path_with_depth_limit(int, int, int, ReservationTable*, ResumableSearch*, int)
         vector[int] find_path_with_exact_length(int, int, int, ReservationTable*)
         vector[int] find_path_with_length_limit(int, int, int, ReservationTable*, ResumableSearch*, int)
@@ -194,14 +205,14 @@ cdef extern from "space_time_a_star.h":
 cdef extern from "hc_a_star.h":
 
     cdef cppclass HCAStar(AbsMAPF):
-        HCAStar(AbsGraph*) except +
+        HCAStar(Env*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, ReservationTable*)
 
 
 cdef extern from "whc_a_star.h":
 
     cdef cppclass WHCAStar(AbsMAPF):
-        WHCAStar(AbsGraph*) except +
+        WHCAStar(Env*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, int, ReservationTable*)
 
 
@@ -209,7 +220,7 @@ cdef extern from "cbs.h":
 
     cdef cppclass CBS(AbsMAPF):
         int num_generated_nodes, num_closed_nodes
-        CBS(AbsGraph*) except +
+        CBS(Env*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
 
 
@@ -217,12 +228,12 @@ cdef extern from "icts.h" namespace "icts":
 
     cdef cppclass ICTS(AbsMAPF):
         int num_generated_nodes, num_closed_nodes
-        ICTS(AbsGraph*) except +
+        ICTS(Env*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
 
 
 cdef extern from "multi_agent_a_star.h" namespace "maas":
 
     cdef cppclass MultiAgentAStar(AbsMAPF):
-        MultiAgentAStar(AbsGraph*) except +
+        MultiAgentAStar(Env*) except +
         vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +

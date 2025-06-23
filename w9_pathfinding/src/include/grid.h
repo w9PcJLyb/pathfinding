@@ -1,9 +1,9 @@
 #pragma once
 
-#include "core.h"
+#include "env.h"
 
 
-class Grid : public AbsGrid {
+class Grid : public GridEnv {
 
     public:
 

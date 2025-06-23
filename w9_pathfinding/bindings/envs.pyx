@@ -18,14 +18,14 @@ cdef class _NodeMapper:
 
     def contains(self, node) -> bool:
         """
-        Return True if the given node is inside the graph.
+        Return True if the given node is inside the environment.
         Otherwise, return False.
         """
         raise NotImplementedError()
 
     def assert_in(self, node):
         """
-        Validates that the given user-facing node is inside the graph.
+        Validates that the given user-facing node is inside the environment.
         Raises an error if the node is invalid.
         """
         if not self.contains(node):
@@ -132,12 +132,12 @@ cdef class _Grid3DMapper(_NodeMapper):
         )
 
 
-cdef class _AbsGraph:
+cdef class _Env:
     """
     Abstract base class for all graph and grid structures.
 
     This class defines the core interface and behaviors expected of any
-    graph representation used in the pathfinding engine, including neighbor
+    environment representation used in the pathfinding engine, including neighbor
     access, cost calculations, and edge collision handling.
     """
 
@@ -151,13 +151,13 @@ cdef class _AbsGraph:
     @property
     def size(self) -> int:
         """
-        Total number of nodes in the graph.
+        Total number of nodes in the environment.
         """
         return self._baseobj.size()
 
     def contains(self, node) -> bool:
         """
-        Check if the graph contains a given node.
+        Check if the environment contains a given node.
 
         Parameters
         ----------
@@ -167,13 +167,13 @@ cdef class _AbsGraph:
         Returns
         -------
         bool
-            True if the node is in the graph, False otherwise.
+            True if the node is in the environment, False otherwise.
         """
         return self._node_mapper.contains(node)
 
     def calculate_cost(self, path) -> double:
         """
-        Calculate the total cost of a given path through the graph.
+        Calculate the total cost of a given path through the environment.
 
         If the path is invalid (e.g. contains non-adjacent nodes), this will return `-1`.
 
@@ -190,7 +190,7 @@ cdef class _AbsGraph:
         Raises
         ------
         ValueError
-            If one of the nodes in the path is not present in the graph.
+            If one of the nodes in the path is not a valid node in the environment.
         """
         cdef vector[int] nodes = self._node_mapper.to_ids(path)
         if not self._baseobj.is_valid_path(nodes):
@@ -199,7 +199,7 @@ cdef class _AbsGraph:
 
     def is_valid_path(self, path) -> bool:
         """
-        Check if a given path is valid within the graph.
+        Check if a given path is valid within the environment.
 
         Parameters
         ----------
@@ -214,7 +214,7 @@ cdef class _AbsGraph:
         Raises
         ------
         ValueError
-            If one of the nodes in the path is not present in the graph.
+            If one of the nodes in the path is not a valid node in the environment.
         """
         cdef vector[int] nodes = self._node_mapper.to_ids(path)
         return self._baseobj.is_valid_path(nodes)
@@ -242,7 +242,7 @@ cdef class _AbsGraph:
         Raises
         ------
         ValueError
-            If the node is not present in the graph.
+            If the node is not a valid node in the environment.
         """
         map = self._node_mapper
         node_id = map.to_id(node)
@@ -268,7 +268,7 @@ cdef class _AbsGraph:
         Raises
         ------
         ValueError
-            If either `v1` or `v2` is not present in the graph.
+            If either `v1` or `v2` is not a valid node in the environment.
         """
         v1 = self._node_mapper.to_id(v1)
         v2 = self._node_mapper.to_id(v2)
@@ -295,12 +295,12 @@ cdef class _AbsGraph:
 
     def to_dict(self) -> dict:
         """
-        Convert graph settings to a serializable dictionary.
+        Convert environment settings to a serializable dictionary.
 
         Returns
         -------
         dict
-            Dictionary of graph configuration options.
+            Dictionary of environment configuration options.
         """
         return {"edge_collision": self.edge_collision}
 
@@ -315,7 +315,7 @@ def _construct(cls, kw):
     return cls(**kw)
 
 
-cdef class Graph(_AbsGraph):
+cdef class Graph(_Env):
     """
     A basic graph implementation with optional coordinates and edge support.
 
@@ -445,7 +445,7 @@ cdef class Graph(_AbsGraph):
         bool
             True if coordinates have been set.
         """
-        return self._obj.has_coordinates()
+        return self._obj.has_heuristic()
 
     def estimate_distance(self, int v1, int v2) -> double:
         """
@@ -592,7 +592,8 @@ cdef class Graph(_AbsGraph):
         """
         if self.directed:
             raise ValueError("find_components only works for an undirected graph")
-        return self._obj.find_components()
+
+        return cdefs.find_components(self._obj)
 
     def find_scc(self):
         """
@@ -611,7 +612,7 @@ cdef class Graph(_AbsGraph):
         if not self.directed:
             raise ValueError("find_scc only works for a directed graph")
 
-        return self._obj.find_scc()
+        return cdefs.find_scc(self._obj)
 
     @property
     def edge_collision(self) -> bool:
@@ -636,7 +637,7 @@ cdef class Graph(_AbsGraph):
         }
 
 
-cdef class _AbsGrid(_AbsGraph):
+cdef class _GridEnv(_Env):
     """
     Abstract base class for grid-based environments.
 
@@ -801,10 +802,14 @@ cdef class _AbsGrid(_AbsGraph):
         List[List[node]]
             List of components, each as a list of nodes.
         """
-        return [
-            self._node_mapper.from_ids(component)
-            for component in self._baseobj.find_components()
-        ]
+        components = []
+        for part in cdefs.find_components(self._baseobj):
+            if len(part) == 1 and self._basegridobj.has_obstacle(part[0]):
+                continue
+
+            components.append(self._node_mapper.from_ids(part))
+
+        return components
 
     @property
     def weights(self):
@@ -1063,7 +1068,7 @@ cdef class _AbsGrid(_AbsGraph):
         return d
 
 
-cdef class Grid(_AbsGrid):
+cdef class Grid(_GridEnv):
     """
     A 2D grid environment for pathfinding with support for obstacles, weighted traversal,
     diagonal movement, and edge-wrapping.
@@ -1371,7 +1376,7 @@ cdef class Grid(_AbsGrid):
         }
 
 
-cdef class Grid3D(_AbsGrid):
+cdef class Grid3D(_GridEnv):
     """
     A 3D grid environment for pathfinding with support for obstacles, weighted traversal,
     and edge-wrapping.
@@ -1528,7 +1533,7 @@ cdef class Grid3D(_AbsGrid):
         }
 
 
-cdef class HexGrid(_AbsGrid):
+cdef class HexGrid(_GridEnv):
     """
     A 2D grid environment with hexagonal tiles with support for obstacles, weighted traversal,
     edge-wrapping and different hexagonal layouts (flat-topped and pointy-topped).
