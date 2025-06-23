@@ -50,6 +50,13 @@ html_static_path = ["_static"]
 html_theme_options = {
     "prev_next_buttons_location": None,
 }
+html_context = {
+    "display_github": True,
+    "github_user": "w9PcJLyb",
+    "github_repo": "w9-pathfinding",
+    "github_version": "main",
+    "conf_py_path": "/docs/",
+}
 
 # autodoc
 autodoc_default_options = {
