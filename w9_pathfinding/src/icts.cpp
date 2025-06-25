@@ -20,18 +20,14 @@ void icts::ResumableBFS::update_data(int depth) {
         queue_.pop();
 
         if (rt_) {
-            if (!rt_->is_reserved(time + 1, node_id))
-                add_record(time + 1, node_id, node_id);
-
             auto reserved_edges = rt_->get_reserved_edges(time, node_id);
-            for (auto& [neighbor_id, cost] : env_->get_neighbors(node_id)) {
+            for (auto& [neighbor_id, cost] : env_->get_neighbors(node_id, false, true)) {
                 if (!reserved_edges.count(neighbor_id) && !rt_->is_reserved(time + 1, neighbor_id))
                     add_record(time + 1, neighbor_id, node_id);
             }
         }
         else {
-            add_record(time + 1, node_id, node_id);
-            for (auto& [neighbor_id, cost] : env_->get_neighbors(node_id))
+            for (auto& [neighbor_id, cost] : env_->get_neighbors(node_id, false, true))
                 add_record(time + 1, neighbor_id, node_id);
         }
 

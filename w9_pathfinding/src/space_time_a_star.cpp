@@ -166,7 +166,11 @@ Path SpaceTimeAStar::find_path_with_exact_length(
 
     auto process_node = [&] (int node_id, double cost, Node* current) {
         int time = current->time + 1;
-        double h = env->estimate_distance(node_id, goal);
+
+        double h = 0;
+        if (env->has_heuristic())
+            h = env->estimate_distance(node_id, goal);
+
         double distance = current->distance + cost;
 
         int st = node_id + time * env_size;

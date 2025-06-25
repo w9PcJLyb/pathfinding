@@ -122,7 +122,7 @@ class TestSpaceTimeAStar(unittest.TestCase):
             [(0, 0), (1, 0), (1, 1), (1, 2), (0, 2), (0, 3), (0, 4), (1, 4), (2, 4)],
         )
 
-    def test_path_with_exact_length(self):
+    def test_grid_path_with_exact_length(self):
         """
         + -  -  - +
         | #     # |
@@ -145,3 +145,17 @@ class TestSpaceTimeAStar(unittest.TestCase):
         #  - [(0,1), (1,1), (1,0), (1,0), (1,1), (2,1)] with cost = 4.1.
         self.assertEqual(path, [(0, 1), (1, 1), (1, 0), (1, 0), (1, 1), (2, 1)])
         self.assertEqual(grid.calculate_cost(path), 4.1)
+
+    def test_graph_path_with_exact_length(self):
+        graph = Graph(4, edges=[[0, 1], [1, 2], [1, 3], [3, 1]])
+
+        a = SpaceTimeAStar(graph)
+
+        path = a.find_path_with_exact_length(0, 2, length=2)
+        self.assertEqual(path, [0, 1, 2])
+
+        path = a.find_path_with_exact_length(0, 2, length=3)
+        self.assertEqual(path, [])
+
+        path = a.find_path_with_exact_length(0, 2, length=4)
+        self.assertEqual(path, [0, 1, 3, 1, 2])

@@ -146,6 +146,8 @@ void test_mapf() {
 
     Graph graph(5, true);
 
+    graph.add_edge(0, 0, 1);
+    graph.add_edge(1, 1, 1);
     graph.add_edge(0, 2, 1);
     graph.add_edge(1, 2, 1);
     graph.add_edge(2, 3, 1);
