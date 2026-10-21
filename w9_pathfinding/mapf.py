@@ -5,6 +5,7 @@ from .bindings.mapf import (
     HCAStar,
     WHCAStar,
     CBS,
+    GCBS,
     ICTS,
     MultiAgentAStar,
 )
