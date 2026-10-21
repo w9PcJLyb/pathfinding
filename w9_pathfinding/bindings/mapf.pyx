@@ -949,6 +949,128 @@ cdef class CBS(_AbsMAPF):
         )
 
 
+cdef class GCBS(_AbsMAPF):
+    """
+    Greedy Conflict Based Search
+    Fast and complete but not optimal
+    """
+
+    cdef cdefs.GCBS* _obj
+
+    def __cinit__(self, _Env env, seed=None):
+        self.env = env
+        self._obj = new cdefs.GCBS(
+            env._baseobj,
+            self._to_cpp_seed(seed)
+        )
+        self._baseobj = self._obj
+
+    def __dealloc__(self):
+        if self._obj != NULL:
+            del self._obj
+            self._obj = NULL
+
+    @property
+    def num_generated_nodes(self) -> int:
+        """
+        Total number of Constraint Tree (CT) nodes generated during the last search.
+        """
+        return self._obj.num_generated_nodes
+
+    @property
+    def num_closed_nodes(self) -> int:
+        """
+        Number of Constraint Tree (CT) nodes expanded (processed) during the last search.
+        """
+        return self._obj.num_closed_nodes
+
+    @staticmethod
+    def _to_cpp_seed(seed):
+        """
+        Convert a Python seed value to the C++ representation.
+        """
+        if seed is None:
+            return -1
+        if not isinstance(seed, int):
+            raise TypeError("Seed must be an integer or None")
+        if seed < 0:
+            raise ValueError("Seed must be None or a non-negative integer")
+        return seed
+
+    def set_seed(self, seed) -> None:
+        """
+        Reset the seed for the solver's random number generator.
+
+        The seed only affects the solver behavior when `disjoint_splitting=True`.
+
+        Parameters
+        ----------
+        seed : int or None
+            Non-negative integer for reproducible results, or None to use
+            nondeterministic behavior.
+        """
+        self._obj.set_seed(self._to_cpp_seed(seed))
+
+    @_mapf
+    def mapf(
+        self,
+        vector[int] starts,
+        vector[int] goals,
+        int max_length=100,
+        double max_time=1,
+        bool disjoint_splitting=True,
+        ReservationTable reservation_table=None,
+    ):
+        """
+        Finds non-colliding paths for all agents from their respective
+        start nodes to goal nodes. The result is a list of individual paths — one
+        per agent.
+
+        Parameters
+        ----------
+        starts : list[node]
+            A list of start nodes, one per agent.
+
+        goals : list[node]
+            A list of goal nodes, one per agent. Must be the same length as `starts`.
+
+        max_length : int, default=100
+            The maximum allowed length of any individual agent's path.
+
+        max_time : float, default=1.0
+            The maximum amount of time (in seconds) allowed for the solver to find a solution.
+            If the time limit is exceeded, a `RuntimeError` is raised.
+
+        disjoint_splitting : bool, default=True
+            If `True`, enables disjoint splitting to improve CBS efficiency and performance.
+            If `False`, standard collision splitting is used.
+
+        reservation_table : ReservationTable, optional
+            Dynamic obstacles.
+
+        Returns
+        -------
+        list[list[node]]
+            A list of paths, one per agent.
+            If no collision-free paths are found, returns an empty list.
+
+        Raises
+        ------
+        ValueError
+            If the number of `starts` and `goals` is different, or if any node is invalid.
+        RuntimeError
+            If no solution is found within the time constraint.
+        """
+        return self._obj.mapf(
+            starts,
+            goals,
+            max_length,
+            max_time,
+            disjoint_splitting,
+            self._to_crt(reservation_table),
+        )
+
+
 cdef class ICTS(_AbsMAPF):
     """
     Increasing Cost Tree Search (ICTS) algorithm for multi-agent pathfinding.

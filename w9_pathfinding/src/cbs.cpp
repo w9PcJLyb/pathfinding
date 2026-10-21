@@ -29,10 +29,8 @@ vector<Path> CBS::mapf(vector<int> starts, vector<int> goals) {
 }
 
 void CBS::print_node(CTNode &node) {
-    cout << "Node: parent=" << node.parent << ", costs=";
-    for (auto x : node.costs)
-        cout << x << ", ";
-    cout << "total=" << node.total_cost() << ", solutions:" << endl;
+    cout << "Node: parent=" << node.parent;
+    cout << ", cost=" << node.cost << ", solutions:" << endl;
     for (auto & path : node.solutions) {
         cout << " - ";
         env->print_path(path);
@@ -279,7 +277,6 @@ bool CBS::low_level(
         return false;
 
     node.solutions[agent_id] = path;
-    node.costs[agent_id] = env->calculate_cost(path);
     return true;
 }
 
@@ -298,7 +295,6 @@ bool CBS::low_level_with_disjoint_splitting(
         if (path.empty())
             return false;
         node.solutions[agent_id] = path;
-        node.costs[agent_id] = env->calculate_cost(path);
     }
     else {
         // a positive constraint, we run the low-level search for every agent
@@ -308,7 +304,6 @@ bool CBS::low_level_with_disjoint_splitting(
             if (path.empty())
                 return false;
             node.solutions[other_agent] = path;
-            node.costs[other_agent] = env->calculate_cost(path);
         }
     }
 
@@ -511,6 +506,14 @@ vector<Path> CBS::mapf(
     return paths;
 }
 
+double CBS::high_level_heuristics(CTNode &ct_node) {
+    // The total cost of the solution
+    double cost = 0;
+    for (Path& path : ct_node.solutions)
+        cost += env->calculate_cost(path);
+    return cost;
+}
+
 vector<Path> CBS::mapf_(
     vector<Agent> &agents,
     int max_length,
@@ -540,13 +543,12 @@ vector<Path> CBS::mapf_(
                 return {};
 
             root.solutions.push_back(path);
-            double cost = env->calculate_cost(path);
-            root.costs.push_back(cost);
         }
 
+        root.cost = high_level_heuristics(root);
         tree.push_back(root);
         num_generated_nodes++;
-        openset.push({root.total_cost(), tree.size() - 1});
+        openset.push({root.cost, tree.size() - 1});
     }
 
     while (!openset.empty()) {
@@ -568,7 +570,6 @@ vector<Path> CBS::mapf_(
             int agent_id = constraint.agent_id;
 
             CTNode new_node(node_id, constraint);
-            new_node.costs = tree[node_id].costs;
             new_node.solutions = tree[node_id].solutions;
 
             bool resolved;
@@ -578,13 +579,13 @@ vector<Path> CBS::mapf_(
                 resolved = low_level_with_disjoint_splitting(new_node, tree, agents, rt, max_length);
 
             if (resolved) {
+                new_node.cost = high_level_heuristics(new_node);
                 tree.push_back(new_node);
                 num_generated_nodes++;
-                openset.push({new_node.total_cost(), tree.size() - 1});
+                openset.push({new_node.cost, tree.size() - 1});
             }
         }
 
-        tree[node_id].costs.clear();
         tree[node_id].solutions.clear();
         num_closed_nodes++;
     }

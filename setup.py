@@ -64,6 +64,7 @@ ext_modules = [
                 "hc_a_star",
                 "whc_a_star",
                 "cbs",
+                "gcbs",
                 "icts",
                 "multi_agent_a_star",
             ),

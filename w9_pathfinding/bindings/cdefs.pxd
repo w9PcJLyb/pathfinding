@@ -225,6 +225,12 @@ cdef extern from "cbs.h":
         vector[vector[int]] mapf(vector[int], vector[int], int, double, bool, ReservationTable*) except +
 
 
+cdef extern from "gcbs.h":
+
+    cdef cppclass GCBS(CBS):
+        GCBS(Env* env, int seed) except +
+
+
 cdef extern from "icts.h" namespace "icts":
 
     cdef cppclass ICTS(AbsMAPF):
